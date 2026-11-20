@@ -3,3 +3,4 @@ export * from "./util.js";
 export * from "./actions.js";
 export * from "./keys.js";
 export * from "./siwq.js";
+export * from "./register.js";
