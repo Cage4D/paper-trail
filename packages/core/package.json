@@ -24,8 +24,22 @@
   },
   "devDependencies": {
     "@types/node": "^22.20.5",
+    "jsdom": "^26.1.0",
     "tsup": "^9.0.0",
     "typescript": "~5.9.3",
     "vitest": "^5.1.1"
+  },
+  "dependencies": {
+    "@cosmjs/proto-signing": "^0.39.0",
+    "@cosmjs/stargate": "^0.39.0",
+    "@noble/ciphers": "^2.4.0",
+    "@noble/hashes": "^2.4.0",
+    "@qorechain/pqc": "0.2.3",
+    "@qorechain/qoreseal": "0.1.0",
+    "@qorechain/qoresign": "0.2.0",
+    "@qorechain/sdk": "0.14.0",
+    "@scure/bip39": "^2.4.0",
+    "shamir-secret-sharing": "0.0.4",
+    "viem": "^2.58.1"
   }
 }
