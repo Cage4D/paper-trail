@@ -5,3 +5,4 @@ export * from "./keys.js";
 export * from "./siwq.js";
 export * from "./register.js";
 export * from "./paper.js";
+export * from "./detect.js";
