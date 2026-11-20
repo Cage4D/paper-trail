@@ -31,6 +31,15 @@ export const groupPurpose = (groupKey: string) => checkLabel(`papertrail:${group
 export const centreGroupKey = (centreId: string) => `centre:${centreId}`;
 export const markersGroupKey = (examId: string) => `markers:${examId}`;
 
+/**
+ * The bytes32 id PaperTrail.rotateEpoch uses for a group: a centre group uses its centreId;
+ * any other group (markers) uses SHA3-256("papertrail:" + groupKey).
+ */
+export function groupChainId(groupKey: string): `0x${string}` {
+  const m = /^centre:(0x[0-9a-fA-F]{64})$/.exec(groupKey);
+  return m ? (m[1].toLowerCase() as `0x${string}`) : sha3Hex(utf8(`papertrail:${groupKey}`));
+}
+
 export function membersHash(members: string[]): `0x${string}` {
   return sha3Hex(utf8([...members].map((m) => m.toLowerCase()).sort().join(",")));
 }

@@ -60,6 +60,12 @@ export function prepareRelease(args: {
 
 /** API side: is this release blob sealed to exactly these recipients (that epoch's members)? */
 export function releaseRecipientsMatch(blob: Uint8Array, members: SealRecipient[]): boolean {
+  return sealedToExactly(blob, members.map((m) => m.mlkemPublicKey));
+}
+
+/** Is a QoreSeal envelope sealed to exactly these ML-KEM keys (by its recipient hints)? */
+export function sealedToExactly(blob: Uint8Array, mlkemPublicKeys: Uint8Array[]): boolean {
+  const members = mlkemPublicKeys.map((mlkemPublicKey) => ({ mlkemPublicKey }));
   const env = parseEnvelope(blob);
   if (env.anonymous || env.entries.length !== members.length) return false;
   const want = new Set(members.map((m) => sha3Hex(recipientHint(env.salt, m.mlkemPublicKey))));

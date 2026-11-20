@@ -10,3 +10,5 @@ export * from "./split.js";
 export * from "./groups.js";
 export * from "./scripts.js";
 export * from "./release.js";
+export * from "./merkle.js";
+export * from "./binding.js";
