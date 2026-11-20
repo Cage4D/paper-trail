@@ -1,0 +1,24 @@
+# secrets
+.env
+.env.*
+!.env.example
+
+# local throwaway postgres
+.pgdata/
+
+# node
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+.turbo/
+
+# foundry
+packages/contracts/out/
+packages/contracts/cache/
+packages/contracts/broadcast/*/31337/
+packages/contracts/broadcast/**/dry-run/
+
+# misc
+.DS_Store
+*.log
