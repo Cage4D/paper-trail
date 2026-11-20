@@ -57,6 +57,24 @@ export function b64url(b: Uint8Array): string {
   return out;
 }
 
+/** Inverse of b64url (unpadded base64url). */
+export function fromB64url(s: string): Uint8Array {
+  const out: number[] = [];
+  let buf = 0;
+  let bits = 0;
+  for (const c of s) {
+    const v = B64URL.indexOf(c);
+    if (v < 0) throw new Error("invalid base64url");
+    buf = ((buf << 6) | v) & 0xffffff;
+    bits += 6;
+    if (bits >= 8) {
+      bits -= 8;
+      out.push((buf >> bits) & 0xff);
+    }
+  }
+  return new Uint8Array(out);
+}
+
 /** QoreSeal purpose / batch-context rule (findings Q7): ^[A-Za-z0-9._:/-]{1,128}$ */
 export const QORESEAL_LABEL_RE = /^[A-Za-z0-9._:/-]{1,128}$/;
 export function checkLabel(label: string): string {

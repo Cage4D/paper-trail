@@ -6,3 +6,6 @@ export * from "./siwq.js";
 export * from "./register.js";
 export * from "./paper.js";
 export * from "./detect.js";
+export * from "./split.js";
+export * from "./groups.js";
+export * from "./scripts.js";

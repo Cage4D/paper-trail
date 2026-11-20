@@ -17,7 +17,7 @@ import { argon2id } from "@noble/hashes/argon2.js";
 import { gcm } from "@noble/ciphers/aes.js";
 import { generateMnemonic, validateMnemonic } from "@scure/bip39";
 import { wordlist } from "@scure/bip39/wordlists/english.js";
-import { b64url, fromUtf8, randomBytes, utf8, wipe } from "./util.js";
+import { b64url, fromB64url, fromUtf8, randomBytes, utf8, wipe } from "./util.js";
 
 export interface RoleKey {
   mnemonic: string;
@@ -67,24 +67,6 @@ export interface EncryptedRoleKey {
   nonce: string; // base64url, 12 bytes
   ciphertext: string; // base64url, AES-256-GCM(mnemonic)
   address: string; // public, for display before unlocking
-}
-
-function fromB64url(s: string): Uint8Array {
-  const A = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
-  const out: number[] = [];
-  let buf = 0;
-  let bits = 0;
-  for (const c of s) {
-    const v = A.indexOf(c);
-    if (v < 0) throw new Error("invalid base64url");
-    buf = (buf << 6) | v;
-    bits += 6;
-    if (bits >= 8) {
-      bits -= 8;
-      out.push((buf >> bits) & 0xff);
-    }
-  }
-  return new Uint8Array(out);
 }
 
 const AAD = utf8("papertrail:role-key:v1");
