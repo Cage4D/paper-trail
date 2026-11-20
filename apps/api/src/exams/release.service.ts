@@ -84,7 +84,7 @@ export class ReleaseService {
   async released(examId: string, centreId: string) {
     await this.indexer.catchUp().catch(() => null);
     const { exam, centre } = await this.load(examId, centreId);
-    const rows = await this.db.shareBlob.findMany({ where: { examId: exam.onchainId, centreId: centre.onchainId, releasedBlob: { not: null }, releaseTx: { not: null } } });
+    const rows = await this.db.shareBlob.findMany({ where: { examId: exam.onchainId, centreId: centre.onchainId, releasedBlob: { not: null }, releaseTx: { not: null } }, orderBy: [{ releasedEpoch: 'asc' }, { examinerIndex: 'asc' }] });
     if (!centre.released) throw new ApiError('NOT_RELEASED', { count: rows.length });
     return {
       released: rows.slice(0, 2).map((r) => ({ examiner: r.examinerAddr, epoch: r.releasedEpoch, blob: toB64url(r.releasedBlob!), txHash: r.releaseTx })),
