@@ -10,9 +10,10 @@
     "build": "pnpm -r build",
     "test": "pnpm -r test",
     "accounts": "tsx scripts/accounts.ts",
-    "findings:q1q3": "NODE_OPTIONS=--dns-result-order=ipv4first tsx scripts/findings/q1-q3-pqcverify.ts",
+    "findings:q1q3": "NODE_OPTIONS=\"--no-network-family-autoselection --dns-result-order=ipv4first\" tsx scripts/findings/q1-q3-pqcverify.ts",
     "findings:q7": "tsx scripts/findings/q7-epoch-restore.ts",
-    "findings:q8": "rm -f scripts/findings/out/q8-*.json && vitest run -c scripts/findings/vitest.q8.config.ts --project node && vitest run -c scripts/findings/vitest.q8.config.ts --project jsdom"
+    "findings:q8": "rm -f scripts/findings/out/q8-*.json && vitest run -c scripts/findings/vitest.q8.config.ts --project node && vitest run -c scripts/findings/vitest.q8.config.ts --project jsdom",
+    "register": "NODE_OPTIONS=\"--no-network-family-autoselection --dns-result-order=ipv4first\" tsx scripts/register.ts"
   },
   "devDependencies": {
     "@cosmjs/stargate": "^0.39.0",

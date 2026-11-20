@@ -128,7 +128,9 @@ What this shows:
   is a one-character change from the spec sketch, with the same address.
 - **Node networking (WSL).** Node can stall on the endpoints' IPv6 records, failing with
   `ENETUNREACH` and then an IPv4 timeout. Running with
-  `NODE_OPTIONS=--dns-result-order=ipv4first` worked reliably.
+  `NODE_OPTIONS="--no-network-family-autoselection --dns-result-order=ipv4first"`
+  worked reliably. The default happy-eyeballs attempt timeout of 250 ms is too short over WSL; `curl` reaches both
+  IPv4 addresses in about 1.2–1.4 s.
 
 ---
 
