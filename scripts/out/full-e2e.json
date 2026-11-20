@@ -1,0 +1,156 @@
+{
+  "api": "http://localhost:3000",
+  "contract": "0xDd26128846Ea6A35340010ce8be8F5820E264C33",
+  "examId": "0xc4699e7ecae9a726e2b882c578181d60a34538b641bfb0d386923ec0784d7679",
+  "centres": {
+    "A": "0xac67fb0b43e10a21cc387bb45f40ae3ac07e8575f5f2e8de53b6b3df1f11657b",
+    "B": "0xde68e4aac78c077c04e6963bbe2cfbbfce47932df72776de68c4307e6e71b5fc"
+  },
+  "startTime": 1795218836,
+  "steps": [
+    {
+      "step": "11 role keys signed in (SIWQ) and published recipient cards"
+    },
+    {
+      "step": "createExam",
+      "tx": "0x64406374f2a42090b6a49bce57a3b449ccad612e4909fc6dc7447467377a144a",
+      "explorer": "https://explore.qore.network/tx/0x64406374f2a42090b6a49bce57a3b449ccad612e4909fc6dc7447467377a144a"
+    },
+    {
+      "step": "setCentre A",
+      "tx": "0x72781eefd8d642de7bcb844215f5a73ff6a013b9fbc52c68f485354df607c950",
+      "explorer": "https://explore.qore.network/tx/0x72781eefd8d642de7bcb844215f5a73ff6a013b9fbc52c68f485354df607c950"
+    },
+    {
+      "step": "setCentre B",
+      "tx": "0xdd3e3e352ae87406f149f4d35858f776948bc37683aaa2b8135ac8fd0a0f47c1",
+      "explorer": "https://explore.qore.network/tx/0xdd3e3e352ae87406f149f4d35858f776948bc37683aaa2b8135ac8fd0a0f47c1"
+    },
+    {
+      "step": "rotateEpoch centre A → 1 (2 members)",
+      "tx": "0x7a65ab65f0cec77922e97e23af93b91a5f6acd52613b2eb0e052bba05a6918e8",
+      "explorer": "https://explore.qore.network/tx/0x7a65ab65f0cec77922e97e23af93b91a5f6acd52613b2eb0e052bba05a6918e8"
+    },
+    {
+      "step": "rotateEpoch centre B → 1 (1 members)",
+      "tx": "0xd0f153d2e2b623e06276afc5d85f987679a7b9f5fcbbae2d1444155f662ce05b",
+      "explorer": "https://explore.qore.network/tx/0xd0f153d2e2b623e06276afc5d85f987679a7b9f5fcbbae2d1444155f662ce05b"
+    },
+    {
+      "step": "rotateEpoch markers  → 1 (2 members)",
+      "tx": "0xb32d2a804392b43d32526f6bdb5d2d229341e4c1c208cb9ab6937ee3b860d352",
+      "explorer": "https://explore.qore.network/tx/0xb32d2a804392b43d32526f6bdb5d2d229341e4c1c208cb9ab6937ee3b860d352"
+    },
+    {
+      "step": "early release refused by the contract",
+      "note": "TOO_EARLY: This paper is still sealed. It can be released from 2026-11-20T23:53:56.000Z."
+    },
+    {
+      "step": "release A by examiner1 (epoch 1: A1, A2)",
+      "tx": "0x74eb0511b845595fb4691b2f9567037ceeb4300b2e3cce3ed4bdaa3408c44ff1",
+      "explorer": "https://explore.qore.network/tx/0x74eb0511b845595fb4691b2f9567037ceeb4300b2e3cce3ed4bdaa3408c44ff1"
+    },
+    {
+      "step": "released blobs withheld before Released",
+      "note": "Waiting for a second examiner to release this centre's paper (1 of 2)."
+    },
+    {
+      "step": "board removes invigilator A2 → epoch 2",
+      "tx": "0x8f0cd839243bb67865e15bb64a5e962b247b443d33c6d841f80f200aff4c571d",
+      "explorer": "https://explore.qore.network/tx/0x8f0cd839243bb67865e15bb64a5e962b247b443d33c6d841f80f200aff4c571d"
+    },
+    {
+      "step": "release A by examiner3 (epoch 2: A1) → released=true",
+      "tx": "0x5ce33af366d147dcc1e47a230405a6af195d918e93cb6058dabd0c7d4b2e8ffc",
+      "explorer": "https://explore.qore.network/tx/0x5ce33af366d147dcc1e47a230405a6af195d918e93cb6058dabd0c7d4b2e8ffc"
+    },
+    {
+      "step": "release B by examiner1",
+      "tx": "0xda93e89b32a0aeaa4cf28f7e5dd96d7e7ae9b67bb5854af0d6d1599757492c3e",
+      "explorer": "https://explore.qore.network/tx/0xda93e89b32a0aeaa4cf28f7e5dd96d7e7ae9b67bb5854af0d6d1599757492c3e"
+    },
+    {
+      "step": "release B by examiner2 → released=true",
+      "tx": "0x2b610382ca81df08de08630c1b068dcdc1ea9313c303029823a861ba83071cbf",
+      "explorer": "https://explore.qore.network/tx/0x2b610382ca81df08de08630c1b068dcdc1ea9313c303029823a861ba83071cbf"
+    },
+    {
+      "step": "A1 opens centre A: authentic=true"
+    },
+    {
+      "step": "B1 opens centre B: authentic=true"
+    },
+    {
+      "step": "removed invigilator A2 cannot open centre A",
+      "note": "NOT_A_MEMBER"
+    },
+    {
+      "step": "submitScript 1/5",
+      "tx": "0xd54ced1221f56ec780b8140e560fac7348676a43dd9f4d023b602fcfe8f26d98",
+      "explorer": "https://explore.qore.network/tx/0xd54ced1221f56ec780b8140e560fac7348676a43dd9f4d023b602fcfe8f26d98"
+    },
+    {
+      "step": "submitScript 2/5",
+      "tx": "0x671ce6bf673eed1cd82b57b79c5d933d22d7001011de6a22ee9544e3cf2c1f75",
+      "explorer": "https://explore.qore.network/tx/0x671ce6bf673eed1cd82b57b79c5d933d22d7001011de6a22ee9544e3cf2c1f75"
+    },
+    {
+      "step": "submitScript 3/5",
+      "tx": "0xd4c5fbad964f4346944c124ab8a5bdf37dd15dba969af6477449a7f7673255c1",
+      "explorer": "https://explore.qore.network/tx/0xd4c5fbad964f4346944c124ab8a5bdf37dd15dba969af6477449a7f7673255c1"
+    },
+    {
+      "step": "submitScript 4/5",
+      "tx": "0x9a23f4515df3607b05b13c08d47d6c5b9c4fa53066d569ad480b472eb7706f38",
+      "explorer": "https://explore.qore.network/tx/0x9a23f4515df3607b05b13c08d47d6c5b9c4fa53066d569ad480b472eb7706f38"
+    },
+    {
+      "step": "submitScript 5/5",
+      "tx": "0xec86a11d463ea09f0dc5956a3ffde44ef934c34031a4923332b9de8771892e89",
+      "explorer": "https://explore.qore.network/tx/0xec86a11d463ea09f0dc5956a3ffde44ef934c34031a4923332b9de8771892e89"
+    },
+    {
+      "step": "marker1 marked 5 scripts (pseudonyms only)"
+    },
+    {
+      "step": "publishMarks",
+      "tx": "0x21cbde267ad79988eae386a16e88246b8bdd1bd60ecefeaff4b1995af1cddce0",
+      "explorer": "https://explore.qore.network/tx/0x21cbde267ad79988eae386a16e88246b8bdd1bd60ecefeaff4b1995af1cddce0",
+      "note": "0x0cc18be862b089a1cc551d3d8969a549f5093bea04a146372dfd53ea3658e237"
+    },
+    {
+      "step": "candidate proof verifies: true (score 65)"
+    },
+    {
+      "step": "leak traced: centre B (confidence 1.00, 23/23 bits)"
+    },
+    {
+      "step": "QoreX stand-in self-transfer with the binding memo (native, hybrid-signed)",
+      "tx": "CA3DEE5DE68FC0E449F9D368E90C4D27D5C180FEF0BED835B0D8EC1F2999F4C9"
+    },
+    {
+      "step": "bindIdentity (board role key ↔ QoreX address)",
+      "tx": "0x5775ba115ea9c671b520a5dfa7b3cd5adc2037912abb013780ada2056e290d0f",
+      "explorer": "https://explore.qore.network/tx/0x5775ba115ea9c671b520a5dfa7b3cd5adc2037912abb013780ada2056e290d0f"
+    },
+    {
+      "step": "audit timeline",
+      "note": "{\"ExamCreated\":1,\"CentreSet\":2,\"EpochChanged\":4,\"ShareReleased\":4,\"Released\":2,\"ScriptSubmitted\":5,\"MarksPublished\":1}"
+    }
+  ],
+  "auditCounts": {
+    "ExamCreated": 1,
+    "CentreSet": 2,
+    "EpochChanged": 4,
+    "ShareReleased": 4,
+    "Released": 2,
+    "ScriptSubmitted": 5,
+    "MarksPublished": 1
+  },
+  "leak": {
+    "copy": "0xde68e4aac78c077c04e6963bbe2cfbbfce47932df72776de68c4307e6e71b5fc",
+    "confidence": 1,
+    "matchedBits": 23,
+    "observedBits": 23
+  }
+}
