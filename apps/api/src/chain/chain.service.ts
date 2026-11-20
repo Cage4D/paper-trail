@@ -15,7 +15,8 @@ import {
   createPublicClient, createWalletClient, getAddress, http, type Abi, type Account, type Chain, type Hex, type PublicClient, type Transport, type WalletClient,
 } from 'viem';
 import { IQORE_PQC_ABI, PRECOMPILE_ADDRESSES, evmAccountFromPrivateKey, evmWindowStatus, qorechainTestnet } from '@qorechain/evm';
-import { EthNativeSigner, deriveUnifiedAccount, getNetwork, openEvmWindowMsg, type UnifiedAccount } from '@qorechain/sdk';
+import { EthNativeSigner, deriveUnifiedAccount, fetchKemKey, getNetwork, openEvmWindowMsg, type UnifiedAccount } from '@qorechain/sdk';
+import { parseAddress } from '@qorechain/qoresign';
 import { PAPERTRAIL_ABI } from '@paper-trail/shared';
 import { config } from '../config.js';
 
@@ -96,6 +97,34 @@ export class ChainService {
     } finally {
       transport.disconnect();
     }
+  }
+
+  /** Explorer base URL from @qorechain/evm's testnet chain definition. */
+  readonly explorer: string = (qorechainTestnet as unknown as { blockExplorers: { default: { url: string } } }).blockExplorers.default.url;
+
+  /** qor1… for a 0x… address (the same 20 bytes). */
+  qor(evm: string): string {
+    return parseAddress(evm).bech32;
+  }
+
+  /** The ML-KEM-1024 key an account registered on chain (QoreSeal KEM registry), or undefined. */
+  async kemKey(address: string): Promise<Uint8Array | undefined> {
+    const r = await fetchKemKey({ rest: this.rest, address });
+    return r.found ? r.key?.publicKey : undefined;
+  }
+
+  /** PaperTrail.centreEpoch(board, groupChainId). */
+  async centreEpoch(board: Hex, groupChainId: Hex): Promise<number> {
+    return Number(await this.client.readContract({ address: this.address, abi: this.abi, functionName: 'centreEpoch', args: [board, groupChainId] }));
+  }
+
+  /** A native-lane tx by hash (REST), or undefined when not found. */
+  async nativeTx(hash: string): Promise<{ code: number; memo: string; messages: Record<string, unknown>[] } | undefined> {
+    const r = await fetch(`${this.rest}/cosmos/tx/v1beta1/txs/${hash.toUpperCase()}`);
+    if (r.status === 404 || r.status === 400) return undefined;
+    if (!r.ok) throw new Error(`tx lookup failed: HTTP ${r.status}`);
+    const j = (await r.json()) as { tx?: { body?: { memo?: string; messages?: Record<string, unknown>[] } }; tx_response?: { code?: number } };
+    return { code: j.tx_response?.code ?? -1, memo: j.tx?.body?.memo ?? '', messages: j.tx?.body?.messages ?? [] };
   }
 
   async relayerBalanceWei(): Promise<bigint> {

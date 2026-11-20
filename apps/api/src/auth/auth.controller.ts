@@ -1,15 +1,33 @@
 import { Body, Controller, Get, HttpCode, Inject, Post, Query, Res, UseGuards } from '@nestjs/common';
 import type { Response } from 'express';
-import { RoleCardBody, SiwqChallengeBody, SiwqVerifyBody } from '@paper-trail/shared';
+import { BindBody, RoleCardBody, SiwqChallengeBody, SiwqVerifyBody } from '@paper-trail/shared';
 import type { SiwqSignature } from '@paper-trail/core';
 import { ZodPipe } from '../common/zod.pipe.js';
 import { AuthService } from './auth.service.js';
+import { BindingService } from './binding.service.js';
 import { CurrentSession, SESSION_COOKIE, SessionGuard, issueSession, type Session } from './session.js';
 import { config } from '../config.js';
 
 @Controller()
 export class AuthController {
-  constructor(@Inject(AuthService) private readonly auth: AuthService) {}
+  constructor(
+    @Inject(AuthService) private readonly auth: AuthService,
+    @Inject(BindingService) private readonly binding: BindingService,
+  ) {}
+
+  @Post('me/bind/challenge')
+  @UseGuards(SessionGuard)
+  @HttpCode(200)
+  bindChallenge(@CurrentSession() s: Session) {
+    return this.binding.challenge(s);
+  }
+
+  @Post('me/bind')
+  @UseGuards(SessionGuard)
+  @HttpCode(200)
+  bind(@CurrentSession() s: Session, @Body(new ZodPipe(BindBody)) b: BindBody) {
+    return this.binding.bind(s, b);
+  }
 
   @Post('auth/siwq/challenge')
   @HttpCode(200)
