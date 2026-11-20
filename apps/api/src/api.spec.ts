@@ -153,6 +153,13 @@ describe.runIf(hasDb)('API', () => {
     });
   });
 
+  it('indexer: a cursor ahead of the chain head is rescanned instead of stalling', async () => {
+    await db.indexerCursor.upsert({ where: { id: CONTRACT.toLowerCase() }, create: { id: CONTRACT.toLowerCase(), lastBlock: 999_999_999n }, update: { lastBlock: 999_999_999n } });
+    await http().post('/internal/index').set('authorization', `Bearer ${config().ADMIN_TOKEN}`).expect(200);
+    const c = await db.indexerCursor.findUnique({ where: { id: CONTRACT.toLowerCase() } });
+    expect(c!.lastBlock).toBe(await chain.client.getBlockNumber());
+  });
+
   it('admin endpoints need the admin token; health reports without secrets', async () => {
     expect((await http().post('/internal/index')).status).toBe(401);
     expect((await http().post('/internal/index').set('authorization', 'Bearer wrong-token-0123456789')).status).toBe(401);

@@ -38,8 +38,13 @@ export class IndexerService {
         if (!locked) return null;
         const id = this.chain.address.toLowerCase();
         const cursor = await tx.indexerCursor.findUnique({ where: { id } });
-        let from = cursor ? cursor.lastBlock + 1n : config().PAPERTRAIL_DEPLOY_BLOCK;
         const latest = await this.chain.client.getBlockNumber();
+        let from = cursor ? cursor.lastBlock + 1n : config().PAPERTRAIL_DEPLOY_BLOCK;
+        if (cursor && cursor.lastBlock > latest) {
+          // impossible on a healthy chain (a cursor from another chain or a test run): rescan rather than stall
+          this.log.warn(`cursor ${cursor.lastBlock} is ahead of the chain head ${latest}; rescanning from the deploy block`);
+          from = config().PAPERTRAIL_DEPLOY_BLOCK;
+        }
         let stored = 0;
         while (from <= latest) {
           const to = from + CHUNK - 1n < latest ? from + CHUNK - 1n : latest;
