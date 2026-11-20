@@ -9,7 +9,7 @@
       "action": 0,
       "signer": "0x156e64214f91CE029959325013f2226f095A139B",
       "fields": {
-        "examId": "0x859fc523cf7c0e59517e49ae21f9b7b89d8e14f12e10bc987fc27fd9b2187b7b",
+        "salt": "0x25fa79555a5d3b371f08023127b06f9d577d096c0fd60b7eb3ca1ebcfd854d54",
         "board": "0x156e64214f91CE029959325013f2226f095A139B",
         "examiners": [
           "0x4f15E68607A43Ebc768AE31c6aA91Cd45C18964C",
@@ -20,20 +20,20 @@
         "masterCommitment": "0x1b80d0df0a671196d178ce8426a264d749930f818a6d878939140b08e6d8dac9",
         "committeeBundleHash": "0xe48bb9fddfdd7c269399cd1042ca1b381c5a0cd0a1c4428e37a77f1ae2c61f06"
       },
-      "payloadHash": "0x35f84acec110d9dcde88d0a739c313a382069a30343861f9a6e4af52d5982d3c",
-      "digest": "0x1caa0d9fb93e1cb34b1b81fbbd70b807b694d9f42d0c0188df8d5995e589e194"
+      "payloadHash": "0x7fa6f4ea78d766ca48c3c641ccba6e78bac415e359d5ce424d309768446b1387",
+      "digest": "0x322f22fc17c925802bcf85396c9159e1c328581736d8dc11715e2638661b01d9"
     },
     "SetCentre": {
       "action": 1,
       "signer": "0x156e64214f91CE029959325013f2226f095A139B",
       "fields": {
-        "examId": "0x859fc523cf7c0e59517e49ae21f9b7b89d8e14f12e10bc987fc27fd9b2187b7b",
+        "examId": "0x053f7e0ea6bda1a877175d71267b4625b555470bcb6f46a8e452c579149c22ac",
         "centreId": "0xea450e26a6bba7ff17f847ff1fc35d1c59609bb383f3d802ddf0a98fb1ee1b1b",
         "commitment": "0x222f7817ffc38b5a78014c7b8481e479508af053d086bbb8eaab805ddfd8d00a",
         "cipherHash": "0xbee2c8770a48eb19aabb0f235350b36114b4959f859b390b47abf8e546c2ef8b"
       },
-      "payloadHash": "0x6646008028c2140e23ada1211a4b10d6e16eaeca6bfe97ef89113faf4d7ed826",
-      "digest": "0xbc165b6f02c21aa965d417cc105efed7cc142ddcaddccd186a309401e2442647"
+      "payloadHash": "0xb27493ef6d7d579d75cbe810d9148d5c812fd8e818f378eecb838687dbc228f6",
+      "digest": "0x03631849468deef4f4ceb1a6a8680c3f9cbe1efb406f726e0560bd963665c936"
     },
     "RotateEpoch": {
       "action": 2,
@@ -52,36 +52,36 @@
       "action": 3,
       "signer": "0x4f15E68607A43Ebc768AE31c6aA91Cd45C18964C",
       "fields": {
-        "examId": "0x859fc523cf7c0e59517e49ae21f9b7b89d8e14f12e10bc987fc27fd9b2187b7b",
+        "examId": "0x053f7e0ea6bda1a877175d71267b4625b555470bcb6f46a8e452c579149c22ac",
         "centreId": "0xea450e26a6bba7ff17f847ff1fc35d1c59609bb383f3d802ddf0a98fb1ee1b1b",
         "blobHash": "0x954a112018acb253b1f0cea5b87d0584c5af7c02640541ba3521efe652fb0805",
         "examiner": "0x4f15E68607A43Ebc768AE31c6aA91Cd45C18964C"
       },
-      "payloadHash": "0x50bc048849fcdc751be0e8c41f887a8dbb44350364fbd32ef76c38985782cf8a",
-      "digest": "0x2d0ce4b5b59c4c050f651a64d539df52f472f5484337bdfd6f72762710962628"
+      "payloadHash": "0xb12c64609c7afc096605770e4b0abfb8a7b6608728d3f96bab800b48caa3a384",
+      "digest": "0x802cdd4a131a1a78cf9bd9b5ec301bc0e768567a9b8bd9cb29990d250b8cfcaf"
     },
     "SubmitScript": {
       "action": 4,
       "signer": "0x156e64214f91CE029959325013f2226f095A139B",
       "fields": {
-        "examId": "0x859fc523cf7c0e59517e49ae21f9b7b89d8e14f12e10bc987fc27fd9b2187b7b",
+        "examId": "0x053f7e0ea6bda1a877175d71267b4625b555470bcb6f46a8e452c579149c22ac",
         "centreId": "0xea450e26a6bba7ff17f847ff1fc35d1c59609bb383f3d802ddf0a98fb1ee1b1b",
         "pseudonymHash": "0x6319a18bf9e2df4f4370f48112c85cd1684848997fdfe361a5230139b5b8d169",
         "scriptHash": "0x5cb9c5fc27fedc01e42c71171dfcc0010513baa6740084a6df9142a97fc20318",
         "markerEpoch": 2
       },
-      "payloadHash": "0x16ddc75591b5fd0083c3f57201e01c9aec53f83f638a02fbe04b0c4bcbd0be3b",
-      "digest": "0x08f86db724dbf7c4fb33ce9b801982086cf7981d0ec50ea2fee627e71d84eac4"
+      "payloadHash": "0x97811a962443ab07fe54eea1d0205868afec5eba3be95527a087ff52a3a21833",
+      "digest": "0x89d61e250cbf6a2bd275faf5b11cbea14fd4874d9ae5eeb716ff8ed02373ff83"
     },
     "PublishMarks": {
       "action": 5,
       "signer": "0x156e64214f91CE029959325013f2226f095A139B",
       "fields": {
-        "examId": "0x859fc523cf7c0e59517e49ae21f9b7b89d8e14f12e10bc987fc27fd9b2187b7b",
+        "examId": "0x053f7e0ea6bda1a877175d71267b4625b555470bcb6f46a8e452c579149c22ac",
         "merkleRoot": "0xe7addb226e31212d1fdf19f15e9c7d6acd74c8880ae8c4ec3601544b0800b74a"
       },
-      "payloadHash": "0xa21be397523d718ab381d0ff48e276d128696965f7241b2e975d823ac09e0d55",
-      "digest": "0x04d42cbdbce700e6d9a18aeaa8df9afb314418e63c557d784d2ee4947b8645e5"
+      "payloadHash": "0xf0a50bc94fe1eaa50695a73aa4c7a6bdeddb889ffda315da5445949cfdd8795d",
+      "digest": "0xabf17019dd9f955bc1a2f21106de3f5b48b376606c4041b62e1144cc2399fa8b"
     },
     "BindIdentity": {
       "action": 6,

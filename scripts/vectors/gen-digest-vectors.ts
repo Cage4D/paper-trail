@@ -7,6 +7,7 @@
  *   digest      = keccak256(abi.encode(DOMAIN, chainId, contract, uint8(action), signer, nonce, payloadHash))
  *   DOMAIN      = keccak256("PaperTrail.v1")
  *   payloadHash = keccak256(abi.encode(<action fields in calldata order>))
+ *   examId      = keccak256(abi.encode(board, salt))   (CreateExam signs the salt)
  *
  * Deterministic: fixed inputs, no randomness. Run: pnpm vectors
  */
@@ -28,7 +29,8 @@ const enc = (types: string[], values: unknown[]) =>
 const digest = (action: number, signer: string, payloadHash: Hex) =>
   keccak256(enc(["bytes32", "uint256", "address", "uint8", "address", "uint256", "bytes32"], [DOMAIN, CHAIN_ID, CONTRACT, action, signer, NONCE, payloadHash]));
 
-const examId = h("vector:exam");
+// examId as derived on-chain: keccak256(abi.encode(board, salt)) (PaperTrail.examIdFor)
+const examId = keccak256(enc(["address", "bytes32"], [BOARD, h("vector:exam-salt")]));
 const centreId = h("vector:centre-A");
 const v: Record<string, Record<string, unknown>> = {};
 function add(name: keyof typeof ACTION, signer: string, fields: Record<string, unknown>, types: string[]) {
@@ -36,7 +38,7 @@ function add(name: keyof typeof ACTION, signer: string, fields: Record<string, u
   v[name] = { action: ACTION[name], signer, fields, payloadHash, digest: digest(ACTION[name], signer, payloadHash) };
 }
 
-add("CreateExam", BOARD, { examId, board: BOARD, examiners: [...EX], startTime: 1_800_003_600, masterCommitment: h("vector:master"), committeeBundleHash: h("vector:bundle") },
+add("CreateExam", BOARD, { salt: h("vector:exam-salt"), board: BOARD, examiners: [...EX], startTime: 1_800_003_600, masterCommitment: h("vector:master"), committeeBundleHash: h("vector:bundle") },
   ["bytes32", "address", "address[3]", "uint64", "bytes32", "bytes32"]);
 add("SetCentre", BOARD, { examId, centreId, commitment: h("vector:commitment"), cipherHash: h("vector:cipher") },
   ["bytes32", "bytes32", "bytes32", "bytes32"]);

@@ -39,15 +39,16 @@ library PaperTrailLib {
 
     // ── payload hashes: keccak256(abi.encode(<action fields in calldata order>)) ──
 
+    /// @dev Signs the salt, not the derived id; the id is keccak256(abi.encode(board, salt)).
     function createExamPayload(
-        bytes32 examId,
+        bytes32 salt,
         address board,
         address[3] memory examiners,
         uint64 startTime,
         bytes32 masterCommitment,
         bytes32 committeeBundleHash
     ) internal pure returns (bytes32) {
-        return keccak256(abi.encode(examId, board, examiners, startTime, masterCommitment, committeeBundleHash));
+        return keccak256(abi.encode(salt, board, examiners, startTime, masterCommitment, committeeBundleHash));
     }
 
     function setCentrePayload(bytes32 examId, bytes32 centreId, bytes32 commitment_, bytes32 cipherHash_)

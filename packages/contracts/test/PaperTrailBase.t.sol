@@ -23,7 +23,8 @@ abstract contract PaperTrailBase is Test {
     address internal outsider = makeAddr("outsider");
     address internal relayer = makeAddr("relayer");
 
-    bytes32 internal constant EXAM = keccak256("exam-1");
+    bytes32 internal constant SALT = keccak256("exam-1-salt");
+    bytes32 internal examId; // = pt.examIdFor(board, SALT)
     bytes32 internal constant CENTRE_A = keccak256("centre-A");
     bytes32 internal constant CENTRE_B = keccak256("centre-B");
     bytes32 internal constant MASTER = keccak256("master-commitment");
@@ -38,6 +39,7 @@ abstract contract PaperTrailBase is Test {
         vm.warp(1_800_000_000);
         startTime = uint64(block.timestamp + 1 hours);
         pt = new PaperTrail();
+        examId = pt.examIdFor(board, SALT);
         _register(board);
         _register(ex1);
         _register(ex2);
@@ -91,19 +93,19 @@ abstract contract PaperTrailBase is Test {
         bytes memory sig = _sign(
             board,
             PaperTrailLib.Action.CreateExam,
-            PaperTrailLib.createExamPayload(EXAM, board, e, startTime, MASTER, BUNDLE)
+            PaperTrailLib.createExamPayload(SALT, board, e, startTime, MASTER, BUNDLE)
         );
         vm.prank(relayer);
-        pt.createExam(EXAM, board, e, startTime, MASTER, BUNDLE, sig);
+        assertEq(pt.createExam(SALT, board, e, startTime, MASTER, BUNDLE, sig), examId);
     }
 
     function _setCentre(bytes32 centreId) internal {
         bytes32 c = keccak256(abi.encode("commitment", centreId));
         bytes32 h = keccak256(abi.encode("cipher", centreId));
         bytes memory sig =
-            _sign(board, PaperTrailLib.Action.SetCentre, PaperTrailLib.setCentrePayload(EXAM, centreId, c, h));
+            _sign(board, PaperTrailLib.Action.SetCentre, PaperTrailLib.setCentrePayload(examId, centreId, c, h));
         vm.prank(relayer);
-        pt.setCentre(EXAM, centreId, c, h, sig);
+        pt.setCentre(examId, centreId, c, h, sig);
     }
 
     function _rotate(bytes32 centreId, address signer, uint64 epoch) internal {
@@ -119,9 +121,9 @@ abstract contract PaperTrailBase is Test {
     function _release(bytes32 centreId, address examiner) internal {
         bytes32 blob = keccak256(abi.encode("blob", centreId, examiner));
         bytes memory sig = _sign(
-            examiner, PaperTrailLib.Action.Release, PaperTrailLib.releasePayload(EXAM, centreId, blob, examiner)
+            examiner, PaperTrailLib.Action.Release, PaperTrailLib.releasePayload(examId, centreId, blob, examiner)
         );
         vm.prank(relayer);
-        pt.release(EXAM, centreId, blob, examiner, sig);
+        pt.release(examId, centreId, blob, examiner, sig);
     }
 }

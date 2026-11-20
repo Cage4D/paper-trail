@@ -47,8 +47,9 @@ contract PaperTrail {
     mapping(bytes32 => mapping(bytes32 => bytes32)) public cipherHash; // exam => centre => hash(C_c)
     mapping(bytes32 => mapping(bytes32 => uint8)) public releaseCount;
     mapping(bytes32 => mapping(bytes32 => mapping(address => bool))) public hasReleased;
-    mapping(bytes32 => address) public centreBoard; // centre => board (set by its first rotateEpoch)
-    mapping(bytes32 => uint64) public centreEpoch; // centre => current epoch (0 = none yet)
+    // Centre epoch groups are namespaced by board: (board, centreId) => current epoch (0 = no group yet).
+    // A board can only ever move its own groups, so nobody can claim or advance another board's centre.
+    mapping(address => mapping(bytes32 => uint64)) public centreEpoch;
     mapping(bytes32 => mapping(bytes32 => bool)) public releasedCentre;
     mapping(address => uint256) public nonces; // per-signer replay protection
     mapping(address => bytes32) public identityBinding; // role addr => hash(binding statement)
@@ -57,7 +58,9 @@ contract PaperTrail {
         bytes32 indexed examId, address indexed board, address[3] examiners, uint64 startTime, bytes32 masterCommitment
     );
     event CentreSet(bytes32 indexed examId, bytes32 indexed centreId, bytes32 commitment, bytes32 cipherHash);
-    event EpochChanged(bytes32 indexed centreId, uint64 epoch, bytes32 membersHash, bytes32 envelopeHash);
+    event EpochChanged(
+        address indexed board, bytes32 indexed centreId, uint64 epoch, bytes32 membersHash, bytes32 envelopeHash
+    );
     event ShareReleased(
         bytes32 indexed examId, bytes32 indexed centreId, address indexed examiner, uint64 epoch, bytes32 blobHash
     );
@@ -84,13 +87,20 @@ contract PaperTrail {
     error ZeroValue();
     error SetupClosed(); // setCentre at or after startTime
     error BadEpoch(uint64 expected);
-    error NotCentreBoard();
+    error NoEpochGroup(); // release before the board has set up the centre's invigilator group
 
     // ───────────────────────────── views ─────────────────────────────
 
     /// @notice The exam record (the public getter of a struct with a fixed array omits the array).
     function getExam(bytes32 examId) external view returns (Exam memory) {
         return _exams[examId];
+    }
+
+    /// @notice Exam ids are namespaced by board: examId = keccak256(abi.encode(board, salt)).
+    ///         Another board using the same salt gets a different id, so a pending
+    ///         createExam cannot be front-run to squat its id.
+    function examIdFor(address board, bytes32 salt) public pure returns (bytes32) {
+        return keccak256(abi.encode(board, salt));
     }
 
     /// @notice The digest `signer` must sign next for `action` with this payload hash.
@@ -105,17 +115,19 @@ contract PaperTrail {
     // ──────────────────────────── actions ────────────────────────────
 
     /// @notice Board creates an exam with three distinct examiners, all with registered ML-DSA-87 keys.
+    ///         The exam id is derived: examIdFor(board, salt).
     function createExam(
-        bytes32 examId,
+        bytes32 salt,
         address board,
         address[3] calldata examiners,
         uint64 startTime,
         bytes32 masterCommitment,
         bytes32 committeeBundleHash,
         bytes calldata sigBoard
-    ) external {
+    ) external returns (bytes32 examId) {
+        if (salt == bytes32(0) || board == address(0) || masterCommitment == bytes32(0)) revert ZeroValue();
+        examId = examIdFor(board, salt);
         if (_exams[examId].exists) revert ExamExists();
-        if (examId == bytes32(0) || masterCommitment == bytes32(0)) revert ZeroValue();
         // forge-lint: disable-next-line(block-timestamp) -- the exam time gate is block time by design (spec §5)
         if (startTime <= block.timestamp) revert StartTimeInPast();
         // Fixed 3 iterations: distinct, non-zero examiners with registered ML-DSA-87 keys.
@@ -132,7 +144,7 @@ contract PaperTrail {
         _auth(
             board,
             PaperTrailLib.Action.CreateExam,
-            PaperTrailLib.createExamPayload(examId, board, examiners, startTime, masterCommitment, committeeBundleHash),
+            PaperTrailLib.createExamPayload(salt, board, examiners, startTime, masterCommitment, committeeBundleHash),
             sigBoard
         );
         _exams[examId] = Exam(board, examiners, startTime, masterCommitment, committeeBundleHash, true);
@@ -159,9 +171,8 @@ contract PaperTrail {
         emit CentreSet(examId, centreId, commitment_, cipherHash_);
     }
 
-    /// @notice Board moves a centre's QoreSeal epoch group to `epoch` (= current + 1).
-    /// @dev `board` is explicit because the first call (epoch 1) is what binds the
-    ///      centre to its board; later calls must come from that same board.
+    /// @notice Board moves its QoreSeal epoch group for a centre to `epoch` (= current + 1).
+    /// @dev Groups are keyed by (board, centreId); `board` is the signer and the namespace.
     function rotateEpoch(
         bytes32 centreId,
         address board,
@@ -170,10 +181,8 @@ contract PaperTrail {
         bytes32 envelopeHash,
         bytes calldata sigBoard
     ) external {
-        if (centreId == bytes32(0)) revert ZeroValue();
-        address bound = centreBoard[centreId];
-        if (bound != address(0) && bound != board) revert NotCentreBoard();
-        uint64 expected = centreEpoch[centreId] + 1;
+        if (centreId == bytes32(0) || board == address(0)) revert ZeroValue();
+        uint64 expected = centreEpoch[board][centreId] + 1;
         if (epoch != expected) revert BadEpoch(expected);
         _auth(
             board,
@@ -181,13 +190,14 @@ contract PaperTrail {
             PaperTrailLib.rotateEpochPayload(centreId, board, epoch, membersHash, envelopeHash),
             sigBoard
         );
-        if (bound == address(0)) centreBoard[centreId] = board;
-        centreEpoch[centreId] = epoch;
-        emit EpochChanged(centreId, epoch, membersHash, envelopeHash);
+        centreEpoch[board][centreId] = epoch;
+        emit EpochChanged(board, centreId, epoch, membersHash, envelopeHash);
     }
 
     /// @notice An examiner releases their share for one centre, at or after startTime.
-    ///         The second distinct release emits `Released` (exactly once).
+    ///         The share is sealed under the centre's current epoch key of the EXAM'S board,
+    ///         so that group must exist (epoch >= 1). The second distinct release emits
+    ///         `Released` (exactly once).
     function release(bytes32 examId, bytes32 centreId, bytes32 blobHash, address examiner, bytes calldata sigExaminer)
         external
     {
@@ -196,6 +206,8 @@ contract PaperTrail {
         // forge-lint: disable-next-line(block-timestamp) -- the exam time gate is block time by design (spec §5)
         if (block.timestamp < e.startTime) revert TooEarly(e.startTime);
         if (commitment[examId][centreId] == bytes32(0)) revert CentreNotSet();
+        uint64 epoch = centreEpoch[e.board][centreId];
+        if (epoch == 0) revert NoEpochGroup();
         if (hasReleased[examId][centreId][examiner]) revert AlreadyReleased();
         if (blobHash == bytes32(0)) revert ZeroValue();
         _auth(
@@ -206,7 +218,6 @@ contract PaperTrail {
         );
         hasReleased[examId][centreId][examiner] = true;
         uint8 count = ++releaseCount[examId][centreId];
-        uint64 epoch = centreEpoch[centreId];
         emit ShareReleased(examId, centreId, examiner, epoch, blobHash);
         if (count >= 2 && !releasedCentre[examId][centreId]) {
             releasedCentre[examId][centreId] = true;

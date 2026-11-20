@@ -57,15 +57,16 @@ Action ids: `CreateExam = 0`, `SetCentre = 1`, `RotateEpoch = 2`, `Release = 3`,
 Each payload hash is `keccak256(abi.encode(...))` over exactly the fields listed, in that
 order (see `PaperTrailLib`).
 
-### `createExam(examId, board, examiners[3], startTime, masterCommitment, committeeBundleHash, sigBoard)`
+### `createExam(salt, board, examiners[3], startTime, masterCommitment, committeeBundleHash, sigBoard) → examId`
 - **Signer:** `board`.
-- **Payload:** `(examId, board, examiners, startTime, masterCommitment, committeeBundleHash)`.
+- **Payload:** `(salt, board, examiners, startTime, masterCommitment, committeeBundleHash)`.
+- **Exam id:** `examId = examIdFor(board, salt) = keccak256(abi.encode(board, salt))`. IDs are namespaced by board. Someone who copies a pending `createExam` with their own board gets a different id, so they can't squat ours.
 - **Requires:**
-  - `examId` is new and non-zero, and `masterCommitment` is non-zero;
+  - `salt`, `board` and `masterCommitment` are non-zero, and the derived `examId` is new;
   - `startTime > block.timestamp`;
   - the three examiners are non-zero and distinct;
   - **the board and all three examiners have registered ML-DSA-87 keys.**
-- **Effects:** stores the exam (read it with `getExam`). Emits `ExamCreated`.
+- **Effects:** stores the exam (read it with `getExam`), returns `examId`, and emits `ExamCreated(examId, …)`.
 - **Errors:** `ExamExists`, `ZeroValue`, `StartTimeInPast`, `InvalidExaminers`, `KeyNotRegistered`, `BadSignature`.
 
 ### `setCentre(examId, centreId, commitment, cipherHash, sigBoard)`
@@ -78,11 +79,10 @@ order (see `PaperTrailLib`).
 ### `rotateEpoch(centreId, board, epoch, membersHash, envelopeHash, sigBoard)`
 - **Signer:** `board`.
 - **Payload:** `(centreId, board, epoch, membersHash, envelopeHash)`.
-- **Requires:**
-  - `epoch == centreEpoch[centreId] + 1`;
-  - the first call (epoch 1) binds the centre to `board`, and every later call must name the same board.
-- **Effects:** advances the centre's QoreSeal epoch group. Emits `EpochChanged`. The envelope itself is stored off-chain by the API; only its hash is recorded here.
-- **Errors:** `ZeroValue`, `NotCentreBoard`, `BadEpoch(expected)`, `KeyNotRegistered`, `BadSignature`.
+- **Namespace:** epoch groups are keyed by `(board, centreId)`. A board can only ever move its own groups, so nobody can claim or advance another board's centre.
+- **Requires:** `epoch == centreEpoch[board][centreId] + 1`, and the ids are non-zero.
+- **Effects:** advances that board's QoreSeal epoch group for the centre and emits `EpochChanged(board, centreId, …)`. The envelope itself is stored off-chain by the API; only its hash is recorded here.
+- **Errors:** `ZeroValue`, `BadEpoch(expected)`, `KeyNotRegistered`, `BadSignature`.
 
 ### `release(examId, centreId, blobHash, examiner, sigExaminer)`
 - **Signer:** `examiner`.
@@ -91,9 +91,10 @@ order (see `PaperTrailLib`).
   - `examiner` is one of the exam's three examiners;
   - `block.timestamp >= startTime`;
   - the centre is set for this exam;
+  - **the exam board's epoch group for the centre exists** (`centreEpoch[exam.board][centreId] >= 1`). The released share is sealed under that group's current key, so another board's group never counts;
   - this examiner hasn't released this centre yet.
-- **Effects:** records the release with the centre's **current epoch** and emits `ShareReleased`. The second distinct release emits `Released(examId, centreId, epoch)`, **exactly once**. A third release is still recorded (`ShareReleased`) but doesn't re-emit `Released`.
-- **Errors:** `UnknownExam`, `NotExaminer`, `TooEarly(startTime)`, `CentreNotSet`, `AlreadyReleased`, `ZeroValue`, `KeyNotRegistered`, `BadSignature`.
+- **Effects:** records the release with the **current epoch of the exam board's group** for the centre, and emits `ShareReleased`. The second distinct release emits `Released(examId, centreId, epoch)`, **exactly once**. A third release is still recorded (`ShareReleased`) but doesn't re-emit `Released`.
+- **Errors:** `UnknownExam`, `NotExaminer`, `TooEarly(startTime)`, `CentreNotSet`, `NoEpochGroup`, `AlreadyReleased`, `ZeroValue`, `KeyNotRegistered`, `BadSignature`.
 
 ### `submitScript(examId, centreId, pseudonymHash, scriptHash, markerEpoch, sigBoard)`
 - **Signer:** the exam's board. In v1 the board relays it; candidates have no role keys.
@@ -117,8 +118,9 @@ order (see `PaperTrailLib`).
 
 ### Views
 - `getExam(examId)`: the full `Exam` struct. The auto-generated getter would drop the examiner array.
+- `examIdFor(board, salt)`: the derived exam id.
 - `nextDigest(action, signer, payloadHash)`: the digest the signer must sign next.
-- Public mappings: `commitment`, `cipherHash`, `releaseCount`, `hasReleased`, `centreBoard`, `centreEpoch`, `releasedCentre`, `nonces`, `identityBinding`.
+- Public mappings: `commitment`, `cipherHash`, `releaseCount`, `hasReleased`, `centreEpoch(board, centreId)`, `releasedCentre`, `nonces`, `identityBinding`.
 - `ML_DSA_87` is `1`.
 
 ## Error → API code (spec §7.4)

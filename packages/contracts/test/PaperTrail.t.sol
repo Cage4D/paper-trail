@@ -20,9 +20,9 @@ contract PaperTrailTest is PaperTrailBase {
     // ── 1 ── createExam: board + 3 registered ML-DSA-87 examiners, valid board signature ✅
     function test01_createExam_valid() public {
         vm.expectEmit(address(pt));
-        emit ExamCreated(EXAM, board, _examiners(), startTime, MASTER);
+        emit ExamCreated(pt.examIdFor(board, SALT), board, _examiners(), startTime, MASTER);
         _createExam();
-        PaperTrail.Exam memory e = pt.getExam(EXAM);
+        PaperTrail.Exam memory e = pt.getExam(examId);
         assertTrue(e.exists);
         assertEq(e.board, board);
         assertEq(e.examiners[2], ex3);
@@ -76,11 +76,11 @@ contract PaperTrailTest is PaperTrailBase {
         bytes memory sig = _sign(
             board,
             PaperTrailLib.Action.CreateExam,
-            PaperTrailLib.createExamPayload(EXAM, board, e, startTime, MASTER, BUNDLE)
+            PaperTrailLib.createExamPayload(SALT, board, e, startTime, MASTER, BUNDLE)
         );
         sig[5] ^= 0x01;
         vm.expectRevert(PaperTrail.BadSignature.selector);
-        pt.createExam(EXAM, board, e, startTime, MASTER, BUNDLE, sig);
+        pt.createExam(SALT, board, e, startTime, MASTER, BUNDLE, sig);
     }
 
     function test04b_badSignature_wrongSigner() public {
@@ -96,11 +96,11 @@ contract PaperTrailTest is PaperTrailBase {
                 PaperTrailLib.Action.SetCentre,
                 board,
                 pt.nonces(board),
-                PaperTrailLib.setCentrePayload(EXAM, CENTRE_A, c, h)
+                PaperTrailLib.setCentrePayload(examId, CENTRE_A, c, h)
             )
         );
         vm.expectRevert(PaperTrail.BadSignature.selector);
-        pt.setCentre(EXAM, CENTRE_A, c, h, sig);
+        pt.setCentre(examId, CENTRE_A, c, h, sig);
     }
 
     function test04c_badSignature_wrongLengthOrEmpty() public {
@@ -140,10 +140,10 @@ contract PaperTrailTest is PaperTrailBase {
         _createExam();
         bytes32 root = keccak256("root");
         bytes memory sig =
-            _sign(board, PaperTrailLib.Action.PublishMarks, PaperTrailLib.publishMarksPayload(EXAM, root));
-        pt.publishMarks(EXAM, root, sig);
+            _sign(board, PaperTrailLib.Action.PublishMarks, PaperTrailLib.publishMarksPayload(examId, root));
+        pt.publishMarks(examId, root, sig);
         vm.expectRevert(PaperTrail.BadSignature.selector);
-        pt.publishMarks(EXAM, root, sig);
+        pt.publishMarks(examId, root, sig);
     }
 
     // ── 6 ── signature for another action / another contract / another chain id ❌
@@ -188,9 +188,9 @@ contract PaperTrailTest is PaperTrailBase {
         bytes32 c = keccak256("c");
         bytes32 h = keccak256("h");
         bytes memory sig =
-            _sign(board, PaperTrailLib.Action.SetCentre, PaperTrailLib.setCentrePayload(EXAM, CENTRE_A, c, h));
+            _sign(board, PaperTrailLib.Action.SetCentre, PaperTrailLib.setCentrePayload(examId, CENTRE_A, c, h));
         vm.expectRevert(PaperTrail.SetupClosed.selector);
-        pt.setCentre(EXAM, CENTRE_A, c, h, sig);
+        pt.setCentre(examId, CENTRE_A, c, h, sig);
     }
 
     function test07b_setCentre_twice() public {
@@ -199,18 +199,18 @@ contract PaperTrailTest is PaperTrailBase {
         bytes32 c = keccak256("c2");
         bytes32 h = keccak256("h2");
         bytes memory sig =
-            _sign(board, PaperTrailLib.Action.SetCentre, PaperTrailLib.setCentrePayload(EXAM, CENTRE_A, c, h));
+            _sign(board, PaperTrailLib.Action.SetCentre, PaperTrailLib.setCentrePayload(examId, CENTRE_A, c, h));
         vm.expectRevert(PaperTrail.CentreAlreadySet.selector);
-        pt.setCentre(EXAM, CENTRE_A, c, h, sig);
+        pt.setCentre(examId, CENTRE_A, c, h, sig);
     }
 
     function test07c_setCentre_unknownExam() public {
         bytes32 c = keccak256("c");
         bytes32 h = keccak256("h");
         bytes memory sig =
-            _sign(board, PaperTrailLib.Action.SetCentre, PaperTrailLib.setCentrePayload(EXAM, CENTRE_A, c, h));
+            _sign(board, PaperTrailLib.Action.SetCentre, PaperTrailLib.setCentrePayload(examId, CENTRE_A, c, h));
         vm.expectRevert(PaperTrail.UnknownExam.selector);
-        pt.setCentre(EXAM, CENTRE_A, c, h, sig);
+        pt.setCentre(examId, CENTRE_A, c, h, sig);
     }
 
     // ── 8 ── release before startTime ❌
@@ -220,9 +220,9 @@ contract PaperTrailTest is PaperTrailBase {
         vm.warp(startTime - 1);
         bytes32 blob = keccak256("blob");
         bytes memory sig =
-            _sign(ex1, PaperTrailLib.Action.Release, PaperTrailLib.releasePayload(EXAM, CENTRE_A, blob, ex1));
+            _sign(ex1, PaperTrailLib.Action.Release, PaperTrailLib.releasePayload(examId, CENTRE_A, blob, ex1));
         vm.expectRevert(abi.encodeWithSelector(PaperTrail.TooEarly.selector, startTime));
-        pt.release(EXAM, CENTRE_A, blob, ex1, sig);
+        pt.release(examId, CENTRE_A, blob, ex1, sig);
     }
 
     // ── 9 ── release by a non-examiner (registered key, valid signature) ❌
@@ -232,10 +232,10 @@ contract PaperTrailTest is PaperTrailBase {
         vm.warp(startTime);
         bytes32 blob = keccak256("blob");
         bytes memory sig = _sign(
-            outsider, PaperTrailLib.Action.Release, PaperTrailLib.releasePayload(EXAM, CENTRE_A, blob, outsider)
+            outsider, PaperTrailLib.Action.Release, PaperTrailLib.releasePayload(examId, CENTRE_A, blob, outsider)
         );
         vm.expectRevert(abi.encodeWithSelector(PaperTrail.NotExaminer.selector, outsider));
-        pt.release(EXAM, CENTRE_A, blob, outsider, sig);
+        pt.release(examId, CENTRE_A, blob, outsider, sig);
     }
 
     function test09b_release_centreNotSet() public {
@@ -243,22 +243,23 @@ contract PaperTrailTest is PaperTrailBase {
         vm.warp(startTime);
         bytes32 blob = keccak256("blob");
         bytes memory sig =
-            _sign(ex1, PaperTrailLib.Action.Release, PaperTrailLib.releasePayload(EXAM, CENTRE_B, blob, ex1));
+            _sign(ex1, PaperTrailLib.Action.Release, PaperTrailLib.releasePayload(examId, CENTRE_B, blob, ex1));
         vm.expectRevert(PaperTrail.CentreNotSet.selector);
-        pt.release(EXAM, CENTRE_B, blob, ex1, sig);
+        pt.release(examId, CENTRE_B, blob, ex1, sig);
     }
 
     // ── 10 ── the same examiner releases twice ❌
     function test10_release_twice() public {
         _createExam();
         _setCentre(CENTRE_A);
+        _rotate(CENTRE_A, board, 1);
         vm.warp(startTime);
         _release(CENTRE_A, ex1);
         bytes32 blob = keccak256("blob-again");
         bytes memory sig =
-            _sign(ex1, PaperTrailLib.Action.Release, PaperTrailLib.releasePayload(EXAM, CENTRE_A, blob, ex1));
+            _sign(ex1, PaperTrailLib.Action.Release, PaperTrailLib.releasePayload(examId, CENTRE_A, blob, ex1));
         vm.expectRevert(PaperTrail.AlreadyReleased.selector);
-        pt.release(EXAM, CENTRE_A, blob, ex1, sig);
+        pt.release(examId, CENTRE_A, blob, ex1, sig);
     }
 
     // ── 11 ── two releases → Released exactly once, with the centre's current epoch ✅
@@ -272,16 +273,16 @@ contract PaperTrailTest is PaperTrailBase {
 
         vm.recordLogs();
         _release(CENTRE_A, ex1);
-        assertFalse(pt.releasedCentre(EXAM, CENTRE_A));
-        assertEq(pt.releaseCount(EXAM, CENTRE_A), 1);
+        assertFalse(pt.releasedCentre(examId, CENTRE_A));
+        assertEq(pt.releaseCount(examId, CENTRE_A), 1);
 
         vm.expectEmit(address(pt));
-        emit Released(EXAM, CENTRE_A, 2);
+        emit Released(examId, CENTRE_A, 2);
         _release(CENTRE_A, ex3);
-        assertTrue(pt.releasedCentre(EXAM, CENTRE_A));
+        assertTrue(pt.releasedCentre(examId, CENTRE_A));
 
         _release(CENTRE_A, ex2); // a third release is recorded but does not re-emit Released
-        assertEq(pt.releaseCount(EXAM, CENTRE_A), 3);
+        assertEq(pt.releaseCount(examId, CENTRE_A), 3);
 
         Vm.Log[] memory logs = vm.getRecordedLogs();
         uint256 releasedEvents;
@@ -301,7 +302,7 @@ contract PaperTrailTest is PaperTrailBase {
         }
         assertEq(releasedEvents, 1);
         assertEq(shareEvents, 3);
-        assertFalse(pt.releasedCentre(EXAM, CENTRE_B)); // other centres are independent
+        assertFalse(pt.releasedCentre(examId, CENTRE_B)); // other centres are independent
     }
 
     // ── 12 ── rotateEpoch skipping or repeating an epoch; by a non-board signer ❌
@@ -311,16 +312,28 @@ contract PaperTrailTest is PaperTrailBase {
 
     function test12b_rotate_repeat() public {
         _rotate(CENTRE_A, board, 1);
-        assertEq(pt.centreBoard(CENTRE_A), board);
+        assertEq(pt.centreEpoch(board, CENTRE_A), 1);
         _expectRotateRevert(CENTRE_A, board, 1, abi.encodeWithSelector(PaperTrail.BadEpoch.selector, uint64(2)));
         _rotate(CENTRE_A, board, 2);
-        assertEq(pt.centreEpoch(CENTRE_A), 2);
+        assertEq(pt.centreEpoch(board, CENTRE_A), 2);
     }
 
     function test12c_rotate_nonBoardSigner() public {
         _rotate(CENTRE_A, board, 1);
-        // outsider signs correctly for itself, but the centre is bound to the board
-        _expectRotateRevert(CENTRE_A, outsider, 2, abi.encodeWithSelector(PaperTrail.NotCentreBoard.selector));
+        // outsider, signing correctly for itself, only ever moves ITS OWN group for this centre id
+        _rotate(CENTRE_A, outsider, 1);
+        _rotate(CENTRE_A, outsider, 2);
+        assertEq(pt.centreEpoch(outsider, CENTRE_A), 2);
+        assertEq(pt.centreEpoch(board, CENTRE_A), 1); // the board's group is untouched
+        // and a release for the board's exam records the board's epoch, not the outsider's
+        _createExam();
+        _setCentre(CENTRE_A);
+        vm.warp(startTime);
+        vm.recordLogs();
+        _release(CENTRE_A, ex1);
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+        (uint64 epoch,) = abi.decode(logs[0].data, (uint64, bytes32));
+        assertEq(epoch, 1);
     }
 
     function test12d_rotate_forgedBoardSignature() public {
@@ -343,20 +356,50 @@ contract PaperTrailTest is PaperTrailBase {
         pt.rotateEpoch(CENTRE_A, board, 2, mh, eh, sig);
     }
 
+    // ── extra: ids are namespaced by board, so a pending createExam cannot be squatted ──
+    function test_createExam_frontRunSameSaltOtherBoard() public {
+        // the outsider front-runs with the board's salt, signing as itself
+        address[3] memory e = _examiners();
+        bytes memory sig = _sign(
+            outsider,
+            PaperTrailLib.Action.CreateExam,
+            PaperTrailLib.createExamPayload(SALT, outsider, e, startTime, MASTER, BUNDLE)
+        );
+        bytes32 squatted = pt.createExam(SALT, outsider, e, startTime, MASTER, BUNDLE, sig);
+        assertTrue(squatted != examId);
+        _createExam(); // the board's own exam still goes through, under its own id
+        assertEq(pt.getExam(examId).board, board);
+        assertEq(pt.getExam(squatted).board, outsider);
+    }
+
+    // ── extra: release needs the exam board's epoch group for that centre ──
+    function test_release_noEpochGroup() public {
+        _createExam();
+        _setCentre(CENTRE_A);
+        _rotate(CENTRE_A, outsider, 1); // another board's group does not count
+        vm.warp(startTime);
+        bytes32 blob = keccak256("blob");
+        bytes memory sig =
+            _sign(ex1, PaperTrailLib.Action.Release, PaperTrailLib.releasePayload(examId, CENTRE_A, blob, ex1));
+        vm.expectRevert(PaperTrail.NoEpochGroup.selector);
+        pt.release(examId, CENTRE_A, blob, ex1, sig);
+    }
+
     // ── 13 ── submitScript before Released ❌ (and after ✅)
     function test13_submitScript_beforeReleased() public {
         _createExam();
         _setCentre(CENTRE_A);
+        _rotate(CENTRE_A, board, 1);
         vm.warp(startTime);
         _release(CENTRE_A, ex1); // only one release: not yet Released
-        bytes32 ph = PaperTrailLib.submitScriptPayload(EXAM, CENTRE_A, keccak256("p"), keccak256("s"), 1);
+        bytes32 ph = PaperTrailLib.submitScriptPayload(examId, CENTRE_A, keccak256("p"), keccak256("s"), 1);
         bytes memory sig = _sign(board, PaperTrailLib.Action.SubmitScript, ph);
         vm.expectRevert(PaperTrail.NotReleased.selector);
-        pt.submitScript(EXAM, CENTRE_A, keccak256("p"), keccak256("s"), 1, sig);
+        pt.submitScript(examId, CENTRE_A, keccak256("p"), keccak256("s"), 1, sig);
 
         _release(CENTRE_A, ex2);
         sig = _sign(board, PaperTrailLib.Action.SubmitScript, ph);
-        pt.submitScript(EXAM, CENTRE_A, keccak256("p"), keccak256("s"), 1, sig);
+        pt.submitScript(examId, CENTRE_A, keccak256("p"), keccak256("s"), 1, sig);
     }
 
     // ── 14 ── publishMarks by a non-board signer ❌
@@ -364,9 +407,9 @@ contract PaperTrailTest is PaperTrailBase {
         _createExam();
         bytes32 root = keccak256("root");
         bytes memory sig =
-            _sign(outsider, PaperTrailLib.Action.PublishMarks, PaperTrailLib.publishMarksPayload(EXAM, root));
+            _sign(outsider, PaperTrailLib.Action.PublishMarks, PaperTrailLib.publishMarksPayload(examId, root));
         vm.expectRevert(PaperTrail.BadSignature.selector);
-        pt.publishMarks(EXAM, root, sig);
+        pt.publishMarks(examId, root, sig);
     }
 
     // ── 15 ── the relayer is any random account and every valid action still succeeds ✅
@@ -379,17 +422,17 @@ contract PaperTrailTest is PaperTrailBase {
         vm.warp(startTime);
         _release(CENTRE_A, ex1);
         _release(CENTRE_A, ex2);
-        assertTrue(pt.releasedCentre(EXAM, CENTRE_A));
+        assertTrue(pt.releasedCentre(examId, CENTRE_A));
 
-        bytes32 ph = PaperTrailLib.submitScriptPayload(EXAM, CENTRE_A, keccak256("p"), keccak256("s"), 1);
+        bytes32 ph = PaperTrailLib.submitScriptPayload(examId, CENTRE_A, keccak256("p"), keccak256("s"), 1);
         bytes memory sig = _sign(board, PaperTrailLib.Action.SubmitScript, ph);
         vm.prank(anyRelayer);
-        pt.submitScript(EXAM, CENTRE_A, keccak256("p"), keccak256("s"), 1, sig);
+        pt.submitScript(examId, CENTRE_A, keccak256("p"), keccak256("s"), 1, sig);
 
         bytes32 root = keccak256("root");
-        sig = _sign(board, PaperTrailLib.Action.PublishMarks, PaperTrailLib.publishMarksPayload(EXAM, root));
+        sig = _sign(board, PaperTrailLib.Action.PublishMarks, PaperTrailLib.publishMarksPayload(examId, root));
         vm.prank(anyRelayer);
-        pt.publishMarks(EXAM, root, sig);
+        pt.publishMarks(examId, root, sig);
 
         bytes32 st = keccak256("statement");
         sig = _sign(ex3, PaperTrailLib.Action.BindIdentity, PaperTrailLib.bindIdentityPayload(ex3, st));
@@ -419,10 +462,10 @@ contract PaperTrailTest is PaperTrailBase {
 
     function _expectCreateRevert(address[3] memory e, uint64 start, bytes memory err) internal {
         bytes memory sig = _sign(
-            board, PaperTrailLib.Action.CreateExam, PaperTrailLib.createExamPayload(EXAM, board, e, start, MASTER, BUNDLE)
+            board, PaperTrailLib.Action.CreateExam, PaperTrailLib.createExamPayload(SALT, board, e, start, MASTER, BUNDLE)
         );
         vm.expectRevert(err);
-        pt.createExam(EXAM, board, e, start, MASTER, BUNDLE, sig);
+        pt.createExam(SALT, board, e, start, MASTER, BUNDLE, sig);
     }
 
     function _expectRotateRevert(bytes32 centreId, address signer, uint64 epoch, bytes memory err) internal {

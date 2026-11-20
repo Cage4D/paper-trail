@@ -4,6 +4,7 @@ pragma solidity ^0.8.24;
 import {Test} from "forge-std/Test.sol";
 import {stdJson} from "forge-std/StdJson.sol";
 import {PaperTrailLib} from "../src/PaperTrailLib.sol";
+import {PaperTrail} from "../src/PaperTrail.sol";
 
 /// @notice PaperTrailLib must reproduce test/vectors/digest-vectors.json, which is
 /// generated independently with viem (scripts/vectors/gen-digest-vectors.ts) and is the
@@ -51,13 +52,21 @@ contract DigestVectorsTest is Test {
         return uint64(json.readUint(string.concat(".vectors.", name, ".fields.", field)));
     }
 
+    function test_examIdDerivation() public {
+        // the vectors' examId (used by every later action) is examIdFor(board, salt)
+        PaperTrail pt = new PaperTrail();
+        assertEq(
+            pt.examIdFor(_a("CreateExam", "board"), _b("CreateExam", "salt")), _b("SetCentre", "examId")
+        );
+    }
+
     function test_createExam() public view {
         address[] memory ex = json.readAddressArray(".vectors.CreateExam.fields.examiners");
         _check(
             "CreateExam",
             PaperTrailLib.Action.CreateExam,
             PaperTrailLib.createExamPayload(
-                _b("CreateExam", "examId"),
+                _b("CreateExam", "salt"),
                 _a("CreateExam", "board"),
                 [ex[0], ex[1], ex[2]],
                 _u("CreateExam", "startTime"),
