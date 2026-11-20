@@ -226,27 +226,66 @@ importers:
 
   apps/api:
     dependencies:
+      '@cosmjs/proto-signing':
+        specifier: ^0.39.0
+        version: 0.39.0
+      '@cosmjs/stargate':
+        specifier: ^0.39.0
+        version: 0.39.0
       '@nestjs/common':
         specifier: ^12.0.1
         version: 12.5.1(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@7.2.0)
       '@nestjs/core':
         specifier: ^12.0.1
         version: 12.5.1(@nestjs/common@12.5.1(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@7.2.0))(@nestjs/platform-express@12.5.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
-      '@nestjs/observe':
-        specifier: ^0.3.0
-        version: 0.3.27(@nestjs/common@12.5.1(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@7.2.0))(@nestjs/core@12.5.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/platform-express':
         specifier: ^12.0.1
         version: 12.5.1(@nestjs/common@12.5.1(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@7.2.0))(@nestjs/core@12.5.1)(rxjs@7.8.2)(supports-color@7.2.0)
+      '@paper-trail/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@paper-trail/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
+      '@prisma/adapter-pg':
+        specifier: 7.10.1
+        version: 7.10.1
       '@prisma/client':
         specifier: 7.10.1
         version: 7.10.1(prisma@7.10.1(@types/node@24.19.2)(@types/react@19.3.0)(magicast@0.5.5)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(typescript@6.0.3))(typescript@6.0.3)
+      '@qorechain/evm':
+        specifier: 0.14.0
+        version: 0.14.0(viem@2.58.1(typescript@6.0.3)(zod@4.6.7))
+      '@qorechain/qoreseal':
+        specifier: 0.1.0
+        version: 0.1.0
+      '@qorechain/qoresign':
+        specifier: 0.2.0
+        version: 0.2.0
+      '@qorechain/sdk':
+        specifier: 0.14.0
+        version: 0.14.0(viem@2.58.1(typescript@6.0.3)(zod@4.6.7))
+      cookie-parser:
+        specifier: ^1.4.7
+        version: 1.4.7
+      jose:
+        specifier: ^6.2.18
+        version: 6.2.18
+      pg:
+        specifier: ^8.23.1
+        version: 8.23.1
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
       rxjs:
         specifier: ^7.8.1
         version: 7.8.2
+      viem:
+        specifier: ^2.58.1
+        version: 2.58.1(typescript@6.0.3)(zod@4.6.7)
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
     devDependencies:
       '@nestjs/cli':
         specifier: ^12.0.0
@@ -257,12 +296,18 @@ importers:
       '@nestjs/testing':
         specifier: ^12.0.1
         version: 12.5.1(@nestjs/common@12.5.1(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@7.2.0))(@nestjs/core@12.5.1)(@nestjs/platform-express@12.5.1)
+      '@types/cookie-parser':
+        specifier: ^1.4.10
+        version: 1.4.10(@types/express@5.0.6)
       '@types/express':
         specifier: ^5.0.0
         version: 5.0.6
       '@types/node':
         specifier: ^24.0.0
         version: 24.19.2
+      '@types/pg':
+        specifier: ^8.23.1
+        version: 8.23.1
       '@types/supertest':
         specifier: ^7.0.0
         version: 7.2.1
@@ -964,47 +1009,6 @@ packages:
       '@nestjs/websockets':
         optional: true
 
-  '@nestjs/observe@0.3.27':
-    resolution: {integrity: sha512-PTUNstMh5UnIH3xWdz5S1HXyvPt538nvsLTJp7CIFLmziej6+Y4thj9SBYoUEJauOj/URnb2JVfyjzm5m+YJBQ==}
-    engines: {node: '>= 20.19.0'}
-    hasBin: true
-    peerDependencies:
-      '@nestjs/bull': ^11.0.0 || ^12.0.0
-      '@nestjs/bullmq': ^11.0.0 || ^12.0.0
-      '@nestjs/common': ^11.0.0 || ^12.0.0
-      '@nestjs/core': ^11.0.0 || ^12.0.0
-      '@nestjs/graphql': ^13.0.0 || ^14.0.0
-      '@nestjs/microservices': ^11.0.0 || ^12.0.0
-      '@nestjs/schedule': ^4.0.0 || ^5.0.0 || ^6.0.0 || ^12.0.0
-      '@nestjs/websockets': ^11.0.0 || ^12.0.0
-      '@opentelemetry/api': ^1.0.0
-      '@taskforcesh/bullmq-pro': ^7.0.0
-      bull: ^3.3.0 || ^4.0.0
-      bullmq: ^5.0.0 || ^6.0.0
-      reflect-metadata: ^0.1.12 || ^0.2.0
-      rxjs: ^7.0.0
-    peerDependenciesMeta:
-      '@nestjs/bull':
-        optional: true
-      '@nestjs/bullmq':
-        optional: true
-      '@nestjs/graphql':
-        optional: true
-      '@nestjs/microservices':
-        optional: true
-      '@nestjs/schedule':
-        optional: true
-      '@nestjs/websockets':
-        optional: true
-      '@opentelemetry/api':
-        optional: true
-      '@taskforcesh/bullmq-pro':
-        optional: true
-      bull:
-        optional: true
-      bullmq:
-        optional: true
-
   '@nestjs/platform-express@12.5.1':
     resolution: {integrity: sha512-pl/ZPErFFsWRaqcKlbQQyME5Zup9GmdBYDy4Vqh0NHoe2LEz0au78OMDNFytuHx2VDvxn6oBiFYigKXrS9embg==}
     peerDependencies:
@@ -1225,6 +1229,9 @@ packages:
   '@paralleldrive/cuid2@2.3.1':
     resolution: {integrity: sha512-XO7cAxhnTZl0Yggq6jOgjiOHhbgcO4NqFqwSmQpjK3b6TEE6Uj/jfSk6wzYyemh3+I0sHirKSetjQwn5cZktFw==}
 
+  '@prisma/adapter-pg@7.10.1':
+    resolution: {integrity: sha512-EP9ruPYHjKP80WZlb5qVaEXKgZjJieBFjAxcBtQnDAHD6+16UN4keVmBh6L/RUpuDQT2FQRbvKNgq5d4Ix+IkQ==}
+
   '@prisma/client-runtime-utils@7.10.1':
     resolution: {integrity: sha512-AzoATVIgmO3lcZfM443+9SI7+cyLMW2+Psw4op8WQHpHvHCX//CKxv8fwhiL0yGWF8DjdQrFewxrZo5McBdB8g==}
 
@@ -1251,6 +1258,9 @@ packages:
 
   '@prisma/dev@0.24.17':
     resolution: {integrity: sha512-UvdZzmpFwknnfreh6Jije84ekkYGPYEJhXG1tFzCsCfQyzJifrOo38eZc0qajzvaC6OLUOrN9ML5XfCnEZL9DA==}
+
+  '@prisma/driver-adapter-utils@7.10.1':
+    resolution: {integrity: sha512-DJ4c6xvVnm3s9ZUyql9nCUicADSqyvH+CjXRCM9L6m5zJxCNmebCElG6X4irICq3rosBwlX+S19Dxq/4IrZk3A==}
 
   '@prisma/engines-version@8.1.0-1.d1b3f377ca835d73fd50954a5e22128b9ebdd6b8':
     resolution: {integrity: sha512-XjXmwjN2NE340RpXoXv8ZF8aNAvr0FE+7gNfkKeW6vyjXs7F8uxvEbWQoVrhioXDQoIsnNmv7r+wxvzfdEZaWA==}
@@ -1687,6 +1697,11 @@ packages:
   '@types/connect@3.4.38':
     resolution: {integrity: sha512-K6uROf1LD88uDQqJCktA4yzL1YYAK6NgfsI0v/mTgyPKWsX1CnJ0XPSDhViejru1GcRkLWb8RlzFYJRqGUbaug==}
 
+  '@types/cookie-parser@1.4.10':
+    resolution: {integrity: sha512-B4xqkqfZ8Wek+rCOeRxsjMS9OgvzebEzzLYw7NHYuvzb7IdxOkI0ZHGgeEBX4PUM7QGVvNSK60T3OvWj3YfBRg==}
+    peerDependencies:
+      '@types/express': '*'
+
   '@types/cookiejar@2.1.5':
     resolution: {integrity: sha512-he+DHOWReW0nghN24E1WUqM0efK4kI9oTqDm6XmK8ZPe2djZ90BSNdGnIyCLzCPw7/pogPlGbzI2wHGGmi4O/Q==}
 
@@ -1752,6 +1767,9 @@ packages:
 
   '@types/node@24.19.2':
     resolution: {integrity: sha512-93d49wCWJkCyN87MxLpNN6KXPCwFw7bVUg79mGUV1OS40JGWwVCr8n61DXCSqz7CV6/VfPkb7xec7uP2M+QHWQ==}
+
+  '@types/pg@8.23.1':
+    resolution: {integrity: sha512-fKVHpikPdg4GKks3JuLEhvwSyvwzF23hnabPy6DD8ljVbC7+6J5dQzdv4arV6jqq57djnMgs1HKBxX4P8aBI3A==}
 
   '@types/qs@6.15.1':
     resolution: {integrity: sha512-GZHUBZR9hckSUhrxmp1nG6NwdpM9fCunJwyThLW1X3AyHgd9IlHb6VANpQQqDr2o/qQp6McZ3y/IA2rVzKzSbw==}
@@ -2067,6 +2085,13 @@ packages:
 
   convert-source-map@2.0.0:
     resolution: {integrity: sha512-Kvp459HrV2FEJ1CAsi1Ku+MY3kasH19TFykTz2xWmMeq6bk2NU3XXvfJ+Q61m0xktWwt+1HSYf3JZsTms3aRJg==}
+
+  cookie-parser@1.4.7:
+    resolution: {integrity: sha512-nGUvgXnotP3BsjiLX2ypbQnWoGUPIIfHQNZkkC668ntrzGWEZVW70HDEB1qnNGMicPje6EttlIgzo51YSwNQGw==}
+    engines: {node: '>= 0.8.0'}
+
+  cookie-signature@1.0.6:
+    resolution: {integrity: sha512-QADzlaHc8icV8I7vbaJXJwod9HWYp8uCqf1xa4OfNu1T7JVxQIrUgOWtHdNDtPiywmFbiS12VjotIXLrKM3orQ==}
 
   cookie-signature@1.2.2:
     resolution: {integrity: sha512-D76uU73ulSXrD1UXF4KE2TMxVVwhsnCgfAyTg9k8P6KGZjlXKrOLe4dJQKI3Bxi5wjesZoFXJWElNWBjPZMbhg==}
@@ -2535,6 +2560,9 @@ packages:
     resolution: {integrity: sha512-AC/7JofJvZGrrneWNaEnJeOLUx+JlGt7tNa0wZiRPT4MY1wmfKjt2+6O2p2uz2+skll8OZZmJMNqeke7kKbNgQ==}
     hasBin: true
 
+  jose@6.2.18:
+    resolution: {integrity: sha512-doV4thUwgkrycJH4yLeqwTGIIZphHl+pk7CPReuMIhYhncmgzdko85MaCG4YQFTxqMFr1/oEH32tZuKKovcDEg==}
+
   joycon@3.1.1:
     resolution: {integrity: sha512-34wB/Y7MW7bzjKRjUKTa46I2Z7eV62Rkhva+KkopW7Qvv/OSWBqvkSY7vusOPrNuZcUG3tApvdVgNB8POj3SPw==}
     engines: {node: '>=10'}
@@ -2878,6 +2906,40 @@ packages:
   perfect-debounce@2.1.0:
     resolution: {integrity: sha512-LjgdTytVFXeUgtHZr9WYViYSM/g8MkcTPYDlPa3cDqMirHjKiSZPYd6DoL7pK8AJQr+uWkQvCjHNdiMqsrJs+g==}
 
+  pg-cloudflare@1.4.1:
+    resolution: {integrity: sha512-6PQbsFWZcp9EmJEwy5cGQ2La+AMWpP46lgbb8X+U/XsHIUweYDNCpeuKck5RxL2MdVFi7krbbEi5nX4Zh7JhrQ==}
+
+  pg-connection-string@2.14.1:
+    resolution: {integrity: sha512-qR3kGNPBLpCNtz0evbKA0Y/MRFXwSSdT+pTJvYp/bXTcReZbvX1kzF0IyTc1QnxqF7AZbOeBhNL8R5mYQZV/MA==}
+
+  pg-int8@1.0.1:
+    resolution: {integrity: sha512-WCtabS6t3c8SkpDBUlb1kjOs7l66xsGdKpIPZsg4wR+B3+u9UAum2odSsF9tnvxg80h4ZxLWMy4pRjOsFIqQpw==}
+    engines: {node: '>=4.0.0'}
+
+  pg-pool@3.14.0:
+    resolution: {integrity: sha512-gKtPkFdQPU3DksooVLi9LsjZxrsBUZIpa+7aVx+LV5pNh0KzP4Zleud2po+ConrxbuXGBJ6Hfer6hdgpIBpBaw==}
+    peerDependencies:
+      pg: '>=8.0'
+
+  pg-protocol@1.16.1:
+    resolution: {integrity: sha512-p9VOFMiHB/ZbJATetbg+99PxssTVSQRnyuPSQ67mN1+1KBOjZaZ83ZQzltnxPhJwSsC3nwVjJ10DVJlerbFzLg==}
+
+  pg-types@2.2.0:
+    resolution: {integrity: sha512-qTAAlrEsl8s4OiEQY69wDvcMIdQN6wdz5ojQiOy6YRMuynxenON0O5oCpJI6lshc6scgAY8qvJ2On/p+CXY0GA==}
+    engines: {node: '>=4'}
+
+  pg@8.23.1:
+    resolution: {integrity: sha512-aL96AHANtWjPLDOLqnhx+ngp9+UK7ETEU8VJrDCGvsSSi/mGLcWYsS6Herg7lmaBJe4uwrfqsa7gTEFaSizDoQ==}
+    engines: {node: '>= 16.0.0'}
+    peerDependencies:
+      pg-native: '>=3.0.1'
+    peerDependenciesMeta:
+      pg-native:
+        optional: true
+
+  pgpass@1.0.5:
+    resolution: {integrity: sha512-FdW9r/jQZhSeohs1Z3sI1yxFQNFvMcnmfuj4WBMUTxOrAyLMaTcE1aAMBiTlbMNaXvBCQuVi0R7hd8udDSP7ug==}
+
   picocolors@1.1.1:
     resolution: {integrity: sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==}
 
@@ -2920,6 +2982,26 @@ packages:
   postcss@8.5.33:
     resolution: {integrity: sha512-RVHEU9/Pp1Fnjr/MpAJsZoADukCKhfIi15OunEYiGktIkYLkPVvC1sioWolGDS7XByMTx9m/IGbro0Js13zhnQ==}
     engines: {node: ^10 || ^12 || >=14}
+
+  postgres-array@2.0.0:
+    resolution: {integrity: sha512-VpZrUqU5A69eQyW2c5CA1jtLecCsN2U/bD6VilrFDWq5+5UIEVO7nazS3TEcHf1zuPYO/sqGvUvW62g86RXZuA==}
+    engines: {node: '>=4'}
+
+  postgres-array@3.0.4:
+    resolution: {integrity: sha512-nAUSGfSDGOaOAEGwqsRY27GPOea7CNipJPOA7lPbdEpx5Kg3qzdP0AaWC5MlhTWV9s4hFX39nomVZ+C4tnGOJQ==}
+    engines: {node: '>=12'}
+
+  postgres-bytea@1.0.1:
+    resolution: {integrity: sha512-5+5HqXnsZPE65IJZSMkZtURARZelel2oXUEO8rH83VS/hxH5vv1uHquPg5wZs8yMAfdv971IU+kcPUczi7NVBQ==}
+    engines: {node: '>=0.10.0'}
+
+  postgres-date@1.0.7:
+    resolution: {integrity: sha512-suDmjLVQg78nMK2UZ454hAG+OAW+HQPZ6n++TNDUX+L0+uUlLywnoxJKDou51Zm+zTCjrCl0Nq6J9C5hP9vK/Q==}
+    engines: {node: '>=0.10.0'}
+
+  postgres-interval@1.2.0:
+    resolution: {integrity: sha512-9ZhXKM/rw350N1ovuWHbGxnGh/SNJ4cnxHiM0rxE4VN41wsg8P8zWn9hv/buK00RP4WvlOyr/RBDiptyxVbkZQ==}
+    engines: {node: '>=0.10.0'}
 
   postgres@3.4.7:
     resolution: {integrity: sha512-Jtc2612XINuBjIl/QTWsV5UvE8UHuNblcO3vVADSrKsrc6RqGX6lOW1cEo3CM2v0XG4Nat8nI+YM7/f26VxXLw==}
@@ -3122,6 +3204,10 @@ packages:
   source-map@0.8.0:
     resolution: {integrity: sha512-d8EqvL+k/SOXCreS/SUzg2ciyHqBBLcN/yuRjFsbvVhHTE2pgei7oAhmPM7kWFbkX6OSMQfUq4KbkF3au9lhYQ==}
     engines: {node: '>= 12'}
+
+  split2@4.2.0:
+    resolution: {integrity: sha512-UcjcJOWknrNkF6PLX83qcHM6KHgVKNkV62Y8a5uYDVv9ydGQVwAHMKqHdJje1VTWpljG0WYpCDhrCdAOYH4TWg==}
+    engines: {node: '>= 10.x'}
 
   sql-escaper@1.9.1:
     resolution: {integrity: sha512-4p522TVYaJXTbMlYgAwacjyg3EJyYe9KYWYlYJVwZG1YjtzxU5m5iSzsZoGI69Po7j3i/2tKlpZQi7uvhTL+WA==}
@@ -3554,6 +3640,10 @@ packages:
 
   xstream@11.14.0:
     resolution: {integrity: sha512-1bLb+kKKtKPbgTK6i/BaoAn03g47PpFstlbe1BA+y3pNS/LfvcaghS5BFf9+EE1J+KwSQsEpfJvFN5GqFtiNmw==}
+
+  xtend@4.0.2:
+    resolution: {integrity: sha512-LKYU1iAXJXUgAXn9URjiu+MWhyUXHsvfp7mcuYm9dSUKK0/CjtrUwFAxD82/mCWbtLsGjFIad0wIsod4zrTAEQ==}
+    engines: {node: '>=0.4'}
 
   yoctocolors@2.2.0:
     resolution: {integrity: sha512-xYqdZFUK/VYazNl/oCDYN+3WloWQwMfZxBoiNt6qNyk+xfOdi598muWE42rNZFp1kNOiqW936q5RhUdnpqElSg==}
@@ -4150,14 +4240,6 @@ snapshots:
     optionalDependencies:
       '@nestjs/platform-express': 12.5.1(@nestjs/common@12.5.1(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@7.2.0))(@nestjs/core@12.5.1)(rxjs@7.8.2)(supports-color@7.2.0)
 
-  '@nestjs/observe@0.3.27(@nestjs/common@12.5.1(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@7.2.0))(@nestjs/core@12.5.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)':
-    dependencies:
-      '@jridgewell/trace-mapping': 0.3.31
-      '@nestjs/common': 12.5.1(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@7.2.0)
-      '@nestjs/core': 12.5.1(@nestjs/common@12.5.1(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@7.2.0))(@nestjs/platform-express@12.5.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
-      reflect-metadata: 0.2.2
-      rxjs: 7.8.2
-
   '@nestjs/platform-express@12.5.1(@nestjs/common@12.5.1(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@7.2.0))(@nestjs/core@12.5.1)(rxjs@7.8.2)(supports-color@7.2.0)':
     dependencies:
       '@nestjs/common': 12.5.1(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@7.2.0)
@@ -4299,6 +4381,15 @@ snapshots:
     dependencies:
       '@noble/hashes': 1.8.0
 
+  '@prisma/adapter-pg@7.10.1':
+    dependencies:
+      '@prisma/driver-adapter-utils': 7.10.1
+      '@types/pg': 8.23.1
+      pg: 8.23.1
+      postgres-array: 3.0.4
+    transitivePeerDependencies:
+      - pg-native
+
   '@prisma/client-runtime-utils@7.10.1': {}
 
   '@prisma/client@7.10.1(prisma@7.10.1(@types/node@24.19.2)(@types/react@19.3.0)(magicast@0.5.5)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(typescript@6.0.3))(typescript@6.0.3)':
@@ -4340,6 +4431,10 @@ snapshots:
       zeptomatch: 2.1.0
     transitivePeerDependencies:
       - typescript
+
+  '@prisma/driver-adapter-utils@7.10.1':
+    dependencies:
+      '@prisma/debug': 7.10.1
 
   '@prisma/engines-version@8.1.0-1.d1b3f377ca835d73fd50954a5e22128b9ebdd6b8': {}
 
@@ -4395,6 +4490,10 @@ snapshots:
   '@qorechain/evm@0.14.0(viem@2.58.1(typescript@5.9.3)(zod@4.6.7))':
     dependencies:
       viem: 2.58.1(typescript@5.9.3)(zod@4.6.7)
+
+  '@qorechain/evm@0.14.0(viem@2.58.1(typescript@6.0.3)(zod@4.6.7))':
+    dependencies:
+      viem: 2.58.1(typescript@6.0.3)(zod@4.6.7)
 
   '@qorechain/pqc@0.2.3':
     dependencies:
@@ -4467,6 +4566,30 @@ snapshots:
       micro-key-producer: 0.9.0
     optionalDependencies:
       viem: 2.58.1(typescript@5.9.3)(zod@4.6.7)
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+
+  '@qorechain/sdk@0.14.0(viem@2.58.1(typescript@6.0.3)(zod@4.6.7))':
+    dependencies:
+      '@bufbuild/protobuf': 2.17.0
+      '@cosmjs/amino': 0.39.0
+      '@cosmjs/cosmwasm-stargate': 0.39.0
+      '@cosmjs/proto-signing': 0.39.0
+      '@cosmjs/stargate': 0.39.0
+      '@cosmjs/tendermint-rpc': 0.39.0
+      '@noble/curves': 1.9.7
+      '@noble/hashes': 1.8.0
+      '@qorechain/evm': 0.14.0(viem@2.58.1(typescript@6.0.3)(zod@4.6.7))
+      '@qorechain/pqc': 0.2.3
+      '@scure/base': 1.2.6
+      '@scure/bip32': 1.7.0
+      '@scure/bip39': 1.6.0
+      bech32: 2.0.0
+      cosmjs-types: 0.11.0
+      micro-key-producer: 0.9.0
+    optionalDependencies:
+      viem: 2.58.1(typescript@6.0.3)(zod@4.6.7)
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
@@ -4717,6 +4840,10 @@ snapshots:
     dependencies:
       '@types/node': 22.20.5
 
+  '@types/cookie-parser@1.4.10(@types/express@5.0.6)':
+    dependencies:
+      '@types/express': 5.0.6
+
   '@types/cookiejar@2.1.5': {}
 
   '@types/d3-array@3.0.3': {}
@@ -4781,6 +4908,12 @@ snapshots:
   '@types/node@24.19.2':
     dependencies:
       undici-types: 7.24.6
+
+  '@types/pg@8.23.1':
+    dependencies:
+      '@types/node': 24.19.2
+      pg-protocol: 1.16.1
+      pg-types: 2.2.0
 
   '@types/qs@6.15.1': {}
 
@@ -4959,6 +5092,11 @@ snapshots:
       typescript: 5.9.3
       zod: 4.6.7
 
+  abitype@1.2.3(typescript@6.0.3)(zod@4.6.7):
+    optionalDependencies:
+      typescript: 6.0.3
+      zod: 4.6.7
+
   accepts@2.0.0:
     dependencies:
       mime-types: 3.0.2
@@ -5129,6 +5267,13 @@ snapshots:
   content-type@2.1.0: {}
 
   convert-source-map@2.0.0: {}
+
+  cookie-parser@1.4.7:
+    dependencies:
+      cookie: 0.7.2
+      cookie-signature: 1.0.6
+
+  cookie-signature@1.0.6: {}
 
   cookie-signature@1.2.2: {}
 
@@ -5608,6 +5753,8 @@ snapshots:
 
   jiti@2.7.0: {}
 
+  jose@6.2.18: {}
+
   joycon@3.1.1: {}
 
   js-tokens@10.0.0: {}
@@ -5900,6 +6047,21 @@ snapshots:
     transitivePeerDependencies:
       - zod
 
+  ox@0.14.67(typescript@6.0.3)(zod@4.6.7):
+    dependencies:
+      '@adraffy/ens-normalize': 1.11.1
+      '@noble/ciphers': 1.3.0
+      '@noble/curves': 1.9.1
+      '@noble/hashes': 1.8.0
+      '@scure/bip32': 1.7.0
+      '@scure/bip39': 1.6.0
+      abitype: 1.2.3(typescript@6.0.3)(zod@4.6.7)
+      eventemitter3: 5.0.1
+    optionalDependencies:
+      typescript: 6.0.3
+    transitivePeerDependencies:
+      - zod
+
   oxlint-tsgolint@7.0.2007:
     optionalDependencies:
       '@oxlint-tsgolint/darwin-arm64': 7.0.2007
@@ -5946,6 +6108,41 @@ snapshots:
 
   perfect-debounce@2.1.0: {}
 
+  pg-cloudflare@1.4.1:
+    optional: true
+
+  pg-connection-string@2.14.1: {}
+
+  pg-int8@1.0.1: {}
+
+  pg-pool@3.14.0(pg@8.23.1):
+    dependencies:
+      pg: 8.23.1
+
+  pg-protocol@1.16.1: {}
+
+  pg-types@2.2.0:
+    dependencies:
+      pg-int8: 1.0.1
+      postgres-array: 2.0.0
+      postgres-bytea: 1.0.1
+      postgres-date: 1.0.7
+      postgres-interval: 1.2.0
+
+  pg@8.23.1:
+    dependencies:
+      pg-connection-string: 2.14.1
+      pg-pool: 3.14.0(pg@8.23.1)
+      pg-protocol: 1.16.1
+      pg-types: 2.2.0
+      pgpass: 1.0.5
+    optionalDependencies:
+      pg-cloudflare: 1.4.1
+
+  pgpass@1.0.5:
+    dependencies:
+      split2: 4.2.0
+
   picocolors@1.1.1: {}
 
   picomatch@4.0.7: {}
@@ -5979,6 +6176,18 @@ snapshots:
       nanoid: 3.3.20
       picocolors: 1.1.1
       source-map-js: 1.2.3
+
+  postgres-array@2.0.0: {}
+
+  postgres-array@3.0.4: {}
+
+  postgres-bytea@1.0.1: {}
+
+  postgres-date@1.0.7: {}
+
+  postgres-interval@1.2.0:
+    dependencies:
+      xtend: 4.0.2
 
   postgres@3.4.7: {}
 
@@ -6234,6 +6443,8 @@ snapshots:
 
   source-map@0.8.0: {}
 
+  split2@4.2.0: {}
+
   sql-escaper@1.9.1: {}
 
   stackback@0.0.2: {}
@@ -6472,6 +6683,23 @@ snapshots:
       - utf-8-validate
       - zod
 
+  viem@2.58.1(typescript@6.0.3)(zod@4.6.7):
+    dependencies:
+      '@noble/curves': 1.9.1
+      '@noble/hashes': 1.8.0
+      '@scure/bip32': 1.7.0
+      '@scure/bip39': 1.6.0
+      abitype: 1.2.3(typescript@6.0.3)(zod@4.6.7)
+      isows: 1.0.7(ws@8.21.0)
+      ox: 0.14.67(typescript@6.0.3)(zod@4.6.7)
+      ws: 8.21.0
+    optionalDependencies:
+      typescript: 6.0.3
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+      - zod
+
   vite@8.3.8(@types/node@22.20.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15):
     dependencies:
       lightningcss: 1.33.0
@@ -6593,6 +6821,8 @@ snapshots:
     dependencies:
       globalthis: 1.0.4
       symbol-observable: 2.0.3
+
+  xtend@4.0.2: {}
 
   yoctocolors@2.2.0: {}
 

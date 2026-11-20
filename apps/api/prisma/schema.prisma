@@ -1,6 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
+// Paper Trail API data model (spec §7.2, amended by decisions D2–D4).
+// The server stores only public data, ciphertexts, sealed envelopes and hashes.
 
 generator client {
   provider = "prisma-client"
@@ -9,4 +8,176 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+enum ExamStatus {
+  PENDING // relay queued / in flight
+  CREATED // ExamCreated indexed
+  FAILED
+}
+
+enum Role {
+  INVIGILATOR
+  MARKER
+}
+
+enum RelayStatus {
+  QUEUED
+  SUBMITTED
+  CONFIRMED
+  FAILED
+}
+
+/// A Paper Trail role key (D2: SIWQ is signed by the role key). qorexAddress is bound later.
+model User {
+  id           String   @id @default(cuid())
+  roleAddress  String   @unique // qor1…
+  evmAddress   String   @unique // 0x… (lower-case)
+  qorexAddress String?  @unique
+  sealCard     Json? // signed QoreSeal recipient card (public)
+  createdAt    DateTime @default(now())
+}
+
+/// SIWQ nonces issued by POST /auth/siwq/challenge (single use, short-lived).
+model AuthChallenge {
+  nonce     String    @id
+  address   String
+  message   String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+}
+
+model Exam {
+  id               String     @id @default(cuid())
+  onchainId        String     @unique // examIdFor(board, salt)
+  salt             String
+  title            String
+  boardAddr        String // 0x… lower-case
+  examiners        String[] // 0x… lower-case, contract order
+  startTime        DateTime
+  masterCommitment String
+  committeeBlob    Bytes
+  committeeHash    String
+  createTx         String?
+  status           ExamStatus @default(PENDING)
+  centres          Centre[]
+  createdAt        DateTime   @default(now())
+}
+
+model Centre {
+  id           String  @id @default(cuid())
+  examId       String
+  exam         Exam    @relation(fields: [examId], references: [id])
+  onchainId    String
+  name         String
+  commitment   String
+  cipherBlob   Bytes
+  cipherHash   String
+  setTx        String?
+  confirmed    Boolean @default(false) // CentreSet indexed
+  currentEpoch Int     @default(0)
+  released     Boolean @default(false)
+
+  @@unique([examId, onchainId])
+}
+
+model Member {
+  id           String  @id @default(cuid())
+  groupKey     String
+  role         Role
+  address      String
+  active       Boolean @default(true)
+  addedEpoch   Int
+  removedEpoch Int?
+}
+
+model EpochEnvelope {
+  id          String  @id @default(cuid())
+  groupKey    String
+  epoch       Int
+  envelope    Bytes
+  membersHash String
+  txHash      String?
+
+  @@unique([groupKey, epoch])
+}
+
+model BoardState {
+  boardAddr   String   @id
+  sealedState Bytes
+  updatedAt   DateTime @updatedAt
+}
+
+model ShareBlob {
+  id               String  @id @default(cuid())
+  examId           String
+  centreId         String
+  examinerAddr     String
+  examinerIndex    Int
+  sealedToExaminer Bytes
+  releasedBlob     Bytes?
+  releasedEpoch    Int?
+  releaseTx        String?
+
+  @@unique([examId, centreId, examinerAddr])
+}
+
+model Script {
+  id            String  @id @default(cuid())
+  examId        String
+  centreId      String
+  pseudonymHash String
+  blob          Bytes
+  scriptHash    String
+  markerEpoch   Int
+  txHash        String?
+}
+
+model Mark {
+  id             String @id @default(cuid())
+  scriptId       String
+  markerAddr     String
+  score          Int
+  sealedFeedback Bytes?
+}
+
+model IdentityMap {
+  examId String @id
+  blob   Bytes
+}
+
+model ChainEvent {
+  id          String   @id @default(cuid())
+  name        String
+  examId      String?
+  centreId    String?
+  data        Json
+  txHash      String
+  blockNumber BigInt
+  logIndex    Int
+  createdAt   DateTime @default(now())
+
+  @@unique([txHash, logIndex])
+  @@index([examId])
+}
+
+/// Catch-up-on-read indexer position (D3: no long-running watcher on Vercel).
+model IndexerCursor {
+  id        String   @id // contract address
+  lastBlock BigInt
+  updatedAt DateTime @updatedAt
+}
+
+model RelayJob {
+  id        String      @id @default(cuid())
+  action    String
+  signer    String
+  payload   Json
+  status    RelayStatus
+  txHash    String?
+  error     String?
+  attempts  Int         @default(0)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
 }
