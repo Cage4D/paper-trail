@@ -19,7 +19,9 @@
     "deploy:papertrail": "NODE_OPTIONS=\"--no-network-family-autoselection --dns-result-order=ipv4first\" tsx scripts/deploy.ts",
     "relayer:window": "NODE_OPTIONS=\"--no-network-family-autoselection --dns-result-order=ipv4first\" tsx scripts/relayer-window.ts",
     "smoke": "NODE_OPTIONS=\"--no-network-family-autoselection --dns-result-order=ipv4first\" tsx scripts/smoke.ts",
-    "abi": "tsx scripts/gen-abi.ts"
+    "abi": "tsx scripts/gen-abi.ts",
+    "api:e2e": "NODE_OPTIONS=\"--no-network-family-autoselection --dns-result-order=ipv4first\" tsx scripts/api-e2e.ts",
+    "api:dev": "pnpm --filter @paper-trail/core build && pnpm --filter @paper-trail/shared build && pnpm --filter @paper-trail/api build && NODE_OPTIONS=\"--no-network-family-autoselection --dns-result-order=ipv4first\" node apps/api/dist/main.js"
   },
   "devDependencies": {
     "@cosmjs/proto-signing": "^0.39.0",

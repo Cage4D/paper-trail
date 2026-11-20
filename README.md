@@ -41,9 +41,15 @@ Kits, templates and libraries used (required by the Fest rules):
 - [`@qorechain/evm`](https://www.npmjs.com/package/@qorechain/evm) — PQC
   precompile ABIs and EVM authorisation window helpers
 - [Foundry](https://getfoundry.sh) and [`forge-std`](https://github.com/foundry-rs/forge-std)
-- [NestJS](https://nestjs.com) (generated with `@nestjs/cli`) and
-  [Prisma](https://www.prisma.io)
-- [tsup](https://tsup.egoist.dev), [Vitest](https://vitest.dev),
+- [NestJS](https://nestjs.com) (generated with `@nestjs/cli`), [Prisma](https://www.prisma.io)
+  with `@prisma/adapter-pg`, [jose](https://github.com/panva/jose) (session JWTs),
+  `cookie-parser`, [supertest](https://github.com/ladjs/supertest)
+- [`@qorechain/qoresign`](https://www.npmjs.com/package/@qorechain/qoresign), [`@qorechain/qoreseal`](https://www.npmjs.com/package/@qorechain/qoreseal),
+  [`@qorechain/pqc`](https://www.npmjs.com/package/@qorechain/pqc) — role keys, SIWQ, sealing, epoch groups, SHAKE256
+- [`@noble/hashes`](https://github.com/paulmillr/noble-hashes), [`@noble/ciphers`](https://github.com/paulmillr/noble-ciphers),
+  [`@scure/bip39`](https://github.com/paulmillr/scure-bip39),
+  [`shamir-secret-sharing`](https://github.com/privy-io/shamir-secret-sharing) (Privy)
+- [tsup](https://tsup.egoist.dev), [Vitest](https://vitest.dev), [jsdom](https://github.com/jsdom/jsdom),
   [Zod](https://zod.dev), [viem](https://viem.sh)
 
 ## Licence

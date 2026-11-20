@@ -1,0 +1,147 @@
+{
+  "api": "http://localhost:3000",
+  "contract": "0xDd26128846Ea6A35340010ce8be8F5820E264C33",
+  "windowBefore": {
+    "found": true,
+    "live": false,
+    "openedHeight": "10432309",
+    "expiryHeight": "10449589",
+    "maxTxs": "50",
+    "usedTxs": "6",
+    "maxValue": "5000000",
+    "usedValue": "440379",
+    "remainingBlocks": "0",
+    "remainingTxs": "44",
+    "remainingValue": "4559621",
+    "nativeOnly": false,
+    "allowedTargets": [
+      "0xdd26128846ea6a35340010ce8be8f5820e264c33"
+    ]
+  },
+  "card": {
+    "registered": {
+      "pqc": true,
+      "kem": true
+    },
+    "card": true
+  },
+  "status": {
+    "roleAddress": "qor1z4hxgg20j88q9x2exfgp8u3zduy45yum60fja3",
+    "evmAddress": "0x156e64214f91ce029959325013f2226f095a139b",
+    "pqc": {
+      "registered": true,
+      "algorithmId": 1
+    },
+    "kem": {
+      "registered": true
+    },
+    "recipientCard": true
+  },
+  "steps": [
+    {
+      "step": "createExam",
+      "tx": "0x4bf03098d2e5ba19e56255e63b56deee04903127c0c6458b192ce3c525571eeb",
+      "explorer": "https://explore.qore.network/tx/0x4bf03098d2e5ba19e56255e63b56deee04903127c0c6458b192ce3c525571eeb",
+      "windowReopened": "0C6FF88F3BF4F6104D106024F4170F450C675DE1BF3B29D48A8BA9A7A6323388"
+    },
+    {
+      "step": "setCentre A",
+      "tx": "0x18331bd6e230e90ea49ee1891e8c8a3fa1c7c8234fe5a383f303aedabc6c6f19",
+      "explorer": "https://explore.qore.network/tx/0x18331bd6e230e90ea49ee1891e8c8a3fa1c7c8234fe5a383f303aedabc6c6f19",
+      "windowReopened": null
+    },
+    {
+      "step": "setCentre B",
+      "tx": "0x8ff661df2fe32f152b81a37a3c02099ba746b8f1309b6dbe8175f872cb8e5cae",
+      "explorer": "https://explore.qore.network/tx/0x8ff661df2fe32f152b81a37a3c02099ba746b8f1309b6dbe8175f872cb8e5cae",
+      "windowReopened": null
+    }
+  ],
+  "view": {
+    "examId": "0x1aa1dff7b486dc9b272bc8ae8c5398586bcf46776f728219b4d4f442b03724ba",
+    "title": "Phase 4 API e2e",
+    "status": "CREATED",
+    "board": "0x156e64214f91ce029959325013f2226f095a139b",
+    "examiners": [
+      "0x4f15e68607a43ebc768ae31c6aa91cd45c18964c",
+      "0x34ac75a84260eeff102b3265c3ba22438b4ab031",
+      "0x6ebe029df8ab7af80b37164191658b11d3e36e80"
+    ],
+    "startTime": "2026-11-21T22:45:21.000Z",
+    "masterCommitment": "0xf756ea190718205a2f2c111277dfd95ae7ae577b7df558e8bbada28f0dd73f56",
+    "committeeBundleHash": "0x71b8804e5c6d7007ca6025f83ed21f90f5feb3e8ad1e4e9b8c51f74ebdde4882",
+    "createTx": "0x4bf03098d2e5ba19e56255e63b56deee04903127c0c6458b192ce3c525571eeb",
+    "centres": [
+      {
+        "centreId": "0x61caae5eede5015ce43c10492a5df2268945355f3c564db97fbbb1e026b1ec52",
+        "name": "Centre B",
+        "commitment": "0xe155cfd7f2c187dcc7b080a5ee5ce6d6b788e550463ea2571f555d33a9aae460",
+        "cipherHash": "0x656d3ee0554cd57fd5ed760259a1b0b624ff20c872a116027a1987a196c3f804",
+        "confirmed": true,
+        "epoch": 0,
+        "released": false,
+        "releaseCount": 0,
+        "setTx": "0x8ff661df2fe32f152b81a37a3c02099ba746b8f1309b6dbe8175f872cb8e5cae"
+      },
+      {
+        "centreId": "0xd9b7b359e7153dba270c2aacebc176de7f711fda23c043bc00aa0aa591dd2015",
+        "name": "Centre A",
+        "commitment": "0x45f9dee72a634a96778957635c1a4c1d0e2534c6850d15668644ebbb71227a58",
+        "cipherHash": "0xd4408313ca921b49a00617eba5d5b314ce2a64d5e9064e6dd69cc22a71a3fa3f",
+        "confirmed": true,
+        "epoch": 0,
+        "released": false,
+        "releaseCount": 0,
+        "setTx": "0x18331bd6e230e90ea49ee1891e8c8a3fa1c7c8234fe5a383f303aedabc6c6f19"
+      }
+    ]
+  },
+  "windowAfter": {
+    "found": true,
+    "live": true,
+    "openedHeight": "10458695",
+    "expiryHeight": "10475975",
+    "maxTxs": "50",
+    "usedTxs": "3",
+    "maxValue": "5000000",
+    "usedValue": "233120",
+    "remainingBlocks": "17265",
+    "remainingTxs": "47",
+    "remainingValue": "4766880",
+    "nativeOnly": false,
+    "allowedTargets": [
+      "0xdd26128846ea6a35340010ce8be8f5820e264c33"
+    ]
+  },
+  "health": {
+    "ok": true,
+    "contract": "0xDd26128846Ea6A35340010ce8be8F5820E264C33",
+    "db": {
+      "ok": true,
+      "value": true
+    },
+    "rpc": {
+      "ok": true,
+      "value": "10458710"
+    },
+    "relayerBalanceQor": {
+      "ok": true,
+      "value": "9.0216019625"
+    },
+    "window": {
+      "ok": true,
+      "value": {
+        "live": true,
+        "remainingTxs": "47",
+        "remainingBlocks": "17264",
+        "allowedTargets": [
+          "0xdd26128846ea6a35340010ce8be8f5820e264c33"
+        ]
+      }
+    },
+    "indexerLagBlocks": {
+      "ok": true,
+      "value": "0"
+    }
+  }
+}
