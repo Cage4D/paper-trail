@@ -20,9 +20,9 @@ Every claim below cites a script in `scripts/findings/` (raw output in
 |---|---|---|
 | Q1 | `pqcVerify` takes ML-DSA-87 sizes? gas? | **Answered** |
 | Q2 | QoreX raw ML-DSA / SIWQ signing | **Answered: no, not in QoreX 0.3.x.** Needs a decision (§3.2, §7.3) |
-| Q3 | context string, algorithmId, raw vs pre-hash | **Answered** (algorithmId on-chain read pending a registered account) |
-| Q4 | derivation works with registration? fees? | derivation **answered**; fees pending funding |
-| Q5 | EVM window limits, cost, unattended reopen | limits **answered**; cost pending funding |
+| Q3 | context string, algorithmId, raw vs pre-hash | **Answered** (algorithmId = 1 confirmed on-chain) |
+| Q4 | derivation works with registration? fees? | **Answered**: works; 0.1 QOR tx fee each, no extra charge |
+| Q5 | EVM window limits, cost, unattended reopen | **Answered**: 0.1 QOR fee per open; max ~6.9 h / 1,000 txs |
 | Q6 | `sealToAddresses` resolves KEM key + card? | **Answered**: KEM key on-chain, card app-hosted |
 | Q7 | `EpochKeyManager` history restore | **Answered**: works across processes |
 | Q8 | `shamir-secret-sharing` Node = browser | **Answered**: identical given equal randomness; shares interoperate |
@@ -112,9 +112,11 @@ What this shows:
 - **algorithmId:** `@qorechain/qoresign` exports `ALGORITHM_ML_DSA_87 = 1`
   (`message-*.d.ts`, line 9). `@qorechain/sdk` has `AlgorithmDilithium5 = 1` and
   `AlgorithmMLKEM1024 = 2` (`sdk/dist/index.js`, line 18394). So
-  **`ML_DSA_87 = 1`** for the contract constant. *Still to do:* read
-  `pqcKeyStatus(relayer)` on-chain once the relayer has registered its key, and confirm it
-  returns `1`.
+  **`ML_DSA_87 = 1`** for the contract constant. **Confirmed on-chain:** the EVM precompile
+  `pqcKeyStatus(addr)` at `0x…0a02` returns `(true, 1, <2,592-byte key>)` for the relayer,
+  board, examiner1 and examiner2. The key is byte-equal to the locally derived ML-DSA-87
+  key. An unregistered account (examiner3) returns `(false, 0, 0x)`
+  (`scripts/findings/q3-keystatus.ts` → `out/q3-keystatus.json`).
 
 ### Two related issues found
 
@@ -146,8 +148,12 @@ What this shows:
 
 **All 10 accounts match exactly** (same `qor1…`/`0x…` address and the same 2,592-byte
 ML-DSA-87 public key). The role keys of §3.2 are therefore the same keys the SDK registers
-and the window helper signs with. *Still to do:* registration fees for PQC and KEM keys,
-measured when the accounts are funded and registered.
+and the window helper signs with. **Registration works and costs only the transaction fee.** `scripts/register.ts` (`pnpm register`) uses the
+SDK's `ensurePqcRegistered`, which reads status first. It is sent classically signed
+through the template's `EthNativeSigner`. Each MsgRegisterKEMKey is hybrid-signed. For each
+of the relayer, board, examiner1 and examiner2, the balance dropped by exactly **100,000 uqor (0.1 QOR)**
+per registration. That is the template's fixed fee (800k gas limit; the KEM tx used about 268k gas), with no separate
+registration charge. Rerunning the script sends nothing. Tx hashes are in `scripts/out/registrations.json`.
 
 ---
 
@@ -229,7 +235,11 @@ README, plus block times measured on diana.
 - **Nonce interaction:** opening a window *advances the account's nonce* (template
   README). The relayer's nonce manager must reopen the window and re-read the nonce in
   one serialised step, never while EVM transactions are in flight.
-- **Cost:** pending. It's measured on the relayer's first `pnpm window open` once funded.
+- **Cost:** opening cost **100,000 uqor (0.1 QOR)**, the tx fee only. `maxValue` is a spend cap, not
+  money set aside: the balance went from 9.8 to 9.7 QOR with a 5 QOR cap. The relayer window was opened with the template
+  (`pnpm window open`, 17,280 blocks / 20 txs / 5 QOR): tx
+  `38113D93AC2FBB166298F1C6FA648998A06386F762FC279C06ECBCFB28F6699E`, opened at height
+  10,431,330, expiring at 10,448,610.
 
 ---
 
@@ -252,7 +262,8 @@ Source: `@qorechain/qoreseal` 0.1.0 `dist/network.js` (`resolveRecipient`,
   stores and serves cards, and clients call `sealToAddresses({ recipients: [{ address,
   card }] })`. The `mlkem` mode works without a card but drops the X25519 half, so we
   won't use it.
-- *Still to do:* a live `fetchKemKey` on our accounts after registration.
+- **Live check:** `fetchKemKey` (`@qorechain/qoreseal/network`) returns the registered ML-KEM key
+  for the relayer, board, examiner1 and examiner2. Each equals the account's `deriveSealKeys` key.
 
 ---
 
@@ -344,6 +355,14 @@ limits on Hobby, and NestJS-on-Vercel packaging. Both are checked in Phase 4/7 b
 relying on them.
 
 ---
+
+## Other notes
+
+- `@qorechain/sdk` 0.14.0 has no block explorer configured for the testnet preset:
+  `explorerTxUrl` throws *"explorer URL not configured for this network"*.
+- `createExam` (§5) needs **all three examiners** to have registered ML-DSA-87 keys.
+  examiner3 is unfunded and unregistered, so it must be registered before the Phase 2
+  live smoke test.
 
 ## Submission note: the project page lists at most 5 addresses
 

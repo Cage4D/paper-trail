@@ -1,0 +1,68 @@
+{
+  "at": "2026-11-20T11:54:19.198Z",
+  "relayer": {
+    "role": "relayer",
+    "evm": "0x55E13829472A8752d717B6feB082d38B3DC66633",
+    "registered": true,
+    "algorithmId": 1,
+    "pubkeyBytes": 2592,
+    "pubkeyMatchesDerived": true,
+    "kemRegistered": true,
+    "kemMatchesSealKey": true
+  },
+  "board": {
+    "role": "board",
+    "evm": "0x156e64214f91CE029959325013f2226f095A139B",
+    "registered": true,
+    "algorithmId": 1,
+    "pubkeyBytes": 2592,
+    "pubkeyMatchesDerived": true,
+    "kemRegistered": true,
+    "kemMatchesSealKey": true
+  },
+  "examiner1": {
+    "role": "examiner1",
+    "evm": "0x4f15E68607A43Ebc768AE31c6aA91Cd45C18964C",
+    "registered": true,
+    "algorithmId": 1,
+    "pubkeyBytes": 2592,
+    "pubkeyMatchesDerived": true,
+    "kemRegistered": true,
+    "kemMatchesSealKey": true
+  },
+  "examiner2": {
+    "role": "examiner2",
+    "evm": "0x34ac75a84260eefF102B3265C3bA22438b4ab031",
+    "registered": true,
+    "algorithmId": 1,
+    "pubkeyBytes": 2592,
+    "pubkeyMatchesDerived": true,
+    "kemRegistered": true,
+    "kemMatchesSealKey": true
+  },
+  "examiner3": {
+    "role": "examiner3",
+    "evm": "0x6EbE029DF8Ab7aF80B37164191658b11d3E36E80",
+    "registered": false,
+    "algorithmId": 0,
+    "pubkeyBytes": 0,
+    "pubkeyMatchesDerived": false,
+    "kemRegistered": false,
+    "kemMatchesSealKey": false
+  },
+  "relayerWindow": {
+    "found": true,
+    "live": true,
+    "openedHeight": "10431330",
+    "expiryHeight": "10448610",
+    "maxTxs": "20",
+    "usedTxs": "0",
+    "maxValue": "5000000",
+    "usedValue": "0",
+    "remainingBlocks": "17230",
+    "remainingTxs": "20",
+    "remainingValue": "5000000",
+    "nativeOnly": false,
+    "allowedTargets": []
+  }
+}
