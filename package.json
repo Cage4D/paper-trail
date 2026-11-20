@@ -10,7 +10,9 @@
     "build": "pnpm -r build",
     "test": "pnpm -r test",
     "accounts": "tsx scripts/accounts.ts",
-    "findings:q1q3": "NODE_OPTIONS=--dns-result-order=ipv4first tsx scripts/findings/q1-q3-pqcverify.ts"
+    "findings:q1q3": "NODE_OPTIONS=--dns-result-order=ipv4first tsx scripts/findings/q1-q3-pqcverify.ts",
+    "findings:q7": "tsx scripts/findings/q7-epoch-restore.ts",
+    "findings:q8": "rm -f scripts/findings/out/q8-*.json && vitest run -c scripts/findings/vitest.q8.config.ts --project node && vitest run -c scripts/findings/vitest.q8.config.ts --project jsdom"
   },
   "devDependencies": {
     "@cosmjs/stargate": "^0.39.0",
@@ -25,9 +27,12 @@
     "@qorechain/sdk": "0.14.0",
     "@types/node": "^22.20.5",
     "dotenv": "^17.4.2",
+    "jsdom": "^26.1.0",
+    "shamir-secret-sharing": "^0.0.4",
     "tsx": "^4.23.15",
     "typescript": "~5.9.3",
-    "viem": "^2.58.1"
+    "viem": "^2.58.1",
+    "vitest": "^5.1.1"
   },
   "type": "module"
 }

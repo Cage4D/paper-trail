@@ -1,0 +1,11 @@
+{
+  "env": "jsdom",
+  "detSharesSha256": "86e4d47d5890342b771090986275fab45ff1fb24221655744eadce82e5b536a8",
+  "realShares": [
+    "dd9db9d1fbbc62df292e79002eaf5edd4a12d45eebf5a0f264c05b490f1895938c",
+    "3048dd49312f67ef3d1c0fe4ac254e6419a83ba99d9b5db74790971220f3deb654",
+    "209ebc7e1d14d7bccba1b116d1cd7f467513c5f323817cc3bc6592eb89ca1664a7"
+  ],
+  "sameDeterministicSharesAsOther": true,
+  "crossCombineOk": true
+}

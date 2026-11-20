@@ -1,0 +1,22 @@
+rest 200 1.522335s
+evm 200 2.658903s
+kit constant 0x0000000000000000000000000000000000000A01 -> checksummed 0x0000000000000000000000000000000000000a01
+evm_limits { txMaxGas: '30000000', precompileInputMaxBytes: '16384' }
+{"label":"pure, ctx='', 32B digest (kit pqSign)","pk":2592,"sig":4627,"msg":32,"calldataBytes":7460,"raw":"0x0000000000000000000000000000000000000000000000000000000000000001","valid":true,"estimateGas":"312380"}
+{"label":"pure, hedged signature","pk":2592,"sig":4627,"msg":32,"calldataBytes":7460,"raw":"0x0000000000000000000000000000000000000000000000000000000000000001","valid":true,"estimateGas":"312410"}
+{"label":"tampered signature","pk":2592,"sig":4627,"msg":32,"calldataBytes":7460,"raw":"0x0000000000000000000000000000000000000000000000000000000000000000","valid":false,"estimateGas":"312380"}
+{"label":"wrong public key","pk":2592,"sig":4627,"msg":32,"calldataBytes":7460,"raw":"0x0000000000000000000000000000000000000000000000000000000000000000","valid":false,"estimateGas":"312320"}
+{"label":"wrong message","pk":2592,"sig":4627,"msg":32,"calldataBytes":7460,"raw":"0x0000000000000000000000000000000000000000000000000000000000000000","valid":false,"estimateGas":"312380"}
+{"label":"pure, ctx='PaperTrail.v1'","pk":2592,"sig":4627,"msg":32,"calldataBytes":7460,"raw":"0x0000000000000000000000000000000000000000000000000000000000000000","valid":false,"estimateGas":"312110"}
+{"label":"HashML-DSA(SHA-512), ctx=''","pk":2592,"sig":4627,"msg":32,"calldataBytes":7460,"raw":"0x0000000000000000000000000000000000000000000000000000000000000000","valid":false,"estimateGas":"312590"}
+{"label":"raw 300B message, signed raw","pk":2592,"sig":4627,"msg":300,"calldataBytes":7748,"raw":"0x0000000000000000000000000000000000000000000000000000000000000001","valid":true,"estimateGas":"322760"}
+{"label":"signed raw 300B, passed keccak(msg)","pk":2592,"sig":4627,"msg":32,"calldataBytes":7460,"raw":"0x0000000000000000000000000000000000000000000000000000000000000000","valid":false,"estimateGas":"311810"}
+{"label":"signed keccak(msg), passed raw msg","pk":2592,"sig":4627,"msg":300,"calldataBytes":7748,"raw":"0x0000000000000000000000000000000000000000000000000000000000000000","valid":false,"estimateGas":"322850"}
+{"label":"size sweep: msg 1024B","pk":2592,"sig":4627,"msg":1024,"calldataBytes":8452,"raw":"0x0000000000000000000000000000000000000000000000000000000000000001","valid":true,"estimateGas":"351880"}
+{"label":"size sweep: msg 2048B","pk":2592,"sig":4627,"msg":2048,"calldataBytes":9476,"raw":"0x0000000000000000000000000000000000000000000000000000000000000001","valid":true,"estimateGas":"392390"}
+{"label":"size sweep: msg 4096B","pk":2592,"sig":4627,"msg":4096,"calldataBytes":11524,"raw":"0x0000000000000000000000000000000000000000000000000000000000000001","valid":true,"estimateGas":"474730"}
+{"label":"size sweep: msg 8192B","pk":2592,"sig":4627,"msg":8192,"calldataBytes":15620,"raw":"0x0000000000000000000000000000000000000000000000000000000000000001","valid":true,"estimateGas":"637460"}
+{"label":"size sweep: msg 16384B","pk":2592,"sig":4627,"msg":16384,"calldataBytes":23812,"raw":"0x0000000000000000000000000000000000000000000000000000000000000001","valid":true,"estimateGas":"964030"}
+main case { calldataBytes: 7460, intrinsicGas: 137552, estimateGas: '312380' }
+
+[exited with code 0]

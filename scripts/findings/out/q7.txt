@@ -1,0 +1,2 @@
+{"phase":"write","epoch":"5","members":["inv1","inv3"],"inv2OnRemovalEnvelope":"refused (NOT_A_RECIPIENT)"}
+{"phase":"read","restoredEpoch":"5","savedEpoch":"5","members":["inv1","inv3"],"keysMatch":true,"openOldBatches":["before removal","after removal"],"afterRotateEpoch":"6","inv1OnNewEnvelope":"epoch 6","inv3OnNewEnvelope":"epoch 6","removedInv2OnNewEnvelope":"refused (NOT_A_RECIPIENT)"}

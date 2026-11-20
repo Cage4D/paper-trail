@@ -22,3 +22,6 @@ packages/contracts/broadcast/**/dry-run/
 # misc
 .DS_Store
 *.log
+
+# findings scratch state (throwaway test keys)
+scripts/findings/out/q7-state.json
