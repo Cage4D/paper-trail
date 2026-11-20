@@ -17,7 +17,8 @@
     "vectors": "tsx scripts/vectors/gen-digest-vectors.ts",
     "transfer": "NODE_OPTIONS=\"--no-network-family-autoselection --dns-result-order=ipv4first\" tsx scripts/transfer.ts",
     "deploy:papertrail": "NODE_OPTIONS=\"--no-network-family-autoselection --dns-result-order=ipv4first\" tsx scripts/deploy.ts",
-    "relayer:window": "NODE_OPTIONS=\"--no-network-family-autoselection --dns-result-order=ipv4first\" tsx scripts/relayer-window.ts"
+    "relayer:window": "NODE_OPTIONS=\"--no-network-family-autoselection --dns-result-order=ipv4first\" tsx scripts/relayer-window.ts",
+    "smoke": "NODE_OPTIONS=\"--no-network-family-autoselection --dns-result-order=ipv4first\" tsx scripts/smoke.ts"
   },
   "devDependencies": {
     "@cosmjs/proto-signing": "^0.39.0",

@@ -1,0 +1,17 @@
+{
+  "contract": "0xDd26128846Ea6A35340010ce8be8F5820E264C33",
+  "examId": "0x784d6519265eed3d17386a7ce8a1a904c222bc5ffa7f6f34008d9964c14e270e",
+  "centreA": "0x851b5419cca5a9711c9ef43e1bd9aabb0c75b3933bbaf271b39ac25f63f224ef",
+  "rows": [
+    {
+      "label": "examiner3 genuine ML-DSA-87 signature",
+      "ok": true,
+      "estimateGas": "269248"
+    },
+    {
+      "label": "same signature, 1 byte flipped",
+      "ok": false,
+      "revert": "BadSignature"
+    }
+  ]
+}

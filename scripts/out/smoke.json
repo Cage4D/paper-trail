@@ -1,0 +1,68 @@
+{
+  "contract": "0xDd26128846Ea6A35340010ce8be8F5820E264C33",
+  "chainId": 9800,
+  "steps": [
+    {
+      "step": "createExam",
+      "tx": "0xc9575bd39331086da69aa01c0df27a0f508f7cba375ea8c296842eb09ba58d58",
+      "block": "10432376",
+      "gasUsed": "421307",
+      "events": 1,
+      "explorer": "https://explore.qore.network/tx/0xc9575bd39331086da69aa01c0df27a0f508f7cba375ea8c296842eb09ba58d58"
+    },
+    {
+      "step": "setCentre A",
+      "tx": "0x2be1ab341a5ebc09af24d209abb97f39fe16f455fa1a1c869e12ac0c53bb49b3",
+      "block": "10432380",
+      "gasUsed": "255003",
+      "events": 1,
+      "explorer": "https://explore.qore.network/tx/0x2be1ab341a5ebc09af24d209abb97f39fe16f455fa1a1c869e12ac0c53bb49b3"
+    },
+    {
+      "step": "setCentre B",
+      "tx": "0x8422a754d453011732e8b644ed67533ea3ef1cd991c43c4e02bb4caaabbcb45b",
+      "block": "10432383",
+      "gasUsed": "254907",
+      "events": 1,
+      "explorer": "https://explore.qore.network/tx/0x8422a754d453011732e8b644ed67533ea3ef1cd991c43c4e02bb4caaabbcb45b"
+    },
+    {
+      "step": "rotateEpoch A→1",
+      "tx": "0xebf9b842b6162eeb1b8951493c22e7174b01acccb557fb0926ab746e0f4fbd5c",
+      "block": "10432386",
+      "gasUsed": "226896",
+      "events": 1,
+      "explorer": "https://explore.qore.network/tx/0xebf9b842b6162eeb1b8951493c22e7174b01acccb557fb0926ab746e0f4fbd5c"
+    },
+    {
+      "step": "early release (simulated)",
+      "reverted": "TooEarly",
+      "args": [
+        "1795177203"
+      ]
+    },
+    {
+      "step": "release examiner1",
+      "tx": "0xe3be40432d1eed626ee97b9d767221aec1dd9b01ab71256375fae5703eda4d69",
+      "block": "10432463",
+      "gasUsed": "279809",
+      "events": 1,
+      "explorer": "https://explore.qore.network/tx/0xe3be40432d1eed626ee97b9d767221aec1dd9b01ab71256375fae5703eda4d69"
+    },
+    {
+      "step": "release examiner2",
+      "tx": "0xe2f2621e93fb674b9debfd3ccc17caede918df3c879b917726cda7198ed8e478",
+      "block": "10432466",
+      "gasUsed": "289040",
+      "events": 2,
+      "explorer": "https://explore.qore.network/tx/0xe2f2621e93fb674b9debfd3ccc17caede918df3c879b917726cda7198ed8e478"
+    }
+  ],
+  "precompileGas": {
+    "pqcKeyStatus": "24038"
+  },
+  "examId": "0x784d6519265eed3d17386a7ce8a1a904c222bc5ffa7f6f34008d9964c14e270e",
+  "startTime": 1795177203,
+  "releasedEvents": 1,
+  "releasedCentre": true
+}

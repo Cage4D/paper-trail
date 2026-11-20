@@ -12,7 +12,7 @@ Every claim below cites a script in `scripts/findings/` (raw output in
 
 | # | Decision | Replaces |
 |---|---|---|
-| D1 | **Auth stays signature-authorised** (§3.1). Role-key ML-DSA-87 signatures are checked on-chain by `pqcKeyStatus` + `pqcVerify` and submitted by an untrusted relayer. The `msg.sender` fallback is not needed (Q1). Final confirmation is the Phase 2 live call from a contract. | — |
+| D1 | **Auth stays signature-authorised** (§3.1). Role-key ML-DSA-87 signatures are checked on-chain by `pqcKeyStatus` + `pqcVerify` and submitted by an untrusted relayer. The `msg.sender` fallback is not needed (Q1). **Confirmed live in Phase 2:** the real precompiles, called from inside PaperTrail, accept genuine signatures and reject forged ones (see "Phase 2 live results"). | — |
 | D2 | **SIWQ is signed by the app role key** (`signSiwq` with classical + ML-DSA-87, verified with `verifySiwqWithChain`). QoreX only supplies the user's `qor1` address. **The QoreX binding is a one-time `signAndBroadcast` self-transfer of 1 uqor with the API nonce in the memo**, behind a feature flag. A QoreX `signArbitrary` path is added later if QoreX ships it (testable with the mock's `"planned"` profile). | §3.2 "users sign in with QoreX (SIWQ)" and the SIWQ-signed bind statement; §7.3 `/auth/siwq/*` and `/me/role` bodies |
 | D3 | **The API runs on Vercel (serverless)** with the Vercel-managed Postgres. The indexer catches up on read (`eth_getLogs` from the last indexed block) plus a Vercel Cron job. The EVM window is checked and reopened lazily before each relay, under a Postgres advisory lock. **Polling replaces SSE.** No uptime ping. | §7.1 ChainModule indexer and RelayerModule auto-reopen; §7.3 SSE; §9 hosting and uptime ping |
 
@@ -356,13 +356,37 @@ relying on them.
 
 ---
 
+## Phase 2 live results (PaperTrail on diana)
+
+The contract is deployed at `0xDd26128846Ea6A35340010ce8be8F5820E264C33`
+([deploy tx](https://explore.qore.network/tx/0x862be464d94e90a4458b07314a15bc5c9068cc1cfecff7c4fbdf1cd1f6abac4d),
+1,611,276 gas). Results are in `scripts/out/smoke.json` and `scripts/findings/out/live-negative.json`.
+
+- **`pqcVerify` from inside a contract works.** Every smoke-test action was authorised by a real
+  ML-DSA-87 signature (role key, pure mode, empty context, over the 32-byte digest) and accepted on-chain.
+  Simulating examiner3's release with its genuine signature succeeds; with one byte of the
+  same signature flipped, it reverts with `BadSignature`.
+- **Real gas per action** (receipt `gasUsed`, with a 4.6 KB signature in the calldata):
+
+  | Action | gasUsed |
+  |---|---|
+  | createExam (reads 4 registered keys) | 421,307 |
+  | setCentre | ~255,000 |
+  | rotateEpoch | 226,896 |
+  | release (1st / 2nd, with `Released`) | 279,809 / 289,040 |
+
+  At 112.5 gwei that's about 0.025–0.05 QOR per action. `pqcKeyStatus` is cheap: a top-level call estimates
+  at 24,038 gas in total, so most of the cost is `pqcVerify` (about 175k) plus calldata.
+- The early release, simulated before `startTime`, reverts with `TooEarly(startTime)`.
+
 ## Other notes
 
 - `@qorechain/sdk` 0.14.0 has no block explorer configured for the testnet preset:
-  `explorerTxUrl` throws *"explorer URL not configured for this network"*.
+  `explorerTxUrl` throws *"explorer URL not configured for this network"*. However, `@qorechain/evm`'s
+  `qorechainTestnet` chain definition names **https://explore.qore.network**, which is the one we link.
 - `createExam` (§5) needs **all three examiners** to have registered ML-DSA-87 keys.
-  examiner3 is unfunded and unregistered, so it must be registered before the Phase 2
-  live smoke test.
+  examiner3 was funded from board (1 QOR) and registered in Phase 2. It is a supporting account and is
+  not one of the 5 listed addresses.
 
 ## Submission note: the project page lists at most 5 addresses
 
