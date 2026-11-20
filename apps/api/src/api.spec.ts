@@ -6,10 +6,9 @@
 import { Test } from '@nestjs/testing';
 import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
-import { ContractFunctionRevertedError, encodeErrorResult, getAddress, type Hex } from 'viem';
-import { pqVerify } from '@qorechain/qoresign';
-import { Action, b64url, buildAction, createRoleKey, createSignIn, fromHex, signAction, signSignIn, toHex, type RoleKey } from '@paper-trail/core';
-import { PAPERTRAIL_ABI } from '@paper-trail/shared';
+import { getAddress, type Hex } from 'viem';
+import { Action, b64url, buildAction, createRoleKey, createSignIn, examIdFor, signAction, signSignIn, toHex, type RoleKey } from '@paper-trail/core';
+import { FakeChain } from './testing/fake-chain.js';
 import { AppModule } from './app.module.js';
 import { configureApp } from './app.factory.js';
 import { ChainService } from './chain/chain.service.js';
@@ -18,76 +17,14 @@ import { config } from './config.js';
 
 const CONTRACT = getAddress(process.env.PAPERTRAIL_ADDRESS!);
 const roles = { board: createRoleKey(), ex: [createRoleKey(), createRoleKey(), createRoleKey()], outsider: createRoleKey(), unregistered: createRoleKey() };
-const registered = new Map<string, RoleKey>([roles.board, ...roles.ex, roles.outsider].map((k) => [k.evm.toLowerCase(), k]));
-
-class FakeChain {
-  address = CONTRACT;
-  abi = PAPERTRAIL_ABI;
-  rest = 'http://fake';
-  nonces = new Map<string, bigint>();
-  needsReopen = false;
-  opened = 0;
-  sent: { functionName: string; args: unknown[] }[] = [];
-  nextRevert?: { errorName: string; args: unknown[] };
-  client = {
-    getBalance: async () => 10n ** 18n,
-    getBlockNumber: async () => 100n,
-    getLogs: async () => [],
-    simulateContract: async (p: { functionName: string; args: unknown[] }) => {
-      if (this.nextRevert) {
-        const r = this.nextRevert;
-        this.nextRevert = undefined;
-        throw new ContractFunctionRevertedError({ abi: PAPERTRAIL_ABI as never, functionName: p.functionName, data: encodeErrorResult({ abi: PAPERTRAIL_ABI, errorName: r.errorName as never, args: r.args as never }) });
-      }
-      return { request: p, result: undefined };
-    },
-    waitForTransactionReceipt: async () => ({ status: 'success', blockNumber: 101n, gasUsed: 250_000n }),
-  };
-  async relayer() {
-    return { cosmos: 'qor1fake', evm: '0x0000000000000000000000000000000000000001' };
-  }
-  async wallet() {
-    return {
-      account: { address: '0x0000000000000000000000000000000000000001' },
-      writeContract: async (req: { functionName: string; args: unknown[] }) => {
-        this.sent.push(req);
-        const signer = (req.functionName === 'createExam' ? req.args[1] : roles.board.evm) as string;
-        this.nonces.set(signer.toLowerCase(), (this.nonces.get(signer.toLowerCase()) ?? 0n) + 1n);
-        return `0x${(this.sent.length).toString(16).padStart(64, '0')}`;
-      },
-    };
-  }
-  async nonceOf(signer: Hex) {
-    return this.nonces.get(signer.toLowerCase()) ?? 0n;
-  }
-  async pqcKeyStatus(a: Hex) {
-    const k = registered.get(a.toLowerCase());
-    return k ? { registered: true, algorithmId: 1, pubkey: toHex(k.pq.publicKey) } : { registered: false, algorithmId: 0, pubkey: '0x' as Hex };
-  }
-  async pqcVerify(pk: Hex, sig: Hex, msg: Hex) {
-    return pqVerify(fromHex(pk), fromHex(msg), fromHex(sig));
-  }
-  async windowNeedsReopen() {
-    return this.needsReopen;
-  }
-  async openWindow() {
-    this.opened++;
-    this.needsReopen = false;
-    return 'WINDOWTX';
-  }
-  async windowStatus() {
-    return { found: true, live: true, remainingTxs: 40n, remainingBlocks: 9000n, allowedTargets: [CONTRACT.toLowerCase()] };
-  }
-  async relayerBalanceWei() {
-    return 10n ** 18n;
-  }
-}
 
 const hasDb = !!process.env.DATABASE_URL;
 describe.runIf(hasDb)('API', () => {
   let app: INestApplication;
   let db: PrismaService;
-  const chain = new FakeChain();
+  const chain = new FakeChain(CONTRACT);
+  for (const k of [roles.board, ...roles.ex, roles.outsider]) chain.register(k);
+  chain.examIdFn = examIdFor;
   const http = () => request(app.getHttpServer());
 
   beforeAll(async () => {
@@ -96,7 +33,7 @@ describe.runIf(hasDb)('API', () => {
     configureApp(app);
     await app.init();
     db = app.get(PrismaService);
-    for (const t of ['relayJob', 'chainEvent', 'shareBlob', 'centre', 'exam', 'authChallenge', 'user', 'indexerCursor'] as const) await (db[t] as { deleteMany: () => Promise<unknown> }).deleteMany();
+    for (const t of ['relayJob', 'chainEvent', 'mark', 'script', 'member', 'epochEnvelope', 'boardState', 'bindChallenge', 'shareBlob', 'centre', 'exam', 'authChallenge', 'user', 'indexerCursor'] as const) await (db[t] as { deleteMany: () => Promise<unknown> }).deleteMany();
   });
   afterAll(async () => app?.close());
 
@@ -179,7 +116,7 @@ describe.runIf(hasDb)('API', () => {
       expect(chain.sent[0].functionName).toBe('createExam');
       examId = r.body.examId;
       const view = await http().get(`/exams/${examId}`).expect(200);
-      expect(view.body).toMatchObject({ title: 'Mock', board: roles.board.evm.toLowerCase(), status: 'PENDING' });
+      expect(view.body).toMatchObject({ title: 'Mock', board: roles.board.evm.toLowerCase(), status: 'CREATED' }); // ExamCreated indexed
       expect((await db.relayJob.findFirst({ where: { status: 'CONFIRMED' } }))?.action).toBe('CreateExam');
     });
 

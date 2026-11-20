@@ -10,7 +10,6 @@ import { randomBytes } from 'node:crypto';
 import type { Hex } from 'viem';
 import { parseAddress, parseSiwqMessage } from '@qorechain/qoresign';
 import { checkRecipientCard, createSignIn, fromHex, verifySignIn, type SiwqSignature } from '@paper-trail/core';
-import { fetchKemKey } from '@qorechain/sdk';
 import type { RecipientCard } from '@qorechain/qoreseal';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { ChainService } from '../chain/chain.service.js';
@@ -63,10 +62,10 @@ export class AuthService {
   async setCard(s: Session, card: Record<string, unknown>) {
     const key = await this.chain.pqcKeyStatus(s.evm);
     if (!key.registered) throw new ApiError('KEY_NOT_REGISTERED');
-    const kem = await fetchKemKey({ rest: this.chain.rest, address: s.roleAddress });
-    if (!kem.found || !kem.key?.publicKey) throw new ApiError('KEY_NOT_REGISTERED');
+    const kem = await this.chain.kemKey(s.roleAddress);
+    if (!kem) throw new ApiError('KEY_NOT_REGISTERED');
     try {
-      checkRecipientCard(card as unknown as RecipientCard, { pqPublicKey: fromHex(key.pubkey), mlkemPublicKey: kem.key.publicKey, address: s.roleAddress });
+      checkRecipientCard(card as unknown as RecipientCard, { pqPublicKey: fromHex(key.pubkey), mlkemPublicKey: kem, address: s.roleAddress });
     } catch {
       throw new ApiError('BAD_SIGNATURE');
     }
@@ -76,14 +75,14 @@ export class AuthService {
 
   async status(s: Session) {
     const key = await this.chain.pqcKeyStatus(s.evm);
-    const kem = await fetchKemKey({ rest: this.chain.rest, address: s.roleAddress });
+    const kem = await this.chain.kemKey(s.roleAddress);
     const user = await this.db.user.findUnique({ where: { id: s.userId } });
     const balance = await this.chain.client.getBalance({ address: s.evm });
     return {
       roleAddress: s.roleAddress,
       evmAddress: s.evm,
       pqc: { registered: key.registered, algorithmId: key.algorithmId },
-      kem: { registered: kem.found },
+      kem: { registered: !!kem },
       recipientCard: !!user?.sealCard,
       ...(balance === 0n ? { faucetHint: 'Fund this address with testnet QOR first: https://dashboard.qorechain.io/faucet' } : {}),
     };
