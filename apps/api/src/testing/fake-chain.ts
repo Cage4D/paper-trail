@@ -57,7 +57,7 @@ export class FakeChain {
       }
       return { request: p, result: undefined };
     },
-    waitForTransactionReceipt: async () => ({ status: 'success', blockNumber: this.block, gasUsed: 250_000n }),
+    waitForTransactionReceipt: async ({ hash }: { hash: Hex }) => ({ status: 'success', blockNumber: this.block, gasUsed: 250_000n, logs: this.logs.filter((l) => l.transactionHash === hash) }),
   };
 
   async relayer() {

@@ -157,7 +157,7 @@ describe.runIf(hasDb)('API', () => {
     await db.indexerCursor.upsert({ where: { id: CONTRACT.toLowerCase() }, create: { id: CONTRACT.toLowerCase(), lastBlock: 999_999_999n }, update: { lastBlock: 999_999_999n } });
     await http().post('/internal/index').set('authorization', `Bearer ${config().ADMIN_TOKEN}`).expect(200);
     const c = await db.indexerCursor.findUnique({ where: { id: CONTRACT.toLowerCase() } });
-    expect(c!.lastBlock).toBe(await chain.client.getBlockNumber());
+    expect(c!.lastBlock).toBe((await chain.client.getBlockNumber()) - 3n); // trails the head by CONFIRMATIONS
   });
 
   it('admin endpoints need the admin token; health reports without secrets', async () => {

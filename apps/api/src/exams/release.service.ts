@@ -83,7 +83,12 @@ export class ReleaseService {
   /** Released blobs, ONLY once the Released event is indexed (else 409 NOT_RELEASED). */
   async released(examId: string, centreId: string) {
     await this.indexer.catchUp().catch(() => null);
-    const { exam, centre } = await this.load(examId, centreId);
+    let { exam, centre } = await this.load(examId, centreId);
+    if (!centre.released) {
+      // not released yet as far as we know: force one catch-up before answering 409
+      await this.indexer.catchUp(true).catch(() => null);
+      ({ exam, centre } = await this.load(examId, centreId));
+    }
     const rows = await this.db.shareBlob.findMany({ where: { examId: exam.onchainId, centreId: centre.onchainId, releasedBlob: { not: null }, releaseTx: { not: null } }, orderBy: [{ releasedEpoch: 'asc' }, { examinerIndex: 'asc' }] });
     if (!centre.released) throw new ApiError('NOT_RELEASED', { count: rows.length });
     return {

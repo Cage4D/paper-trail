@@ -20,6 +20,7 @@ import { Action, buildAction, type ActionFields } from '@paper-trail/core';
 import { CONTRACT_ERROR_CODES } from '@paper-trail/shared';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { ChainService } from '../chain/chain.service.js';
+import { IndexerService } from '../chain/indexer.service.js';
 import { ApiError } from '../common/api-error.js';
 import { config } from '../config.js';
 
@@ -48,6 +49,7 @@ export class RelayerService {
   constructor(
     @Inject(PrismaService) private readonly db: PrismaService,
     @Inject(ChainService) private readonly chain: ChainService,
+    @Inject(IndexerService) private readonly indexer: IndexerService,
   ) {}
 
   async relay<A extends Action>(action: A, signer: Hex, fields: ActionFields[A], signature: Hex): Promise<RelayResult> {
@@ -84,7 +86,7 @@ export class RelayerService {
             await tx.relayJob.update({ where: { id: job.id }, data: { status: 'SUBMITTED', txHash: hash, attempts: { increment: 1 } } });
             const receipt = await this.chain.client.waitForTransactionReceipt({ hash, timeout: 90_000 });
             if (receipt.status !== 'success') throw new ApiError('ACTION_REJECTED', { reason: 'the transaction reverted' });
-            return { txHash: hash, blockNumber: receipt.blockNumber, gasUsed: receipt.gasUsed };
+            return { txHash: hash, blockNumber: receipt.blockNumber, gasUsed: receipt.gasUsed, logs: receipt.logs };
           };
           let out;
           try {
@@ -102,8 +104,11 @@ export class RelayerService {
         { timeout: 240_000, maxWait: 30_000 },
       );
       await this.db.relayJob.update({ where: { id: job.id }, data: { status: 'CONFIRMED', txHash: res.txHash } });
+      // index our own events from the receipt right away (Released gating must not wait for the cursor)
+      await this.indexer.ingest(res.logs ?? []).catch((e: Error) => this.log.warn(`receipt ingest failed: ${e.message.split('\n')[0]}`));
       this.log.log(`${Action[action]} signer=${signer} tx=${res.txHash} gas=${res.gasUsed}`);
-      return { jobId: job.id, ...res };
+      const { logs: _logs, ...out } = res;
+      return { jobId: job.id, ...out };
     } catch (e) {
       const err = e instanceof ApiError ? e : new ApiError('RELAYER_BUSY');
       await this.db.relayJob.update({ where: { id: job.id }, data: { status: 'FAILED', error: err.code } }).catch(() => undefined);

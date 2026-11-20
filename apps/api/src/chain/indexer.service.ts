@@ -6,6 +6,9 @@
  * (exam status, centre confirmed/epoch/released, release tx). It is called before reads that
  * depend on chain state and by the cron endpoint. A Postgres advisory lock makes concurrent
  * calls cheap: whoever does not get the lock returns immediately.
+ *
+ * Our own relayed txs are ingested straight from their receipts (`ingest`), so projections such as
+ * `Released` update immediately; the cursor catch-up trails the head by CONFIRMATIONS blocks.
  */
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { decodeEventLog, type Hex, type Log } from 'viem';
@@ -18,6 +21,8 @@ import { config } from '../config.js';
 const LOCK_ID = 7_000_002; // pg advisory lock key for the indexer
 const CHUNK = 2_000n;
 const MIN_INTERVAL_MS = 3_000;
+/** Cursor catch-up stops this many blocks behind the head, so a lagging RPC node cannot make it skip logs. */
+const CONFIRMATIONS = 3n;
 
 @Injectable()
 export class IndexerService {
@@ -38,11 +43,12 @@ export class IndexerService {
         if (!locked) return null;
         const id = this.chain.address.toLowerCase();
         const cursor = await tx.indexerCursor.findUnique({ where: { id } });
-        const latest = await this.chain.client.getBlockNumber();
+        const head = await this.chain.client.getBlockNumber();
+        const latest = head > CONFIRMATIONS ? head - CONFIRMATIONS : 0n;
         let from = cursor ? cursor.lastBlock + 1n : config().PAPERTRAIL_DEPLOY_BLOCK;
         if (cursor && cursor.lastBlock > latest) {
           // impossible on a healthy chain (a cursor from another chain or a test run): rescan rather than stall
-          this.log.warn(`cursor ${cursor.lastBlock} is ahead of the chain head ${latest}; rescanning from the deploy block`);
+          this.log.warn(`cursor ${cursor.lastBlock} is ahead of the chain head ${head}; rescanning from the deploy block`);
           from = config().PAPERTRAIL_DEPLOY_BLOCK;
         }
         let stored = 0;
@@ -58,6 +64,17 @@ export class IndexerService {
       },
       { timeout: 60_000, maxWait: 10_000 },
     );
+  }
+
+  /** Ingest PaperTrail logs from a confirmed receipt (idempotent on txHash+logIndex). */
+  async ingest(logs: readonly Log[]): Promise<number> {
+    const mine = logs.filter((l) => l.address.toLowerCase() === this.chain.address.toLowerCase());
+    if (!mine.length) return 0;
+    return this.db.$transaction(async (tx) => {
+      let n = 0;
+      for (const l of mine) n += await this.apply(tx, l);
+      return n;
+    });
   }
 
   async lag(): Promise<bigint | null> {
