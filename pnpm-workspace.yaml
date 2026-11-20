@@ -5,4 +5,6 @@ packages:
 # pnpm 12 blocks dependency install scripts by default; esbuild (via tsx in the
 # contracts template) needs its postinstall. Recorded by `pnpm approve-builds esbuild`.
 allowBuilds:
+  '@prisma/engines': true
   esbuild: true
+  prisma: true

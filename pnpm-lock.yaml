@@ -164,7 +164,47 @@ settings:
 
 importers:
 
-  .: {}
+  .:
+    devDependencies:
+      '@cosmjs/stargate':
+        specifier: ^0.39.0
+        version: 0.39.0
+      '@qorechain/evm':
+        specifier: 0.14.0
+        version: 0.14.0(viem@2.58.1(typescript@5.9.3)(zod@4.6.7))
+      '@qorechain/pqc':
+        specifier: 0.2.3
+        version: 0.2.3
+      '@qorechain/qoreseal':
+        specifier: 0.1.0
+        version: 0.1.0
+      '@qorechain/qoresign':
+        specifier: 0.2.0
+        version: 0.2.0
+      '@qorechain/qorex-types':
+        specifier: 0.1.0
+        version: 0.1.0
+      '@qorechain/qorex-wallet-mock':
+        specifier: 0.1.0
+        version: 0.1.0(typescript@5.9.3)(zod@4.6.7)
+      '@qorechain/sdk':
+        specifier: 0.14.0
+        version: 0.14.0(viem@2.58.1(typescript@5.9.3)(zod@4.6.7))
+      '@types/node':
+        specifier: ^22.20.5
+        version: 22.20.5
+      dotenv:
+        specifier: ^17.4.2
+        version: 17.4.2
+      tsx:
+        specifier: ^4.23.15
+        version: 4.23.15
+      typescript:
+        specifier: ~5.9.3
+        version: 5.9.3
+      viem:
+        specifier: ^2.58.1
+        version: 2.58.1(typescript@5.9.3)(zod@4.6.7)
 
   apps/api:
     dependencies:
@@ -1165,6 +1205,26 @@ packages:
     resolution: {integrity: sha512-YLzcfwkeq9mCyTcFf/BQFB7dsNIkyFcUluByp1zrJ7SRAkPj8cwPmv7jtw5Xeh7K80FgwzlvtBeZb/dzzknWZA==}
     engines: {node: '>=18'}
 
+  '@qorechain/qoreseal@0.1.0':
+    resolution: {integrity: sha512-OBUwTVsibzTH/zOpqT6lkq7mH/dCg9zV4hSw3tEMUttt3Jb4BqF4BF6/DsZqzSY1+joPusm3gRutx17kV+Hb5w==}
+    engines: {node: '>=20'}
+
+  '@qorechain/qoresign@0.1.0':
+    resolution: {integrity: sha512-PF4x20G3l1+Qym762WOuoGv/0jN+BMeqIPWwZIGlxF0OMulOIVX2s7yzBaTjrAJUilqUwJKUNtDvLnPEPJFD8g==}
+    engines: {node: '>=20'}
+
+  '@qorechain/qoresign@0.2.0':
+    resolution: {integrity: sha512-bOhFn/Xb5SQbDrOccYa0sKsh7Ds07qyeUd3JrqjqqRyx8sUOgu8HeOYV2tWR+7hVeHKhWaTY6oGEnEax+JeVcQ==}
+    engines: {node: '>=20'}
+
+  '@qorechain/qorex-types@0.1.0':
+    resolution: {integrity: sha512-M3rzdQp9YfEPuQ2EnBtqjAxR61T4lPD0JrW35Hh7k6Ny4E0o3qITvGGN8ssHnBzPz0yq2vVY/BECpjaAvT5xWQ==}
+    engines: {node: '>=20'}
+
+  '@qorechain/qorex-wallet-mock@0.1.0':
+    resolution: {integrity: sha512-KNd4kfJP7wg28DAY3B/SeNWqSh6e+mUaQRnZb4078GPiVtFj+fBDnaHshr/d3oWfCVyzoNwBJdUjkaBwokMB1w==}
+    engines: {node: '>=20.16'}
+
   '@qorechain/sdk@0.14.0':
     resolution: {integrity: sha512-EwoH2WX5hRUK685a3NDDd0dZcn7QL/6M11huVh7Kx37nFDMryF8QAHrJe0to8EcRmRnLbMH5UNnZbjoI48wo9Q==}
     peerDependencies:
@@ -1505,6 +1565,9 @@ packages:
 
   '@scure/bip32@1.7.0':
     resolution: {integrity: sha512-E4FFX/N3f4B80AKWp5dP6ow+flD1LQZo/w8UnLGYZO674jS6YnYeepycOOksv+vLPSpgN35wgKgy+ybfTb2SMw==}
+
+  '@scure/bip32@2.4.0':
+    resolution: {integrity: sha512-i3DS0CptAocyvqE4n3SUkpzeQK4vJMFwWLofTwRiiKo2aWojBOfyMCgfKw9HVpO6fSY5AK86sHS/Uzn8kK9Few==}
 
   '@scure/bip39@1.6.0':
     resolution: {integrity: sha512-+lF0BbLiJNwVlev4eKelw1WWLaiKXw7sSl8T6FvBlWkdX+94aGJ4o8XjUdlyhTCjd8c+B3KT3JfS8P0bLRNU6A==}
@@ -2623,6 +2686,14 @@ packages:
     resolution: {integrity: sha512-6VlU9MLXbjVQD04AZCMX28hVtA5bUoadvUqO76MUCVA0ilwJbMiHsITRPfyVm6p/BC0Av/BXMujx39WCe1LEqw==}
     engines: {node: '>=20'}
 
+  ox@0.14.56:
+    resolution: {integrity: sha512-Feinlj+deWEam6RIwurRE+eHZ2N3hoUb3AAjQ10BmxRCYIymfqNkv0eZ+4ln4GkgDmSGLD2rGtTMqsFYSVDC6w==}
+    peerDependencies:
+      typescript: '>=5.4.0'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+
   ox@0.14.67:
     resolution: {integrity: sha512-6v6UlwgsmiyTujZp0aVDuN8uIBAtl/QZadBADFRZ2zp1+CM9TqDzd+rPKJ5PYvWPlCvz8JvoO9dTr42+1PhBhA==}
     peerDependencies:
@@ -3092,6 +3163,14 @@ packages:
   vary@1.1.2:
     resolution: {integrity: sha512-BNGbWLfd0eUPabhkXUVm0j8uuvREyTh5ovRa/dyow/BqAbZJyC+5fU+IzQOzmAKzYqYRAISoRhdQr3eIZ/PXqg==}
     engines: {node: '>= 0.8'}
+
+  viem@2.57.5:
+    resolution: {integrity: sha512-BaUdS5lJJTxr6hJX17K0AjHbgUhsolsqH8CCbTq1WMunW/I/Siwc9VrTwccCcNPppgqa/gY4TqK8Zl8LLmlTlw==}
+    peerDependencies:
+      typescript: '>=5.0.4'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
 
   viem@2.58.1:
     resolution: {integrity: sha512-8qzo5+rbG4Sr9/MvUit9g0r/0H25suExk5WEBOzqXoTu7nYfm8EpgCTtpqQAlu8HkBmz96clZHfN7RkXKT3a1g==}
@@ -4092,6 +4171,52 @@ snapshots:
       '@noble/hashes': 2.4.0
       '@noble/post-quantum': 0.7.1
 
+  '@qorechain/qoreseal@0.1.0':
+    dependencies:
+      '@noble/ciphers': 2.4.0
+      '@noble/curves': 2.4.0
+      '@noble/hashes': 2.4.0
+      '@noble/post-quantum': 0.7.1
+      '@qorechain/pqc': 0.2.3
+      '@qorechain/qoresign': 0.1.0
+      '@scure/base': 2.4.0
+      '@scure/bip39': 2.4.0
+
+  '@qorechain/qoresign@0.1.0':
+    dependencies:
+      '@noble/curves': 2.4.0
+      '@noble/hashes': 2.4.0
+      '@qorechain/pqc': 0.2.3
+      '@scure/base': 2.4.0
+      '@scure/bip32': 2.4.0
+      '@scure/bip39': 2.4.0
+
+  '@qorechain/qoresign@0.2.0':
+    dependencies:
+      '@noble/curves': 2.4.0
+      '@noble/hashes': 2.4.0
+      '@qorechain/pqc': 0.2.3
+      '@scure/base': 2.4.0
+      '@scure/bip32': 2.4.0
+      '@scure/bip39': 2.4.0
+
+  '@qorechain/qorex-types@0.1.0': {}
+
+  '@qorechain/qorex-wallet-mock@0.1.0(typescript@5.9.3)(zod@4.6.7)':
+    dependencies:
+      '@noble/curves': 2.4.0
+      '@noble/hashes': 2.4.0
+      '@qorechain/qoresign': 0.1.0
+      '@qorechain/qorex-types': 0.1.0
+      '@scure/base': 2.4.0
+      '@scure/bip39': 2.4.0
+      viem: 2.57.5(typescript@5.9.3)(zod@4.6.7)
+    transitivePeerDependencies:
+      - bufferutil
+      - typescript
+      - utf-8-validate
+      - zod
+
   '@qorechain/sdk@0.14.0(viem@2.58.1(typescript@5.9.3)(zod@4.6.7))':
     dependencies:
       '@bufbuild/protobuf': 2.17.0
@@ -4313,6 +4438,12 @@ snapshots:
       '@noble/curves': 1.9.7
       '@noble/hashes': 1.8.0
       '@scure/base': 1.2.6
+
+  '@scure/bip32@2.4.0':
+    dependencies:
+      '@noble/curves': 2.4.0
+      '@noble/hashes': 2.4.0
+      '@scure/base': 2.4.0
 
   '@scure/bip39@1.6.0':
     dependencies:
@@ -5438,6 +5569,21 @@ snapshots:
       stdin-discarder: 0.3.2
       string-width: 8.3.0
 
+  ox@0.14.56(typescript@5.9.3)(zod@4.6.7):
+    dependencies:
+      '@adraffy/ens-normalize': 1.11.1
+      '@noble/ciphers': 1.3.0
+      '@noble/curves': 1.9.1
+      '@noble/hashes': 1.8.0
+      '@scure/bip32': 1.7.0
+      '@scure/bip39': 1.6.0
+      abitype: 1.2.3(typescript@5.9.3)(zod@4.6.7)
+      eventemitter3: 5.0.1
+    optionalDependencies:
+      typescript: 5.9.3
+    transitivePeerDependencies:
+      - zod
+
   ox@0.14.67(typescript@5.9.3)(zod@4.6.7):
     dependencies:
       '@adraffy/ens-normalize': 1.11.1
@@ -5960,6 +6106,23 @@ snapshots:
       typescript: 6.0.3
 
   vary@1.1.2: {}
+
+  viem@2.57.5(typescript@5.9.3)(zod@4.6.7):
+    dependencies:
+      '@noble/curves': 1.9.1
+      '@noble/hashes': 1.8.0
+      '@scure/bip32': 1.7.0
+      '@scure/bip39': 1.6.0
+      abitype: 1.2.3(typescript@5.9.3)(zod@4.6.7)
+      isows: 1.0.7(ws@8.21.0)
+      ox: 0.14.56(typescript@5.9.3)(zod@4.6.7)
+      ws: 8.21.0
+    optionalDependencies:
+      typescript: 5.9.3
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+      - zod
 
   viem@2.58.1(typescript@5.9.3)(zod@4.6.7):
     dependencies:

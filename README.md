@@ -1,5 +1,7 @@
 # Paper Trail
 
+[![Built on QoreChain](https://build.qorechain.io/badge/paper-trail.svg)](https://build.qorechain.io/p/paper-trail)
+
 A post-quantum chain of custody for exam papers, built on QoreChain testnet
 (`qorechain-diana`) for the QoreChain Developer Fest, Encrypted Apps (QoreSeal)
 category.
@@ -35,6 +37,7 @@ Kits, templates and libraries used (required by the Fest rules):
   including its EVM-window helper `scripts/window.ts`
 - [`@qorechain/sdk`](https://www.npmjs.com/package/@qorechain/sdk) — native-lane
   client, PQC key registration, account derivation
+- [`@qorechain/qoresign`](https://www.npmjs.com/package/@qorechain/qoresign) — classical + canonical ML-DSA-87 key derivation, hybrid signing, SIWQ
 - [`@qorechain/evm`](https://www.npmjs.com/package/@qorechain/evm) — PQC
   precompile ABIs and EVM authorisation window helpers
 - [Foundry](https://getfoundry.sh) and [`forge-std`](https://github.com/foundry-rs/forge-std)
