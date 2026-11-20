@@ -43,3 +43,37 @@ export const SetCentreBody = z.object({
 export type CreateExamBody = z.infer<typeof CreateExamBody>;
 export type SetCentreBody = z.infer<typeof SetCentreBody>;
 export type SiwqVerifyBody = z.infer<typeof SiwqVerifyBody>;
+
+// ── groups (board) ──
+export const RotateBody = z.object({
+  /** members added by this rotation (create / add); empty for a plain rotate */
+  addresses: z.array(evmAddress).max(64).default([]),
+  role: z.enum(["invigilator", "marker"]).default("invigilator"),
+  envelope: b64url.min(1),
+  epoch: z.number().int().positive(),
+  membersHash: hex32,
+  signature: mldsaSignature,
+  sealedBoardState: b64url.min(1),
+});
+export const RemoveMemberBody = RotateBody.omit({ addresses: true, role: true });
+
+// ── release (examiner) ──
+export const ReleaseBody = z.object({ releasedBlob: b64url.min(1), blobHash: hex32, epoch: z.number().int().positive(), signature: mldsaSignature });
+
+// ── scripts & marks ──
+export const ScriptBody = z.object({ centreId: hex32, pseudonymHash: hex32, blob: b64url.min(1), scriptHash: hex32, markerEpoch: z.number().int().positive() });
+export const SubmitScriptsBody = z.object({ items: z.array(z.object({ scriptId: z.string().min(1), signature: mldsaSignature })).min(1).max(20) });
+export const MarkBody = z.object({ score: z.number().int().min(0).max(1_000_000), sealedFeedback: b64url.optional() });
+export const PublishMarksBody = z.object({ merkleRoot: hex32, signature: mldsaSignature });
+
+// ── QoreX binding (D2) ──
+export const BindBody = z.object({ qorexAddress: qorAddress, txHash: z.string().regex(/^[0-9a-fA-F]{64}$/), signature: mldsaSignature });
+
+export type RotateBody = z.infer<typeof RotateBody>;
+export type RemoveMemberBody = z.infer<typeof RemoveMemberBody>;
+export type ReleaseBody = z.infer<typeof ReleaseBody>;
+export type ScriptBody = z.infer<typeof ScriptBody>;
+export type SubmitScriptsBody = z.infer<typeof SubmitScriptsBody>;
+export type MarkBody = z.infer<typeof MarkBody>;
+export type PublishMarksBody = z.infer<typeof PublishMarksBody>;
+export type BindBody = z.infer<typeof BindBody>;

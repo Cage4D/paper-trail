@@ -34,6 +34,9 @@ model User {
   roleAddress  String   @unique // qor1…
   evmAddress   String   @unique // 0x… (lower-case)
   qorexAddress String?  @unique
+  bindTx       String? // QoreX self-transfer carrying the binding memo
+  bindStatementHash String?
+  bindRelayTx  String? // PaperTrail.bindIdentity
   sealCard     Json? // signed QoreSeal recipient card (public)
   createdAt    DateTime @default(now())
 }
@@ -61,6 +64,8 @@ model Exam {
   committeeHash    String
   createTx         String?
   status           ExamStatus @default(PENDING)
+  marksRoot        String?
+  marksTx          String?
   centres          Centre[]
   createdAt        DateTime   @default(now())
 }
@@ -84,23 +89,28 @@ model Centre {
 
 model Member {
   id           String  @id @default(cuid())
+  boardAddr    String
   groupKey     String
   role         Role
   address      String
   active       Boolean @default(true)
   addedEpoch   Int
   removedEpoch Int?
+
+  @@index([boardAddr, groupKey, active])
 }
 
 model EpochEnvelope {
   id          String  @id @default(cuid())
+  boardAddr   String
   groupKey    String
   epoch       Int
   envelope    Bytes
   membersHash String
   txHash      String?
+  createdAt   DateTime @default(now())
 
-  @@unique([groupKey, epoch])
+  @@unique([boardAddr, groupKey, epoch])
 }
 
 model BoardState {
@@ -132,6 +142,9 @@ model Script {
   scriptHash    String
   markerEpoch   Int
   txHash        String?
+  createdAt     DateTime @default(now())
+
+  @@unique([examId, pseudonymHash])
 }
 
 model Mark {
@@ -140,6 +153,18 @@ model Mark {
   markerAddr     String
   score          Int
   sealedFeedback Bytes?
+  createdAt      DateTime @default(now())
+
+  @@unique([scriptId, markerAddr])
+}
+
+/// QoreX binding nonces (D2): the memo the user's QoreX self-transfer must carry.
+model BindChallenge {
+  nonce     String    @id
+  userId    String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
 }
 
 model IdentityMap {
