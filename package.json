@@ -14,7 +14,8 @@
     "findings:q7": "tsx scripts/findings/q7-epoch-restore.ts",
     "findings:q8": "rm -f scripts/findings/out/q8-*.json && vitest run -c scripts/findings/vitest.q8.config.ts --project node && vitest run -c scripts/findings/vitest.q8.config.ts --project jsdom",
     "register": "NODE_OPTIONS=\"--no-network-family-autoselection --dns-result-order=ipv4first\" tsx scripts/register.ts",
-    "vectors": "tsx scripts/vectors/gen-digest-vectors.ts"
+    "vectors": "tsx scripts/vectors/gen-digest-vectors.ts",
+    "transfer": "NODE_OPTIONS=\"--no-network-family-autoselection --dns-result-order=ipv4first\" tsx scripts/transfer.ts"
   },
   "devDependencies": {
     "@cosmjs/stargate": "^0.39.0",
