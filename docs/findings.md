@@ -8,6 +8,14 @@ REST `https://api-testnet.qore.host`. Kit versions: `@qorechain/sdk` 0.14.0, `@q
 Every claim below cites a script in `scripts/findings/` (raw output in
 `scripts/findings/out/`) or a package source location.
 
+## Decisions (agreed 2026-11-20)
+
+| # | Decision | Replaces |
+|---|---|---|
+| D1 | **Auth stays signature-authorised** (§3.1). Role-key ML-DSA-87 signatures are checked on-chain by `pqcKeyStatus` + `pqcVerify` and submitted by an untrusted relayer. The `msg.sender` fallback is not needed (Q1). Final confirmation is the Phase 2 live call from a contract. | — |
+| D2 | **SIWQ is signed by the app role key** (`signSiwq` with classical + ML-DSA-87, verified with `verifySiwqWithChain`). QoreX only supplies the user's `qor1` address. **The QoreX binding is a one-time `signAndBroadcast` self-transfer of 1 uqor with the API nonce in the memo**, behind a feature flag. A QoreX `signArbitrary` path is added later if QoreX ships it (testable with the mock's `"planned"` profile). | §3.2 "users sign in with QoreX (SIWQ)" and the SIWQ-signed bind statement; §7.3 `/auth/siwq/*` and `/me/role` bodies |
+| D3 | **The API runs on Vercel (serverless)** with the Vercel-managed Postgres. The indexer catches up on read (`eth_getLogs` from the last indexed block) plus a Vercel Cron job. The EVM window is checked and reopened lazily before each relay, under a Postgres advisory lock. **Polling replaces SSE.** No uptime ping. | §7.1 ChainModule indexer and RelayerModule auto-reopen; §7.3 SSE; §9 hosting and uptime ping |
+
 | # | Question | Status |
 |---|---|---|
 | Q1 | `pqcVerify` takes ML-DSA-87 sizes? gas? | **Answered** |
