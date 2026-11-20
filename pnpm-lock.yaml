@@ -169,6 +169,12 @@ importers:
       '@cosmjs/stargate':
         specifier: ^0.39.0
         version: 0.39.0
+      '@noble/hashes':
+        specifier: 2.4.0
+        version: 2.4.0
+      '@noble/post-quantum':
+        specifier: 0.7.1
+        version: 0.7.1
       '@qorechain/evm':
         specifier: 0.14.0
         version: 0.14.0(viem@2.58.1(typescript@5.9.3)(zod@4.6.7))

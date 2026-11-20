@@ -9,10 +9,13 @@
   "scripts": {
     "build": "pnpm -r build",
     "test": "pnpm -r test",
-    "accounts": "tsx scripts/accounts.ts"
+    "accounts": "tsx scripts/accounts.ts",
+    "findings:q1q3": "NODE_OPTIONS=--dns-result-order=ipv4first tsx scripts/findings/q1-q3-pqcverify.ts"
   },
   "devDependencies": {
     "@cosmjs/stargate": "^0.39.0",
+    "@noble/hashes": "2.4.0",
+    "@noble/post-quantum": "0.7.1",
     "@qorechain/evm": "0.14.0",
     "@qorechain/pqc": "0.2.3",
     "@qorechain/qoreseal": "0.1.0",
