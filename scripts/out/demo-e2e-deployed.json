@@ -1,0 +1,105 @@
+{
+  "api": "https://paper-trail-api.vercel.app",
+  "demoId": "cmwqn1114000c08l264hj1v9k",
+  "examId": "0x403cace17b53ce39d98d99c80cd552e8e9cab48a2af0dee7a6cee5a3c380b720",
+  "centres": {
+    "A": "0x7f4efcbabee7751a07173c1dbf06570dd800187026f152239e2ab59673f9c8dd",
+    "B": "0xa2e5233db8b27b07d8b3445d8652fbba3109582e0a8cb7d4db5179a71d73bb80"
+  },
+  "totalSeconds": 113.783,
+  "beats": [
+    {
+      "beat": 1,
+      "what": "set",
+      "at": "15.7s",
+      "result": "exam 0x403cace1…, 2 centres, groups; canary copies differ in ≥ 52 bits (10/18 toggles differ between A and B)",
+      "txs": [
+        "0x38049fcda22b3f44d8d0bf293a9c0ba5832cd2aad17b160b52dd7c62ea4b8f47",
+        "0x9babacb07f047caf242bc60c5de416d7383558c196eedbb65ec831b2e2695570",
+        "0x5ef6466a800c58e390c7f1060199cb8c0ee8db34d2dbc099471a03328d89e9d0",
+        "0xdf8c89a75884bea5f14b50d82eea90ce2a60978e045e408e61bbef91454c0ee1",
+        "0x0bfad45fb26d8b31fbcff168c383a4e7a8ef9e9ba4d80cc25c181f6e54511b52",
+        "0x25347305b7e8d52ed9e07d828d8ff122623ba035b2ebd82791d9af3c2a2f0875"
+      ]
+    },
+    {
+      "beat": 2,
+      "what": "early release",
+      "at": "17.0s",
+      "result": "refused by the contract — This paper is still sealed. It can be released from 2026-11-21T16:45:26.000Z."
+    },
+    {
+      "beat": 3,
+      "what": "examiner 1 (bot) releases centre A",
+      "at": "95.9s",
+      "result": "1 of 2",
+      "txs": [
+        "0x89c721f0408b132c9cece6d3d37ea750a2b46ec87d0b1d8a85a5db995abe15bb"
+      ]
+    },
+    {
+      "beat": 3,
+      "what": "judge releases as examiner 2",
+      "at": "98.6s",
+      "result": "2 of 2 → Released",
+      "txs": [
+        "0xeaaaea4ded4bd8e2fc6e48bb4faf7e9c1209e07497dcb306f1719ba2cdfb7035"
+      ]
+    },
+    {
+      "beat": 4,
+      "what": "invigilator A1 opens centre A",
+      "at": "99.1s",
+      "result": "Authentic ✓ (SHA3 matches the on-chain commitment)"
+    },
+    {
+      "beat": 5,
+      "what": "board removes invigilator A2",
+      "at": "101.3s",
+      "result": "epoch 2",
+      "txs": [
+        "0x75111f70ecbedeb09c3fc45a25a3c11eaf243d4a31777565a7e4955a38e7f6ff"
+      ]
+    },
+    {
+      "beat": 5,
+      "what": "6 candidate bots submit scripts",
+      "at": "111.5s",
+      "result": "6 recorded on chain, sealed to the markers",
+      "txs": [
+        "0x68a0dad581f31c2b509998be5922345024d16314c6a24aeefbb21680182c4992",
+        "0x74d91c1951e21857ac5ddb0e454f8ab49105a1fd0d6c2e3a52ef362fa5bd1cf5",
+        "0xbab900ccab16a91058b383fd30b0e350da87f3665ebe30f72c37deb4d3519fff",
+        "0xbfc43db70244447bc380560444bdf915041128f548443fb674352ac26593f3a0",
+        "0x0c64e1f4b9c71000fd1b8f475b600c3348fa68a9f6c88a858b647e213f3d1a20",
+        "0xbf83c797d723be8f631eeed72b29010e27886980a1f5b69cc111e243aa899952"
+      ]
+    },
+    {
+      "beat": 5,
+      "what": "removed invigilator A2",
+      "at": "112.5s",
+      "result": "centre A group key, epoch 2 → NOT_A_MEMBER; a candidate script → NOT_A_RECIPIENT"
+    },
+    {
+      "beat": 6,
+      "what": "leak (noisy centre-B excerpt)",
+      "at": "113.0s",
+      "result": "→ Centre B (confidence 1.00, 20/20 bits), epoch 1, 1 recipient(s)"
+    },
+    {
+      "beat": 7,
+      "what": "audit",
+      "at": "113.8s",
+      "result": "{\"ExamCreated\":1,\"CentreSet\":2,\"EpochChanged\":4,\"ShareReleased\":2,\"Released\":1,\"ScriptSubmitted\":6}"
+    }
+  ],
+  "auditCounts": {
+    "ExamCreated": 1,
+    "CentreSet": 2,
+    "EpochChanged": 4,
+    "ShareReleased": 2,
+    "Released": 1,
+    "ScriptSubmitted": 6
+  }
+}
