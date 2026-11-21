@@ -9,24 +9,36 @@ import { ChainService } from '../chain/chain.service.js';
 import { IndexerService } from '../chain/indexer.service.js';
 import { RelayerService } from '../relayer/relayer.service.js';
 
-/** Bearer ADMIN_TOKEN (or CRON_SECRET, which Vercel Cron sends) — compared in constant time. */
+const bearer = (req: Request) => {
+  const h = req.headers.authorization ?? '';
+  return h.startsWith('Bearer ') ? h.slice(7) : '';
+};
+const matches = (token: string, secrets: (string | undefined)[]) =>
+  secrets.filter((x): x is string => !!x).some((secret) => {
+    const a = Buffer.from(token);
+    const b = Buffer.from(secret);
+    return a.length === b.length && timingSafeEqual(a, b);
+  });
+
+/** Bearer ADMIN_TOKEN only — compared in constant time. */
 @Injectable()
 export class AdminGuard implements CanActivate {
   canActivate(ctx: ExecutionContext): boolean {
-    const h = ctx.switchToHttp().getRequest<Request>().headers.authorization ?? '';
-    const token = h.startsWith('Bearer ') ? h.slice(7) : '';
-    const ok = [config().ADMIN_TOKEN, process.env.CRON_SECRET].filter((x): x is string => !!x).some((secret) => {
-      const a = Buffer.from(token);
-      const b = Buffer.from(secret);
-      return a.length === b.length && timingSafeEqual(a, b);
-    });
-    if (!ok) throw new ApiError('UNAUTHENTICATED');
+    if (!matches(bearer(ctx.switchToHttp().getRequest<Request>()), [config().ADMIN_TOKEN])) throw new ApiError('UNAUTHENTICATED');
+    return true;
+  }
+}
+
+/** Bearer CRON_SECRET (what Vercel Cron sends) or ADMIN_TOKEN: only for the scheduled catch-up. */
+@Injectable()
+export class CronGuard implements CanActivate {
+  canActivate(ctx: ExecutionContext): boolean {
+    if (!matches(bearer(ctx.switchToHttp().getRequest<Request>()), [config().CRON_SECRET, config().ADMIN_TOKEN])) throw new ApiError('UNAUTHENTICATED');
     return true;
   }
 }
 
 @Controller()
-@UseGuards(AdminGuard)
 export class InternalController {
   constructor(
     @Inject(PrismaService) private readonly db: PrismaService,
@@ -35,8 +47,15 @@ export class InternalController {
     @Inject(RelayerService) private readonly relayerSvc: RelayerService,
   ) {}
 
-  /** Vercel Cron target (D3): finish pending relays by tx hash, then catch the indexer up. */
+  /** Scheduled target (D3; Vercel Cron sends GET): finish pending relays by tx hash, then catch the indexer up. */
+  @Get('internal/index')
+  @UseGuards(CronGuard)
+  indexGet() {
+    return this.index();
+  }
+
   @Post('internal/index')
+  @UseGuards(CronGuard)
   @HttpCode(200)
   async index() {
     const reconciled = await this.relayerSvc.reconcile();
@@ -45,6 +64,7 @@ export class InternalController {
   }
 
   @Get('admin/relayer')
+  @UseGuards(AdminGuard)
   async relayer() {
     const r = await this.chain.relayer();
     const w = await this.chain.windowStatus();

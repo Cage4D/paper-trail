@@ -13,7 +13,7 @@ import { AppModule } from './app.module.js';
 import { configureApp } from './app.factory.js';
 import { ChainService } from './chain/chain.service.js';
 import { PrismaService } from './prisma/prisma.service.js';
-import { config } from './config.js';
+import { config, setConfigForTests } from './config.js';
 
 const CONTRACT = getAddress(process.env.PAPERTRAIL_ADDRESS!);
 const roles = { board: createRoleKey(), ex: [createRoleKey(), createRoleKey(), createRoleKey()], outsider: createRoleKey(), unregistered: createRoleKey() };
@@ -151,6 +151,15 @@ describe.runIf(hasDb)('API', () => {
       const out = await login(roles.outsider);
       expect((await http().get(`/exams/${examId}/committee`).set('authorization', `Bearer ${out}`)).body.error.code).toBe('FORBIDDEN');
     });
+  });
+
+  it('CRON_SECRET opens only the scheduled catch-up (GET for Vercel Cron, POST), never /admin', async () => {
+    setConfigForTests({ CRON_SECRET: 'cron-secret-0123456789' });
+    const cron = { authorization: 'Bearer cron-secret-0123456789' };
+    await http().get('/internal/index').set(cron).expect(200);
+    await http().post('/internal/index').set(cron).expect(200);
+    expect((await http().get('/admin/relayer').set(cron)).status).toBe(401);
+    await http().get('/admin/relayer').set('authorization', `Bearer ${config().ADMIN_TOKEN}`).expect(200);
   });
 
   it('indexer: a cursor ahead of the chain head is rescanned instead of stalling', async () => {

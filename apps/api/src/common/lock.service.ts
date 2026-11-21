@@ -13,7 +13,9 @@ export const LOCK = { relay: 7_000_001, indexer: 7_000_002, demo: 7_000_003 } as
 export class LockService implements OnModuleDestroy {
   private pool?: pg.Pool;
   private get p(): pg.Pool {
-    this.pool ??= new pg.Pool({ connectionString: config().DATABASE_URL, max: 4, idleTimeoutMillis: 10_000 });
+    // session-level advisory locks need a DIRECT connection: through a transaction-mode pooler (Neon's
+    // default DATABASE_URL) lock and unlock could land on different server connections
+    this.pool ??= new pg.Pool({ connectionString: config().DATABASE_URL_UNPOOLED || config().DATABASE_URL, max: 4, idleTimeoutMillis: 10_000 });
     return this.pool;
   }
 

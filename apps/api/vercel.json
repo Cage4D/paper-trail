@@ -1,0 +1,5 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "cd ../.. && pnpm --filter @paper-trail/core build && pnpm --filter @paper-trail/shared build && cd apps/api && pnpm exec prisma generate && pnpm exec prisma migrate deploy && pnpm exec nest build",
+  "crons": [{ "path": "/internal/index", "schedule": "0 4 * * *" }]
+}

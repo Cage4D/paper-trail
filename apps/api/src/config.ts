@@ -6,6 +6,10 @@ import { z } from 'zod';
 
 const Env = z.object({
   DATABASE_URL: z.string().min(1),
+  /** Direct (non-pooled) connection, e.g. Neon's DATABASE_URL_UNPOOLED: needed for session advisory locks. */
+  DATABASE_URL_UNPOOLED: z.string().optional(),
+  /** Bearer secret for the scheduled /internal/index calls (Vercel Cron, GitHub Actions). */
+  CRON_SECRET: z.string().min(16).optional(),
   QORE_REST: z.string().url().default('https://api-testnet.qore.host'),
   QORE_RPC: z.string().optional(),
   EVM_RPC: z.string().url().default('https://evm-testnet.qore.host'),
