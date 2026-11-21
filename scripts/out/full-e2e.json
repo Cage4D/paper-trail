@@ -1,54 +1,55 @@
 {
   "api": "http://localhost:3000",
-  "contract": "0xDd26128846Ea6A35340010ce8be8F5820E264C33",
-  "examId": "0xc4699e7ecae9a726e2b882c578181d60a34538b641bfb0d386923ec0784d7679",
+  "contract": "0xbe6b208Bc8990a68740053Dad68624914812cf8F",
+  "examId": "0xb1a490339477c571130f47cc2bd140905f72259d405da001b61384cd4d29aa37",
   "centres": {
-    "A": "0xac67fb0b43e10a21cc387bb45f40ae3ac07e8575f5f2e8de53b6b3df1f11657b",
-    "B": "0xde68e4aac78c077c04e6963bbe2cfbbfce47932df72776de68c4307e6e71b5fc"
+    "A": "0xbc7fb5a7b74ee95a94881b9a75b7ee0b3fdcf5b523c33572e8fc854201cd9f6b",
+    "B": "0x27e587584a911ebc83520fb40b6e9138ad80e37f9c964c83659981c3814058df"
   },
-  "startTime": 1795218836,
+  "startTime": 1795253887,
   "steps": [
     {
       "step": "11 role keys signed in (SIWQ) and published recipient cards"
     },
     {
       "step": "createExam",
-      "tx": "0x64406374f2a42090b6a49bce57a3b449ccad612e4909fc6dc7447467377a144a",
-      "explorer": "https://explore.qore.network/tx/0x64406374f2a42090b6a49bce57a3b449ccad612e4909fc6dc7447467377a144a"
+      "tx": "0x052bc8c88a1594b9ca5f0d54806de8e90fc4c5c56c1849c59926db60e966c7c2",
+      "explorer": "https://explore.qore.network/tx/0x052bc8c88a1594b9ca5f0d54806de8e90fc4c5c56c1849c59926db60e966c7c2",
+      "note": "window reopened DF95CB29A4B4F008F2AB8A73DD1E0D9AAA476351DFA3DD25388A682150FF1395"
     },
     {
       "step": "setCentre A",
-      "tx": "0x72781eefd8d642de7bcb844215f5a73ff6a013b9fbc52c68f485354df607c950",
-      "explorer": "https://explore.qore.network/tx/0x72781eefd8d642de7bcb844215f5a73ff6a013b9fbc52c68f485354df607c950"
+      "tx": "0x78aac08048951922ddcf4dacab56d53598a4d23e9445073126d54aa30fce3e55",
+      "explorer": "https://explore.qore.network/tx/0x78aac08048951922ddcf4dacab56d53598a4d23e9445073126d54aa30fce3e55"
     },
     {
       "step": "setCentre B",
-      "tx": "0xdd3e3e352ae87406f149f4d35858f776948bc37683aaa2b8135ac8fd0a0f47c1",
-      "explorer": "https://explore.qore.network/tx/0xdd3e3e352ae87406f149f4d35858f776948bc37683aaa2b8135ac8fd0a0f47c1"
+      "tx": "0x272dd297a2ba4197d0b761fb3fbe6fc55c7661eaf60539dbd3ef566f1ce81e1e",
+      "explorer": "https://explore.qore.network/tx/0x272dd297a2ba4197d0b761fb3fbe6fc55c7661eaf60539dbd3ef566f1ce81e1e"
     },
     {
       "step": "rotateEpoch centre A → 1 (2 members)",
-      "tx": "0x7a65ab65f0cec77922e97e23af93b91a5f6acd52613b2eb0e052bba05a6918e8",
-      "explorer": "https://explore.qore.network/tx/0x7a65ab65f0cec77922e97e23af93b91a5f6acd52613b2eb0e052bba05a6918e8"
+      "tx": "0xc03d9f16f61f1b7761f57c81493f5db592246fd6d42feb3d7e3f3ced6a31c9fe",
+      "explorer": "https://explore.qore.network/tx/0xc03d9f16f61f1b7761f57c81493f5db592246fd6d42feb3d7e3f3ced6a31c9fe"
     },
     {
       "step": "rotateEpoch centre B → 1 (1 members)",
-      "tx": "0xd0f153d2e2b623e06276afc5d85f987679a7b9f5fcbbae2d1444155f662ce05b",
-      "explorer": "https://explore.qore.network/tx/0xd0f153d2e2b623e06276afc5d85f987679a7b9f5fcbbae2d1444155f662ce05b"
+      "tx": "0x87c9c0686745a2c794e34b2ef28d828dbd95bc971da70f422f50fda02543ff53",
+      "explorer": "https://explore.qore.network/tx/0x87c9c0686745a2c794e34b2ef28d828dbd95bc971da70f422f50fda02543ff53"
     },
     {
       "step": "rotateEpoch markers  → 1 (2 members)",
-      "tx": "0xb32d2a804392b43d32526f6bdb5d2d229341e4c1c208cb9ab6937ee3b860d352",
-      "explorer": "https://explore.qore.network/tx/0xb32d2a804392b43d32526f6bdb5d2d229341e4c1c208cb9ab6937ee3b860d352"
+      "tx": "0x7314a761cbb0edd50668a012d574a1ff13c738ce67285b7db858b8bf1232ddfa",
+      "explorer": "https://explore.qore.network/tx/0x7314a761cbb0edd50668a012d574a1ff13c738ce67285b7db858b8bf1232ddfa"
     },
     {
       "step": "early release refused by the contract",
-      "note": "TOO_EARLY: This paper is still sealed. It can be released from 2026-11-20T23:53:56.000Z."
+      "note": "TOO_EARLY: This paper is still sealed. It can be released from 2026-11-21T09:38:07.000Z."
     },
     {
       "step": "release A by examiner1 (epoch 1: A1, A2)",
-      "tx": "0x74eb0511b845595fb4691b2f9567037ceeb4300b2e3cce3ed4bdaa3408c44ff1",
-      "explorer": "https://explore.qore.network/tx/0x74eb0511b845595fb4691b2f9567037ceeb4300b2e3cce3ed4bdaa3408c44ff1"
+      "tx": "0x2023fc657d860feeb4a2d34057edeb872557150e6116b963b7eaf093dd6bdfff",
+      "explorer": "https://explore.qore.network/tx/0x2023fc657d860feeb4a2d34057edeb872557150e6116b963b7eaf093dd6bdfff"
     },
     {
       "step": "released blobs withheld before Released",
@@ -56,23 +57,23 @@
     },
     {
       "step": "board removes invigilator A2 → epoch 2",
-      "tx": "0x8f0cd839243bb67865e15bb64a5e962b247b443d33c6d841f80f200aff4c571d",
-      "explorer": "https://explore.qore.network/tx/0x8f0cd839243bb67865e15bb64a5e962b247b443d33c6d841f80f200aff4c571d"
+      "tx": "0xa38858078ad7bea3970039678986dab746614b98a422dd1a899a226cfd361563",
+      "explorer": "https://explore.qore.network/tx/0xa38858078ad7bea3970039678986dab746614b98a422dd1a899a226cfd361563"
     },
     {
       "step": "release A by examiner3 (epoch 2: A1) → released=true",
-      "tx": "0x5ce33af366d147dcc1e47a230405a6af195d918e93cb6058dabd0c7d4b2e8ffc",
-      "explorer": "https://explore.qore.network/tx/0x5ce33af366d147dcc1e47a230405a6af195d918e93cb6058dabd0c7d4b2e8ffc"
+      "tx": "0x64666ca8ff18abee0ab66cfbfb59a83afd597e2a95f32d5cd1c3fe357e1137b4",
+      "explorer": "https://explore.qore.network/tx/0x64666ca8ff18abee0ab66cfbfb59a83afd597e2a95f32d5cd1c3fe357e1137b4"
     },
     {
       "step": "release B by examiner1",
-      "tx": "0xda93e89b32a0aeaa4cf28f7e5dd96d7e7ae9b67bb5854af0d6d1599757492c3e",
-      "explorer": "https://explore.qore.network/tx/0xda93e89b32a0aeaa4cf28f7e5dd96d7e7ae9b67bb5854af0d6d1599757492c3e"
+      "tx": "0xf16a8111ad0d82c74587bd936324588d17b22e30a2da4c3331024c3df212afb2",
+      "explorer": "https://explore.qore.network/tx/0xf16a8111ad0d82c74587bd936324588d17b22e30a2da4c3331024c3df212afb2"
     },
     {
       "step": "release B by examiner2 → released=true",
-      "tx": "0x2b610382ca81df08de08630c1b068dcdc1ea9313c303029823a861ba83071cbf",
-      "explorer": "https://explore.qore.network/tx/0x2b610382ca81df08de08630c1b068dcdc1ea9313c303029823a861ba83071cbf"
+      "tx": "0x35818382290d794b3e1094da08c77c03031448204147482392fab6e5c89daf45",
+      "explorer": "https://explore.qore.network/tx/0x35818382290d794b3e1094da08c77c03031448204147482392fab6e5c89daf45"
     },
     {
       "step": "A1 opens centre A: authentic=true"
@@ -85,38 +86,41 @@
       "note": "NOT_A_MEMBER"
     },
     {
+      "step": "markers group verified against the chain (epoch 1, 2 members)"
+    },
+    {
       "step": "submitScript 1/5",
-      "tx": "0xd54ced1221f56ec780b8140e560fac7348676a43dd9f4d023b602fcfe8f26d98",
-      "explorer": "https://explore.qore.network/tx/0xd54ced1221f56ec780b8140e560fac7348676a43dd9f4d023b602fcfe8f26d98"
+      "tx": "0x51ec18d11ba37ab0bbe21cd9044634f3244a624a59873361852d4cc4aa1ae34f",
+      "explorer": "https://explore.qore.network/tx/0x51ec18d11ba37ab0bbe21cd9044634f3244a624a59873361852d4cc4aa1ae34f"
     },
     {
       "step": "submitScript 2/5",
-      "tx": "0x671ce6bf673eed1cd82b57b79c5d933d22d7001011de6a22ee9544e3cf2c1f75",
-      "explorer": "https://explore.qore.network/tx/0x671ce6bf673eed1cd82b57b79c5d933d22d7001011de6a22ee9544e3cf2c1f75"
+      "tx": "0x2d350d750d8cd5d29f81e95150d8f7229bd574e813a6b1eda6cb46ecbd0c4f1f",
+      "explorer": "https://explore.qore.network/tx/0x2d350d750d8cd5d29f81e95150d8f7229bd574e813a6b1eda6cb46ecbd0c4f1f"
     },
     {
       "step": "submitScript 3/5",
-      "tx": "0xd4c5fbad964f4346944c124ab8a5bdf37dd15dba969af6477449a7f7673255c1",
-      "explorer": "https://explore.qore.network/tx/0xd4c5fbad964f4346944c124ab8a5bdf37dd15dba969af6477449a7f7673255c1"
+      "tx": "0x2cdf4b169b3b1f426fe90523ce86ed6414ec62335b115ebea9d4cd14a673c19b",
+      "explorer": "https://explore.qore.network/tx/0x2cdf4b169b3b1f426fe90523ce86ed6414ec62335b115ebea9d4cd14a673c19b"
     },
     {
       "step": "submitScript 4/5",
-      "tx": "0x9a23f4515df3607b05b13c08d47d6c5b9c4fa53066d569ad480b472eb7706f38",
-      "explorer": "https://explore.qore.network/tx/0x9a23f4515df3607b05b13c08d47d6c5b9c4fa53066d569ad480b472eb7706f38"
+      "tx": "0x6e07fd235a871e2e870417d22bd5177bfd59a550be4018ceaaa12ef3e07a3245",
+      "explorer": "https://explore.qore.network/tx/0x6e07fd235a871e2e870417d22bd5177bfd59a550be4018ceaaa12ef3e07a3245"
     },
     {
       "step": "submitScript 5/5",
-      "tx": "0xec86a11d463ea09f0dc5956a3ffde44ef934c34031a4923332b9de8771892e89",
-      "explorer": "https://explore.qore.network/tx/0xec86a11d463ea09f0dc5956a3ffde44ef934c34031a4923332b9de8771892e89"
+      "tx": "0x0569d18992f0e2f5e975f3774521041c8d443fc164d9338522b99ff2bd6f1408",
+      "explorer": "https://explore.qore.network/tx/0x0569d18992f0e2f5e975f3774521041c8d443fc164d9338522b99ff2bd6f1408"
     },
     {
       "step": "marker1 marked 5 scripts (pseudonyms only)"
     },
     {
       "step": "publishMarks",
-      "tx": "0x21cbde267ad79988eae386a16e88246b8bdd1bd60ecefeaff4b1995af1cddce0",
-      "explorer": "https://explore.qore.network/tx/0x21cbde267ad79988eae386a16e88246b8bdd1bd60ecefeaff4b1995af1cddce0",
-      "note": "0x0cc18be862b089a1cc551d3d8969a549f5093bea04a146372dfd53ea3658e237"
+      "tx": "0xeaeb5eaf5549e65b95345c675533fc218aa7fd0562c00658fb9b75f59e466615",
+      "explorer": "https://explore.qore.network/tx/0xeaeb5eaf5549e65b95345c675533fc218aa7fd0562c00658fb9b75f59e466615",
+      "note": "0x1bbb0304ed205c354fa9639800cf691e693af0cd9de19879857ea06c06a4a881"
     },
     {
       "step": "candidate proof verifies: true (score 65)"
@@ -126,12 +130,12 @@
     },
     {
       "step": "QoreX stand-in self-transfer with the binding memo (native, hybrid-signed)",
-      "tx": "CA3DEE5DE68FC0E449F9D368E90C4D27D5C180FEF0BED835B0D8EC1F2999F4C9"
+      "tx": "BC820072B0BC1CD1905588F8733FE3F5DDFC339FEEDA852E80F26DEB31A55AF5"
     },
     {
       "step": "bindIdentity (board role key ↔ QoreX address)",
-      "tx": "0x5775ba115ea9c671b520a5dfa7b3cd5adc2037912abb013780ada2056e290d0f",
-      "explorer": "https://explore.qore.network/tx/0x5775ba115ea9c671b520a5dfa7b3cd5adc2037912abb013780ada2056e290d0f"
+      "tx": "0x5839a1ad8125dd2faf4160a05c2ebe2a1a5a42e9ed0cdac5a7165a2c56390b8d",
+      "explorer": "https://explore.qore.network/tx/0x5839a1ad8125dd2faf4160a05c2ebe2a1a5a42e9ed0cdac5a7165a2c56390b8d"
     },
     {
       "step": "audit timeline",
@@ -148,7 +152,7 @@
     "MarksPublished": 1
   },
   "leak": {
-    "copy": "0xde68e4aac78c077c04e6963bbe2cfbbfce47932df72776de68c4307e6e71b5fc",
+    "copy": "0x27e587584a911ebc83520fb40b6e9138ad80e37f9c964c83659981c3814058df",
     "confidence": 1,
     "matchedBits": 23,
     "observedBits": 23
