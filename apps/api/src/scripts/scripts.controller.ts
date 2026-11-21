@@ -1,5 +1,5 @@
-import { Body, Controller, Get, Inject, Param, Post, Query, UseGuards } from '@nestjs/common';
-import { MarkBody, PublishMarksBody, ScriptBody, SubmitScriptsBody } from '@paper-trail/shared';
+import { Body, Controller, Get, Inject, Ip, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { IdentityMapBody, MarkBody, PublishMarksBody, ScriptBody, SubmitScriptsBody, TicketsBody } from '@paper-trail/shared';
 import { ZodPipe } from '../common/zod.pipe.js';
 import { CurrentSession, SessionGuard, type Session } from '../auth/session.js';
 import { ScriptsService } from './scripts.service.js';
@@ -9,8 +9,26 @@ export class ScriptsController {
   constructor(@Inject(ScriptsService) private readonly scripts: ScriptsService) {}
 
   @Post('exams/:id/scripts')
-  submit(@Param('id') id: string, @Body(new ZodPipe(ScriptBody)) b: ScriptBody) {
-    return this.scripts.submit(id, b);
+  submit(@Param('id') id: string, @Body(new ZodPipe(ScriptBody)) b: ScriptBody, @Ip() ip: string) {
+    return this.scripts.submit(id, b, ip ?? 'unknown');
+  }
+
+  @Post('exams/:id/tickets')
+  @UseGuards(SessionGuard)
+  tickets(@CurrentSession() s: Session, @Param('id') id: string, @Body(new ZodPipe(TicketsBody)) b: TicketsBody) {
+    return this.scripts.tickets(s, id, b);
+  }
+
+  @Put('exams/:id/identity-map')
+  @UseGuards(SessionGuard)
+  putIdentityMap(@CurrentSession() s: Session, @Param('id') id: string, @Body(new ZodPipe(IdentityMapBody)) b: IdentityMapBody) {
+    return this.scripts.putIdentityMap(s, id, b);
+  }
+
+  @Get('exams/:id/identity-map')
+  @UseGuards(SessionGuard)
+  getIdentityMap(@CurrentSession() s: Session, @Param('id') id: string) {
+    return this.scripts.getIdentityMap(s, id);
   }
 
   @Get('exams/:id/markers')

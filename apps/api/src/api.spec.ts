@@ -33,7 +33,7 @@ describe.runIf(hasDb)('API', () => {
     configureApp(app);
     await app.init();
     db = app.get(PrismaService);
-    for (const t of ['relayJob', 'chainEvent', 'mark', 'script', 'member', 'epochEnvelope', 'boardState', 'bindChallenge', 'shareBlob', 'centre', 'exam', 'authChallenge', 'user', 'indexerCursor'] as const) await (db[t] as { deleteMany: () => Promise<unknown> }).deleteMany();
+    for (const t of ['relayJob', 'chainEvent', 'mark', 'script', 'scriptTicket', 'rateLimit', 'member', 'epochEnvelope', 'boardState', 'bindChallenge', 'identityMap', 'shareBlob', 'centre', 'exam', 'authChallenge', 'user', 'indexerCursor'] as const) await (db[t] as { deleteMany: () => Promise<unknown> }).deleteMany();
   });
   afterAll(async () => app?.close());
 
@@ -155,9 +155,25 @@ describe.runIf(hasDb)('API', () => {
 
   it('indexer: a cursor ahead of the chain head is rescanned instead of stalling', async () => {
     await db.indexerCursor.upsert({ where: { id: CONTRACT.toLowerCase() }, create: { id: CONTRACT.toLowerCase(), lastBlock: 999_999_999n }, update: { lastBlock: 999_999_999n } });
-    await http().post('/internal/index').set('authorization', `Bearer ${config().ADMIN_TOKEN}`).expect(200);
+    const r = (await http().post('/internal/index').set('authorization', `Bearer ${config().ADMIN_TOKEN}`).expect(200)).body;
     const c = await db.indexerCursor.findUnique({ where: { id: CONTRACT.toLowerCase() } });
-    expect(c!.lastBlock).toBe((await chain.client.getBlockNumber()) - 3n); // trails the head by CONFIRMATIONS
+    // rescans from the deploy block; one call does at most 25 chunks of 2,000 blocks, committed as it goes (finding 4)
+    expect(c!.lastBlock).toBe(config().PAPERTRAIL_DEPLOY_BLOCK + 50_000n - 1n);
+    expect(r.done).toBe(false);
+  });
+
+  it('indexer: a long backfill makes steady, committed progress across calls and reaches head - 3 (finding 4)', async () => {
+    const head = await chain.client.getBlockNumber();
+    await db.indexerCursor.update({ where: { id: CONTRACT.toLowerCase() }, data: { lastBlock: head - 120_000n } });
+    const steps: bigint[] = [];
+    for (let i = 0; i < 4; i++) {
+      await http().post('/internal/index').set('authorization', `Bearer ${config().ADMIN_TOKEN}`).expect(200);
+      steps.push((await db.indexerCursor.findUnique({ where: { id: CONTRACT.toLowerCase() } }))!.lastBlock);
+    }
+    expect(steps[0]).toBe(head - 120_000n + 50_000n);
+    expect(steps[1]).toBe(head - 120_000n + 100_000n);
+    expect(steps[2]).toBe(head - 3n); // trails the head by CONFIRMATIONS
+    expect(steps[3]).toBe(head - 3n);
   });
 
   it('admin endpoints need the admin token; health reports without secrets', async () => {

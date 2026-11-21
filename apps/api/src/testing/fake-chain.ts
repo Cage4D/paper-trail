@@ -4,7 +4,7 @@
  * Released gating run as in production. Crypto stays real: pqcVerify checks ML-DSA-87
  * signatures with QoreSign; keys come from real role keys. Test-only (excluded from the build).
  */
-import { ContractFunctionRevertedError, encodeAbiParameters, encodeErrorResult, encodeEventTopics, getAddress, type Hex } from 'viem';
+import { ContractFunctionRevertedError, decodeFunctionData, encodeAbiParameters, encodeErrorResult, encodeEventTopics, fromHex as vFromHex, getAddress, keccak256, toHex as vToHex, type Hex } from 'viem';
 import { pqVerify } from '@qorechain/qoresign';
 import { fromHex, toHex, type RoleKey } from '@paper-trail/core';
 import { PAPERTRAIL_ABI } from '@paper-trail/shared';
@@ -25,8 +25,15 @@ export class FakeChain {
   sent: { functionName: string; args: unknown[] }[] = [];
   nextRevert?: { errorName: string; args: unknown[] };
   nativeTxs = new Map<string, { code: number; memo: string; messages: Record<string, unknown>[] }>();
+  /** fault knobs (bug-hunt finding 2) */
+  receiptTimeouts = 0; // the next N waitForTransactionReceipt calls time out (the tx still lands)
+  failBroadcastAfterAccept = 0; // the next N broadcasts are applied, then throw a transport error
+  broadcasts = new Map<string, number>(); // tx hash → times its raw bytes reached the fake node
+  mined = new Set<string>();
+  headOffset = 0n; // raise the reported head without new blocks (indexer backfill tests)
   private logs: Record<string, unknown>[] = [];
   private block = 20_000_000n; // above PAPERTRAIL_DEPLOY_BLOCK, where the indexer starts
+  private evmNonce = 0;
 
   constructor(address: string) {
     this.address = getAddress(address);
@@ -46,7 +53,7 @@ export class FakeChain {
 
   client = {
     getBalance: async () => 10n ** 18n,
-    getBlockNumber: async () => this.block,
+    getBlockNumber: async () => this.block + this.headOffset,
     getLogs: async ({ fromBlock, toBlock }: { fromBlock: bigint; toBlock: bigint }) => this.logs.filter((l) => (l.blockNumber as bigint) >= fromBlock && (l.blockNumber as bigint) <= toBlock),
     readContract: async () => 0n,
     simulateContract: async (p: { functionName: string; args: unknown[] }) => {
@@ -57,8 +64,38 @@ export class FakeChain {
       }
       return { request: p, result: undefined };
     },
-    waitForTransactionReceipt: async ({ hash }: { hash: Hex }) => ({ status: 'success', blockNumber: this.block, gasUsed: 250_000n, logs: this.logs.filter((l) => l.transactionHash === hash) }),
+    waitForTransactionReceipt: async ({ hash }: { hash: Hex }) => {
+      if (this.receiptTimeouts > 0) {
+        this.receiptTimeouts--;
+        throw new Error('Timed out while waiting for transaction receipt');
+      }
+      return this.receipt(hash);
+    },
+    getTransactionReceipt: async ({ hash }: { hash: Hex }) => {
+      const r = this.receipt(hash);
+      if (!r) throw new Error('receipt not found');
+      return r;
+    },
+    sendRawTransaction: async ({ serializedTransaction }: { serializedTransaction: Hex }) => {
+      const hash = keccak256(serializedTransaction);
+      this.broadcasts.set(hash, (this.broadcasts.get(hash) ?? 0) + 1);
+      if (this.mined.has(hash)) throw new Error('already known');
+      const tx = JSON.parse(vFromHex(serializedTransaction, 'string')) as { data: Hex };
+      const { functionName, args } = decodeFunctionData({ abi: PAPERTRAIL_ABI, data: tx.data });
+      this.apply({ functionName, args: args as unknown as unknown[] }, hash);
+      this.mined.add(hash);
+      if (this.failBroadcastAfterAccept > 0) {
+        this.failBroadcastAfterAccept--;
+        throw new Error('socket hang up');
+      }
+      return hash;
+    },
   };
+
+  private receipt(hash: Hex) {
+    if (!this.mined.has(hash)) return undefined as never;
+    return { status: 'success', blockNumber: this.block, gasUsed: 250_000n, logs: this.logs.filter((l) => l.transactionHash === hash) } as never;
+  }
 
   async relayer() {
     return { cosmos: 'qor1fake', evm: '0x0000000000000000000000000000000000000001' };
@@ -67,10 +104,16 @@ export class FakeChain {
   async wallet() {
     return {
       account: { address: '0x0000000000000000000000000000000000000001' },
-      writeContract: async (req: { functionName: string; args: unknown[] }) => {
+      chain: undefined,
+      prepareTransactionRequest: async (req: { to: Hex; data: Hex }) => ({ to: req.to, data: req.data, nonce: this.evmNonce++ }),
+      signTransaction: async (p: { to: Hex; data: Hex; nonce: number }) => vToHex(JSON.stringify({ to: p.to, data: p.data, nonce: p.nonce })),
+    };
+  }
+
+  /** Apply a contract call's effects (nonces, epochs, releases) and emit its logs. */
+  private apply(req: { functionName: string; args: unknown[] }, hash: Hex) {
         this.sent.push(req);
         this.block += 1n;
-        const hash = `0x${this.sent.length.toString(16).padStart(64, '0')}` as Hex;
         const a = req.args as Hex[];
         const signerOf: Record<string, Hex> = { createExam: a[1], release: a[3], bindIdentity: a[0], rotateEpoch: a[1] };
         const signer = (signerOf[req.functionName] ?? this.boardFor(a[0]))!.toLowerCase();
@@ -106,9 +149,6 @@ export class FakeChain {
             this.log('IdentityBound', { role: a[0], statementHash: a[1] }, hash);
             break;
         }
-        return hash;
-      },
-    };
   }
 
   boards = new Map<string, string>(); // examId → board

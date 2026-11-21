@@ -7,6 +7,7 @@ import { config } from '../config.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { ChainService } from '../chain/chain.service.js';
 import { IndexerService } from '../chain/indexer.service.js';
+import { RelayerService } from '../relayer/relayer.service.js';
 
 /** Bearer ADMIN_TOKEN (or CRON_SECRET, which Vercel Cron sends) — compared in constant time. */
 @Injectable()
@@ -31,14 +32,16 @@ export class InternalController {
     @Inject(PrismaService) private readonly db: PrismaService,
     @Inject(ChainService) private readonly chain: ChainService,
     @Inject(IndexerService) private readonly indexer: IndexerService,
+    @Inject(RelayerService) private readonly relayerSvc: RelayerService,
   ) {}
 
-  /** Vercel Cron target: catch the indexer up (D3). */
+  /** Vercel Cron target (D3): finish pending relays by tx hash, then catch the indexer up. */
   @Post('internal/index')
   @HttpCode(200)
   async index() {
+    const reconciled = await this.relayerSvc.reconcile();
     const r = await this.indexer.catchUp(true);
-    return r ? { stored: r.stored, toBlock: r.toBlock.toString() } : { skipped: true };
+    return { reconciled, ...(r ? { stored: r.stored, toBlock: r.toBlock.toString(), done: r.done } : { skipped: true }) };
   }
 
   @Get('admin/relayer')

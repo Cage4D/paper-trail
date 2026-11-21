@@ -17,7 +17,7 @@ import type { BindBody } from '@paper-trail/shared';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { ChainService } from '../chain/chain.service.js';
 import { RelayerService } from '../relayer/relayer.service.js';
-import { ApiError } from '../common/api-error.js';
+import { ApiError, maybeSent } from '../common/api-error.js';
 import type { Session } from './session.js';
 
 const TTL_MS = 30 * 60_000;
@@ -51,11 +51,19 @@ export class BindingService {
 
     const statement = bindingStatement({ roleAddress: s.roleAddress, qorexAddress: b.qorexAddress, nonce, txHash: b.txHash });
     const sh = statementHash(statement);
-    const r = await this.relayer.relay(Action.BindIdentity, s.evm, { role: s.evm, statementHash: sh }, b.signature as Hex);
-    await this.db.$transaction([
-      this.db.bindChallenge.update({ where: { nonce }, data: { usedAt: new Date() } }),
-      this.db.user.update({ where: { id: s.userId }, data: { qorexAddress: b.qorexAddress, bindTx: b.txHash.toUpperCase(), bindStatementHash: sh, bindRelayTx: r.txHash } }),
-    ]);
-    return { qorexAddress: b.qorexAddress, statement, statementHash: sh, relayTx: r.txHash };
+    const record = (relayTx: string | null) =>
+      this.db.$transaction([
+        this.db.bindChallenge.update({ where: { nonce }, data: { usedAt: new Date() } }),
+        this.db.user.update({ where: { id: s.userId }, data: { qorexAddress: b.qorexAddress, bindTx: b.txHash.toUpperCase(), bindStatementHash: sh, bindRelayTx: relayTx } }),
+      ]);
+    try {
+      const r = await this.relayer.relay(Action.BindIdentity, s.evm, { role: s.evm, statementHash: sh }, b.signature as Hex, { ref: `bind:${s.evm}:${nonce}` });
+      await record(r.txHash);
+      return { qorexAddress: b.qorexAddress, statement, statementHash: sh, relayTx: r.txHash };
+    } catch (e) {
+      // may have landed: record the binding now; the IdentityBound projection fills in bindRelayTx
+      if (maybeSent(e)) await record(null);
+      throw e;
+    }
   }
 }

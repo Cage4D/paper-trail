@@ -21,6 +21,12 @@ enum Role {
   MARKER
 }
 
+enum MarksStatus {
+  OPEN
+  PUBLISHING // publishMarks relayed / in flight: marking frozen (bug-hunt finding 6)
+  PUBLISHED
+}
+
 enum RelayStatus {
   QUEUED
   SUBMITTED
@@ -64,8 +70,10 @@ model Exam {
   committeeHash    String
   createTx         String?
   status           ExamStatus @default(PENDING)
+  marksStatus      MarksStatus @default(OPEN)
   marksRoot        String?
   marksTx          String?
+  marksSnapshot    Json? // the exact entries the root was built from
   centres          Centre[]
   createdAt        DateTime   @default(now())
 }
@@ -100,15 +108,24 @@ model Member {
   @@index([boardAddr, groupKey, active])
 }
 
+/// One row per (board, group, epoch), written BEFORE relaying rotateEpoch and confirmed by the
+/// indexed EpochChanged event (bug-hunt findings 2/3): the members of the epoch the chain is at
+/// are the group's current members.
 model EpochEnvelope {
-  id          String  @id @default(cuid())
-  boardAddr   String
-  groupKey    String
-  epoch       Int
-  envelope    Bytes
-  membersHash String
-  txHash      String?
-  createdAt   DateTime @default(now())
+  id           String   @id @default(cuid())
+  boardAddr    String
+  groupKey     String
+  groupChainId String
+  epoch        Int
+  envelope     Bytes
+  membersHash  String
+  members      String[] // 0x… lower-case, the full member list of this epoch
+  added        String[]
+  removed      String[]
+  role         Role     @default(INVIGILATOR)
+  confirmed    Boolean  @default(false) // EpochChanged indexed with this membersHash
+  txHash       String?
+  createdAt    DateTime @default(now())
 
   @@unique([boardAddr, groupKey, epoch])
 }
@@ -154,6 +171,7 @@ model Mark {
   score          Int
   sealedFeedback Bytes?
   createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   @@unique([scriptId, markerAddr])
 }
@@ -196,6 +214,8 @@ model IndexerCursor {
 
 model RelayJob {
   id        String      @id @default(cuid())
+  ref       String? // what the job is for, e.g. "centre:<examId>:<centreId>" (retries, reconciliation)
+  examId    String?
   action    String
   signer    String
   payload   Json
@@ -205,4 +225,25 @@ model RelayJob {
   attempts  Int         @default(0)
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
+
+  @@index([ref])
+  @@index([status])
+}
+
+/// Board-issued, single-use admission tickets for script submission (bug-hunt finding 5).
+model ScriptTicket {
+  tokenHash String    @id // SHA3-256 of the ticket
+  examId    String
+  centreId  String
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([examId])
+}
+
+/// Fixed-window rate limits shared by every serverless instance (bug-hunt finding 5).
+model RateLimit {
+  key         String   @id
+  windowStart DateTime
+  count       Int
 }

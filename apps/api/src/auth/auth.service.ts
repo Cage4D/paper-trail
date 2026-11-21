@@ -89,6 +89,7 @@ export class AuthService {
   }
 
   async directory(role?: string) {
+    if (role !== undefined && !['invigilator', 'marker'].includes(role.toLowerCase())) throw new ApiError('VALIDATION_FAILED', { fields: 'role (invigilator or marker)' });
     const users = (await this.db.user.findMany({ orderBy: { createdAt: 'asc' } })).filter((u) => u.sealCard !== null);
     const roles = role ? new Set((await this.db.member.findMany({ where: { role: role.toUpperCase() as never, active: true } })).map((m) => m.address)) : null;
     return users

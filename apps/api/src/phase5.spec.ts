@@ -11,7 +11,7 @@ import { getAddress, type Hex } from 'viem';
 import {
   Action, BoardGroups, b64url, bindingStatement, buildAction, buildMarksTree, centreGroupKey, createRoleKey, examIdFor, fromB64url,
   markersGroupKey, newPseudonym, openPaper, openScript, prepareRelease, recipientCardFor, sealScript, setExam, signAction, signSignIn,
-  statementHash, toHex, verifyMarkProof, type RoleKey,
+  statementHash, toHex, verifyMarkProof, checkRecipientCard, membersHash as coreMembersHash, type RoleKey,
 } from '@paper-trail/core';
 import { AppModule } from './app.module.js';
 import { configureApp } from './app.factory.js';
@@ -29,6 +29,7 @@ const k = {
   outsider: createRoleKey(),
 };
 const all: RoleKey[] = [k.board, ...k.ex, ...k.inv, ...k.markers, k.outsider];
+void fromB64url;
 
 describe.runIf(!!process.env.DATABASE_URL)('Phase 5 flow', () => {
   let app: INestApplication;
@@ -38,6 +39,14 @@ describe.runIf(!!process.env.DATABASE_URL)('Phase 5 flow', () => {
   chain.examIdFn = examIdFor;
   const http = () => request(app.getHttpServer());
   const tokens = new Map<RoleKey, string>();
+  /** Recipients from a group response: each signed card checked against that member's keys (as a client would against the chain). */
+  const fromCards = (g: { members: { address: string; card: unknown }[]; membersHash: string }) => {
+    expect(coreMembersHash(g.members.map((m) => m.address))).toBe(g.membersHash);
+    return g.members.map((m) => {
+      const who = all.find((x) => x.evm.toLowerCase() === m.address)!;
+      return checkRecipientCard(m.card as never, { pqPublicKey: who.pq.publicKey, mlkemPublicKey: who.seal.mlkemPublicKey, address: who.address });
+    });
+  };
   const auth = (r: RoleKey) => ({ authorization: `Bearer ${tokens.get(r)}` });
   const sign = async (signer: RoleKey, action: Action, fields: never) => {
     const nonce = await chain.nonceOf(signer.evm);
@@ -57,7 +66,7 @@ describe.runIf(!!process.env.DATABASE_URL)('Phase 5 flow', () => {
     configureApp(app);
     await app.init();
     db = app.get(PrismaService);
-    for (const t of ['relayJob', 'chainEvent', 'mark', 'script', 'member', 'epochEnvelope', 'boardState', 'bindChallenge', 'shareBlob', 'centre', 'exam', 'authChallenge', 'user', 'indexerCursor'] as const)
+    for (const t of ['relayJob', 'chainEvent', 'mark', 'script', 'scriptTicket', 'rateLimit', 'member', 'epochEnvelope', 'boardState', 'bindChallenge', 'identityMap', 'shareBlob', 'centre', 'exam', 'authChallenge', 'user', 'indexerCursor'] as const)
       await (db[t] as { deleteMany: () => Promise<unknown> }).deleteMany();
     // everyone signs in and publishes a recipient card
     for (const r of all) {
@@ -106,7 +115,7 @@ describe.runIf(!!process.env.DATABASE_URL)('Phase 5 flow', () => {
     const doRelease = async (i: number) => {
       const share = await http().get(`/exams/${examId}/centres/${A}/my-share`).set(auth(k.ex[i])).expect(200);
       const inv = await http().get(`/exams/${examId}/centres/${A}/invigilators`).expect(200);
-      const recipients = inv.body.members.map((m: { mlkemPublicKey: string; x25519PublicKey: string }) => ({ mlkemPublicKey: fromB64url(m.mlkemPublicKey), x25519PublicKey: Uint8Array.from(Buffer.from(m.x25519PublicKey, 'hex')) }));
+      const recipients = fromCards(inv.body);
       const r = prepareRelease({ shareEnvelope: fromB64url(share.body.sealedToExaminer), examinerKeys: k.ex[i].seal, examinerIndex: share.body.examinerIndex, examId, centreId: A, epoch: inv.body.epoch, invigilators: recipients });
       const signature = await sign(k.ex[i], Action.Release, { examId, centreId: A, blobHash: r.blobHash, examiner: k.ex[i].evm, epoch: BigInt(inv.body.epoch) } as never);
       return http().post(`/exams/${examId}/centres/${A}/release`).set(auth(k.ex[i])).send({ releasedBlob: b64url(r.blob), blobHash: r.blobHash, epoch: inv.body.epoch, signature });
@@ -144,18 +153,27 @@ describe.runIf(!!process.env.DATABASE_URL)('Phase 5 flow', () => {
 
   it('scripts → batch submit → blind marking → published root → proofs', async () => {
     const mk = await http().get(`/exams/${examId}/markers`).expect(200);
-    const markers = mk.body.members.map((m: { mlkemPublicKey: string; x25519PublicKey: string }) => ({ mlkemPublicKey: fromB64url(m.mlkemPublicKey), x25519PublicKey: Uint8Array.from(Buffer.from(m.x25519PublicKey, 'hex')) }));
+    const markers = fromCards(mk.body);
     const pseudonyms = [newPseudonym(), newPseudonym(), newPseudonym()];
+    const tix = async (centreId: string, n: number) => (await http().post(`/exams/${examId}/tickets`).set(auth(k.board)).send({ centreId, count: n }).expect(201)).body.tickets as string[];
+    const ticketsA = await tix(A, 5);
+    const ticketsB = await tix(B, 1);
     // centre B is not released: refused
     const sB = sealScript({ examId, centreId: B, pseudonym: pseudonyms[0], answers: {}, markers });
-    expect((await http().post(`/exams/${examId}/scripts`).send({ centreId: B, pseudonymHash: sB.pseudonymHash, blob: b64url(sB.envelope), scriptHash: sB.scriptHash, markerEpoch: mk.body.epoch })).body.error.code).toBe('NOT_RELEASED');
+    expect((await http().post(`/exams/${examId}/scripts`).send({ centreId: B, pseudonymHash: sB.pseudonymHash, blob: b64url(sB.envelope), scriptHash: sB.scriptHash, markerEpoch: mk.body.epoch, ticket: ticketsB[0] })).body.error.code).toBe('NOT_RELEASED');
     for (const [i, ps] of pseudonyms.entries()) {
       const s = sealScript({ examId, centreId: A, pseudonym: ps, answers: { q1: i }, markers });
-      await http().post(`/exams/${examId}/scripts`).send({ centreId: A, pseudonymHash: s.pseudonymHash, blob: b64url(s.envelope), scriptHash: s.scriptHash, markerEpoch: mk.body.epoch }).expect(201);
+      await http().post(`/exams/${examId}/scripts`).send({ centreId: A, pseudonymHash: s.pseudonymHash, blob: b64url(s.envelope), scriptHash: s.scriptHash, markerEpoch: mk.body.epoch, ticket: ticketsA[i] }).expect(201);
     }
     // a script sealed to someone else is refused
     const wrong = sealScript({ examId, centreId: A, pseudonym: newPseudonym(), answers: {}, markers: [k.outsider.recipient] });
-    expect((await http().post(`/exams/${examId}/scripts`).send({ centreId: A, pseudonymHash: wrong.pseudonymHash, blob: b64url(wrong.envelope), scriptHash: wrong.scriptHash, markerEpoch: mk.body.epoch })).status).toBe(400);
+    expect((await http().post(`/exams/${examId}/scripts`).send({ centreId: A, pseudonymHash: wrong.pseudonymHash, blob: b64url(wrong.envelope), scriptHash: wrong.scriptHash, markerEpoch: mk.body.epoch, ticket: ticketsA[3] })).status).toBe(400);
+    // finding 5: no ticket / a used ticket / another centre's ticket are refused
+    const extra = sealScript({ examId, centreId: A, pseudonym: newPseudonym(), answers: {}, markers });
+    const body = (ticket: string) => ({ centreId: A, pseudonymHash: extra.pseudonymHash, blob: b64url(extra.envelope), scriptHash: extra.scriptHash, markerEpoch: mk.body.epoch, ticket });
+    expect((await http().post(`/exams/${examId}/scripts`).send({ ...body('x'), ticket: undefined })).status).toBe(400);
+    expect((await http().post(`/exams/${examId}/scripts`).send(body(ticketsA[0]))).body.error.code).toBe('FORBIDDEN');
+    expect((await http().post(`/exams/${examId}/scripts`).send(body(ticketsB[0]))).body.error.code).toBe('FORBIDDEN');
 
     const pending = (await http().get(`/exams/${examId}/scripts/pending`).set(auth(k.board)).expect(200)).body;
     expect(pending).toHaveLength(3);

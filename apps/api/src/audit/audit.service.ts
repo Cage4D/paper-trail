@@ -53,6 +53,7 @@ export class AuditService {
   }
 
   async events(examId: string, after?: string) {
+    if (after !== undefined && !/^\d{1,20}:\d{1,9}$/.test(after)) throw new ApiError('VALIDATION_FAILED', { fields: 'after (expected <block>:<logIndex>)' });
     const { events } = await this.load(examId);
     const [b, i] = (after ?? '').split(':').map((x) => (x ? BigInt(x) : -1n));
     const fresh = events.filter((e) => e.blockNumber > b || (e.blockNumber === b && BigInt(e.logIndex) > (i ?? -1n)));

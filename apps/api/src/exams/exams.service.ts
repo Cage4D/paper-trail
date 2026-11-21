@@ -9,7 +9,8 @@ import type { CreateExamBody, SetCentreBody } from '@paper-trail/shared';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { RelayerService } from '../relayer/relayer.service.js';
 import { IndexerService } from '../chain/indexer.service.js';
-import { ApiError } from '../common/api-error.js';
+import { ApiError, maybeSent } from '../common/api-error.js';
+import { ChainService } from '../chain/chain.service.js';
 import { decodeBlob, lower, sha3Hex, toB64url } from '../common/bytes.js';
 import type { Session } from '../auth/session.js';
 
@@ -19,7 +20,18 @@ export class ExamsService {
     @Inject(PrismaService) private readonly db: PrismaService,
     @Inject(RelayerService) private readonly relayer: RelayerService,
     @Inject(IndexerService) private readonly indexer: IndexerService,
+    @Inject(ChainService) private readonly chain: ChainService,
   ) {}
+
+  /**
+   * A row from an earlier attempt: done → CONFLICT; relay still pending → RELAYER_BUSY (keep it);
+   * failed / never relayed → the caller may replace it (bug-hunt finding 2).
+   */
+  private async retryable(ref: string, done: boolean): Promise<void> {
+    if (done) throw new ApiError('CONFLICT');
+    const job = await this.relayer.jobFor(ref);
+    if (job && job.status !== 'FAILED') throw ApiError.pending(job.txHash ?? '');
+  }
 
   async create(s: Session, b: CreateExamBody) {
     if (b.startTime <= Math.floor(Date.now() / 1000) + 30) throw new ApiError('VALIDATION_FAILED', { fields: 'startTime' });
@@ -29,7 +41,12 @@ export class ExamsService {
     const committeeHash = sha3Hex(committee);
     const board = s.evm;
     const onchainId = examIdFor(board, b.salt as Hex).toLowerCase();
-    if (await this.db.exam.findUnique({ where: { onchainId } })) throw new ApiError('CONFLICT');
+    const ref = `exam:${onchainId}`;
+    const prev = await this.db.exam.findUnique({ where: { onchainId } });
+    if (prev) {
+      await this.retryable(ref, prev.status === 'CREATED');
+      await this.db.exam.delete({ where: { id: prev.id } });
+    }
     const exam = await this.db.exam.create({
       data: {
         onchainId, salt: b.salt.toLowerCase(), title: b.title, boardAddr: board, examiners, startTime: new Date(b.startTime * 1000),
@@ -42,12 +59,13 @@ export class ExamsService {
         board,
         { salt: b.salt as Hex, board, examiners, startTime: BigInt(b.startTime), masterCommitment: b.masterCommitment as Hex, committeeBundleHash: committeeHash },
         b.signature as Hex,
+        { ref, examId: onchainId },
       );
       await this.db.exam.update({ where: { id: exam.id }, data: { createTx: r.txHash } });
-      await this.indexer.catchUp(true).catch(() => null);
       return { id: exam.id, examId: onchainId, onchainId, txHash: r.txHash, windowReopened: r.windowReopened ?? null };
     } catch (e) {
-      await this.db.exam.delete({ where: { id: exam.id } }).catch(() => undefined);
+      // may have landed (receipt timed out): keep the row; ExamCreated / reconciliation will settle it
+      if (!maybeSent(e)) await this.db.exam.delete({ where: { id: exam.id } }).catch(() => undefined);
       throw e;
     }
   }
@@ -56,23 +74,33 @@ export class ExamsService {
     const exam = await this.examOr404(examId);
     if (exam.boardAddr !== s.evm) throw new ApiError('FORBIDDEN');
     const centreId = b.centreId.toLowerCase();
-    if (await this.db.centre.findUnique({ where: { examId_onchainId: { examId: exam.id, onchainId: centreId } } })) throw new ApiError('CONFLICT');
+    const ref = `centre:${exam.onchainId}:${centreId}`;
+    const prev = await this.db.centre.findUnique({ where: { examId_onchainId: { examId: exam.id, onchainId: centreId } } });
+    if (prev) {
+      await this.retryable(ref, prev.confirmed);
+      await this.db.$transaction([
+        this.db.shareBlob.deleteMany({ where: { examId: exam.onchainId, centreId } }),
+        this.db.centre.delete({ where: { id: prev.id } }),
+      ]);
+    }
+    // a board can reuse a centre whose group already rotated: start from the chain's epoch (finding 8)
+    const epochNow = await this.chain.centreEpoch(exam.boardAddr as Hex, centreId as Hex).catch(() => 0);
     const cipher = decodeBlob(b.cipherBlob, 'cipherBlob', 4 * 1024 * 1024);
     const cipherHash = sha3Hex(cipher);
     const shares = b.shares.map((x, i) => decodeBlob(x, `shares.${i}`));
     const centre = await this.db.$transaction(async (tx) => {
-      const c = await tx.centre.create({ data: { examId: exam.id, onchainId: centreId, name: b.name, commitment: b.commitment.toLowerCase(), cipherBlob: cipher, cipherHash } });
+      const c = await tx.centre.create({ data: { examId: exam.id, onchainId: centreId, name: b.name, commitment: b.commitment.toLowerCase(), cipherBlob: cipher, cipherHash, currentEpoch: epochNow } });
       await tx.shareBlob.createMany({
         data: shares.map((sh, i) => ({ examId: exam.onchainId, centreId, examinerAddr: exam.examiners[i], examinerIndex: i, sealedToExaminer: sh })),
       });
       return c;
     });
     try {
-      const r = await this.relayer.relay(Action.SetCentre, s.evm, { examId: exam.onchainId as Hex, centreId: centreId as Hex, commitment: b.commitment as Hex, cipherHash }, b.signature as Hex);
+      const r = await this.relayer.relay(Action.SetCentre, s.evm, { examId: exam.onchainId as Hex, centreId: centreId as Hex, commitment: b.commitment as Hex, cipherHash }, b.signature as Hex, { ref, examId: exam.onchainId });
       await this.db.centre.update({ where: { id: centre.id }, data: { setTx: r.txHash } });
-      await this.indexer.catchUp(true).catch(() => null);
       return { centreId, txHash: r.txHash, cipherHash, windowReopened: r.windowReopened ?? null };
     } catch (e) {
+      if (maybeSent(e)) throw e; // keep the ciphertext and shares: the centre may be set on chain
       await this.db.$transaction([
         this.db.shareBlob.deleteMany({ where: { examId: exam.onchainId, centreId } }),
         this.db.centre.delete({ where: { id: centre.id } }),
