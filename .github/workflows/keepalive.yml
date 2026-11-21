@@ -1,0 +1,31 @@
+# Uptime ping + scheduled catch-up for the deployed API (spec §9: every 5 min through 16 Dec;
+# judging runs 6–15 Dec). Also reconciles pending relays and indexes events (decision D3: the
+# API runs on Vercel, with no long-running process). A failed health check fails the run, so
+# GitHub notifies the repo owner. Needs repo variable API_URL and repo secret CRON_SECRET.
+name: keepalive
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    if: ${{ vars.API_URL != '' }}
+    timeout-minutes: 5
+    steps:
+      - name: health and catch-up
+        env:
+          API_URL: ${{ vars.API_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ "$(date -u +%Y%m%d)" -gt 20261216 ]; then echo "Judging is over (after 16 Dec 2026): nothing to do."; exit 0; fi
+          health=$(curl -fsS --max-time 60 "$API_URL/health")
+          echo "$health" | jq '{ok, warnings, relayerBalanceQor: .relayerBalanceQor.value, window: .window.value, indexerLagBlocks: .indexerLagBlocks.value}'
+          echo "$health" | jq -r '.warnings[]? | "::warning::" + .'
+          [ "$(echo "$health" | jq -r .ok)" = "true" ] || { echo "::error::/health is not ok"; exit 1; }
+          curl -fsS --max-time 240 -X POST -H "Authorization: Bearer $CRON_SECRET" "$API_URL/internal/index" | jq -c .
