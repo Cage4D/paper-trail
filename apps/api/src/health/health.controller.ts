@@ -1,10 +1,18 @@
 import { Controller, Get, Inject } from '@nestjs/common';
-import { formatEther } from 'viem';
+import { formatEther, parseEther } from 'viem';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { ChainService } from '../chain/chain.service.js';
 import { IndexerService } from '../chain/indexer.service.js';
 
-/** GET /health: DB, RPC, relayer balance, window status, indexer lag (spec §7.1). Never secrets. */
+/** Below this the relayer may run dry during judging (~0.41 QOR per demo run + 0.1 QOR per window reopen). */
+export const RELAYER_LOW_QOR = '2';
+const FAUCET = 'https://dashboard.qorechain.io/faucet';
+
+/**
+ * GET /health: DB, RPC, relayer balance, window status, indexer lag (spec §7.1). Never secrets.
+ * `warnings` flags a low relayer balance (with the address to fund) while `ok` stays true: a low
+ * balance is not an outage yet, but whoever watches the uptime ping should claim the faucet.
+ */
 @Controller('health')
 export class HealthController {
   constructor(
@@ -33,6 +41,11 @@ export class HealthController {
       check(async () => (await this.indexer.lag())?.toString() ?? null),
     ]);
     const ok = db.ok && block.ok && balance.ok && window.ok;
-    return { ok, contract: this.chain.address, db, rpc: block, relayerBalanceQor: balance, window, indexerLagBlocks: lag };
+    const warnings: string[] = [];
+    if (balance.ok && parseEther(balance.value) < parseEther(RELAYER_LOW_QOR)) {
+      const r = await this.chain.relayer();
+      warnings.push(`Relayer balance is low (${balance.value} QOR, below ${RELAYER_LOW_QOR}). Claim testnet QOR for ${r.cosmos} at ${FAUCET}.`);
+    }
+    return { ok, warnings, contract: this.chain.address, db, rpc: block, relayerBalanceQor: balance, window, indexerLagBlocks: lag };
   }
 }

@@ -182,6 +182,13 @@ describe.runIf(hasDb)('API', () => {
     await http().post('/internal/index').set('authorization', `Bearer ${config().ADMIN_TOKEN}`).expect(200);
     const h = await http().get('/health').expect(200);
     expect(h.body.ok).toBe(true);
+    // the fake relayer holds 1 QOR: below the 2 QOR threshold, so a faucet warning (ok stays true)
+    expect(h.body.warnings).toHaveLength(1);
+    expect(h.body.warnings[0]).toMatch(/^Relayer balance is low \(1 QOR, below 2\)\. Claim testnet QOR for qor1fake at https:\/\/dashboard\.qorechain\.io\/faucet\.$/);
+    const orig = chain.relayerBalanceWei.bind(chain);
+    chain.relayerBalanceWei = async () => 5n * 10n ** 18n; // 5 QOR: healthy, no warning
+    expect((await http().get('/health').expect(200)).body.warnings).toEqual([]);
+    chain.relayerBalanceWei = orig;
     expect(JSON.stringify(h.body)).not.toContain(config().JWT_SECRET);
   });
 });
