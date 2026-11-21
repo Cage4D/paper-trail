@@ -1,0 +1,105 @@
+{
+  "api": "http://localhost:3000",
+  "demoId": "cmwqm0hfw0003pyapv5ucz1sk",
+  "examId": "0x42a270513f3908ed2acea5178dd9f6eff029b8914f7e065a429ea2218b72271e",
+  "centres": {
+    "A": "0xb190f4dd044bb9d53320271245bb1647f86589bed1c155364c112eb7c3bb0df9",
+    "B": "0xaabb406ee01d3969674b20eba32cc56e0a52e0cf0ba4a40bac5dcd2daf8a60a5"
+  },
+  "totalSeconds": 155.345,
+  "beats": [
+    {
+      "beat": 1,
+      "what": "set",
+      "at": "36.5s",
+      "result": "exam 0x42a27051…, 2 centres, groups; canary copies differ in ≥ 55 bits (9/18 toggles differ between A and B)",
+      "txs": [
+        "0x22ba384393c33caea2541e9f8c5fe3fae6d584f92b710533e4f940d804b044c1",
+        "0x62747f948b8fdc435c4b9b5470f3ca39e63a692661afe07382ba303ddd0807a8",
+        "0x7544f4afcb46eb955cbd9f39cd4ea0a1d9b2b83ef3a9c6aea51bf2aaf443be1a",
+        "0xe65ad1b978dd74524b2fcd58cab7041eb4704f96fe64a63b117f3ef04c2c72fe",
+        "0x280018529e8161b0ce1f5e9f3f1b3ff2cd135bbfc7f112e9c39c2bd1bbb7e411",
+        "0xb7572949fb76a008274a0fd1ec2f3f60fcecdc69824bf99ee3154e97ce6707c5"
+      ]
+    },
+    {
+      "beat": 2,
+      "what": "early release",
+      "at": "41.8s",
+      "result": "refused by the contract — This paper is still sealed. It can be released from 2026-11-21T16:17:00.000Z."
+    },
+    {
+      "beat": 3,
+      "what": "examiner 1 (bot) releases centre A",
+      "at": "100.1s",
+      "result": "1 of 2",
+      "txs": [
+        "0xa3db0ec6ba593e2e8a0565eef9d346454efb3785d347f22c78405aca8a8cf916"
+      ]
+    },
+    {
+      "beat": 3,
+      "what": "judge releases as examiner 2",
+      "at": "109.1s",
+      "result": "2 of 2 → Released",
+      "txs": [
+        "0x84f408b8d63da3b8872609bd40a190f8af647a3a5c2d62c7a6d3eb50050811e6"
+      ]
+    },
+    {
+      "beat": 4,
+      "what": "invigilator A1 opens centre A",
+      "at": "109.5s",
+      "result": "Authentic ✓ (SHA3 matches the on-chain commitment)"
+    },
+    {
+      "beat": 5,
+      "what": "board removes invigilator A2",
+      "at": "114.4s",
+      "result": "epoch 2",
+      "txs": [
+        "0x95c0c757775f56224fdbbf98a19143164b92781312a168e8784f191e5ed6855c"
+      ]
+    },
+    {
+      "beat": 5,
+      "what": "6 candidate bots submit scripts",
+      "at": "154.4s",
+      "result": "6 recorded on chain, sealed to the markers",
+      "txs": [
+        "0x7770b1d1db037ef5473a3ae1be4064e267804020832404aed3b443b899162c80",
+        "0x167a62acc0b6c3c7942c076d54063e4e66e964188b43121dd40407abcb3141dd",
+        "0xf0fc2424022d6a5a1791cb4e5bcb962c4283c60fcae85c33fb073681e72df7c3",
+        "0xb4a697a3e6bab9897f6dae5560ec121752f144875cab4bfc0980fb8498cc38b9",
+        "0xed19f85f5b85346328390fe6ee648b31c46fec1009840a5fc9055b446ee03670",
+        "0xbd3da36c073a2d687ca42b003014df05f811aae72cf00ee0b90348449ce94036"
+      ]
+    },
+    {
+      "beat": 5,
+      "what": "removed invigilator A2",
+      "at": "154.7s",
+      "result": "centre A group key, epoch 2 → NOT_A_MEMBER; a candidate script → NOT_A_RECIPIENT"
+    },
+    {
+      "beat": 6,
+      "what": "leak (noisy centre-B excerpt)",
+      "at": "155.3s",
+      "result": "→ Centre B (confidence 1.00, 23/23 bits), epoch 1, 1 recipient(s)"
+    },
+    {
+      "beat": 7,
+      "what": "audit",
+      "at": "155.3s",
+      "result": "{\"ExamCreated\":1,\"CentreSet\":2,\"EpochChanged\":4,\"ShareReleased\":2,\"Released\":1,\"ScriptSubmitted\":6}"
+    }
+  ],
+  "auditCounts": {
+    "ExamCreated": 1,
+    "CentreSet": 2,
+    "EpochChanged": 4,
+    "ShareReleased": 2,
+    "Released": 1,
+    "ScriptSubmitted": 6
+  }
+}
