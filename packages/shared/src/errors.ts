@@ -20,6 +20,8 @@ export const ERRORS = {
   NOT_FOUND: { status: 404, message: "That doesn't exist." },
   CONFLICT: { status: 409, message: "That already exists." },
   ACTION_REJECTED: { status: 422, message: "QoreChain refused this action: {reason}." },
+  RATE_LIMITED: { status: 429, message: "Too many requests. Try again in a few minutes." },
+  INTERNAL: { status: 500, message: "Something went wrong on our side. Try again." },
 } as const;
 
 export type ErrorCode = keyof typeof ERRORS;

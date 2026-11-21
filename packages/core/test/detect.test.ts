@@ -65,6 +65,14 @@ describe("detect: matchLeak", () => {
     expect(matchLeak("Q1: What is the capital of France?\n- Paris\n- Rome", paper, r.tables).copy).toBeNull();
   });
 
+  it("a tie names nobody (bug-hunt finding 9)", () => {
+    const r = generateCopies(paper, new Uint8Array(32).fill(3), ["A"]);
+    const twin = { ...r.tables[1], copy: "A-twin" }; // identical fingerprint
+    const m = matchLeak(r.centres.A.text, paper, [r.tables[0], r.tables[1], twin]);
+    expect(m.copy).toBeNull();
+    expect(m.distanceToRunnerUp).toBe(0);
+  });
+
   it("accuracy: ≥ 95% correct from 3 random questions over 1,000 trials with 2–8 centres (spec §4.3)", () => {
     const r = rng(20261120);
     let correct = 0;

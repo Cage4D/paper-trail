@@ -201,6 +201,8 @@ export function matchLeak(text: string, paper: Paper, tables: FingerprintTable[]
   if (!n || !ranking.length) return { copy: null, confidence: 0, matchedBits: 0, observedBits: n, distanceToRunnerUp: 0, ranking, alignedQuestions: order };
   const best = ranking[0];
   const margin = ranking.length > 1 ? ranking[1].mismatches - best.mismatches : n;
+  // a tie names nobody: no copy is better supported than another (bug-hunt finding 9)
+  if (margin === 0) return { copy: null, confidence: 0, matchedBits: n - best.mismatches, observedBits: n, distanceToRunnerUp: 0, ranking, alignedQuestions: order };
   const agreement = 1 - best.mismatches / n;
   const confidence = Math.max(0, Math.min(1, agreement * Math.min(1, margin / Math.max(1, n / 4))));
   return { copy: best.copy, confidence, matchedBits: n - best.mismatches, observedBits: n, distanceToRunnerUp: margin, ranking, alignedQuestions: order };

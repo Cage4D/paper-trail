@@ -61,7 +61,10 @@ export const RemoveMemberBody = RotateBody.omit({ addresses: true, role: true })
 export const ReleaseBody = z.object({ releasedBlob: b64url.min(1), blobHash: hex32, epoch: z.number().int().positive(), signature: mldsaSignature });
 
 // ── scripts & marks ──
-export const ScriptBody = z.object({ centreId: hex32, pseudonymHash: hex32, blob: b64url.min(1), scriptHash: hex32, markerEpoch: z.number().int().positive() });
+/** `ticket`: a single-use admission ticket the board issued for this centre (bug-hunt finding 5). */
+export const ScriptBody = z.object({ centreId: hex32, pseudonymHash: hex32, blob: b64url.min(1), scriptHash: hex32, markerEpoch: z.number().int().positive(), ticket: z.string().regex(/^pt_[A-Za-z0-9_-]{22}$/) });
+export const TicketsBody = z.object({ centreId: hex32, count: z.number().int().min(1).max(500) });
+export const IdentityMapBody = z.object({ blob: b64url.min(1) });
 export const SubmitScriptsBody = z.object({ items: z.array(z.object({ scriptId: z.string().min(1), signature: mldsaSignature })).min(1).max(20) });
 export const MarkBody = z.object({ score: z.number().int().min(0).max(1_000_000), sealedFeedback: b64url.optional() });
 export const PublishMarksBody = z.object({ merkleRoot: hex32, signature: mldsaSignature });
@@ -73,6 +76,8 @@ export type RotateBody = z.infer<typeof RotateBody>;
 export type RemoveMemberBody = z.infer<typeof RemoveMemberBody>;
 export type ReleaseBody = z.infer<typeof ReleaseBody>;
 export type ScriptBody = z.infer<typeof ScriptBody>;
+export type TicketsBody = z.infer<typeof TicketsBody>;
+export type IdentityMapBody = z.infer<typeof IdentityMapBody>;
 export type SubmitScriptsBody = z.infer<typeof SubmitScriptsBody>;
 export type MarkBody = z.infer<typeof MarkBody>;
 export type PublishMarksBody = z.infer<typeof PublishMarksBody>;

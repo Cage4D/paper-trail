@@ -12,3 +12,4 @@ export * from "./scripts.js";
 export * from "./release.js";
 export * from "./merkle.js";
 export * from "./binding.js";
+export * from "./verify.js";
