@@ -9,6 +9,21 @@ category.
 > Work in progress. The full design is in [`docs/SPEC.md`](docs/SPEC.md);
 > platform findings are in [`docs/findings.md`](docs/findings.md).
 
+## Live deployment (qorechain-diana testnet)
+
+- **API:** https://paper-trail-api.vercel.app ([`/health`](https://paper-trail-api.vercel.app/health)); judge mode: `POST /demo/start`.
+- **PaperTrail v2 contract:** `0xbe6b208Bc8990a68740053Dad68624914812cf8F`
+
+### Project-page addresses (max 5, read on chain)
+
+| Role | qor1 | 0x |
+|---|---|---|
+| PaperTrail v2 contract | `qor1he4jpz7gny9xsaqq20dddp3yj9yp9nu0pxscg9` | `0xbe6b208Bc8990a68740053Dad68624914812cf8F` |
+| Relayer (EVM window, all EVM txs) | `qor12hsns22892r494chkmltpqkn3v7uve3nkej5k0` | `0x55E13829472A8752d717B6feB082d38B3DC66633` |
+| Board | `qor1z4hxgg20j88q9x2exfgp8u3zduy45yum60fja3` | `0x156e64214f91CE029959325013f2226f095A139B` |
+| Examiner 1 | `qor1fu27dps85sltca52uvwx42gu63wp39jvtn36ny` | `0x4f15E68607A43Ebc768AE31c6aA91Cd45C18964C` |
+| Examiner 2 | `qor1xjk8t2zzvrh07yptxfju8w3zgw954vp3ezm47c` | `0x34ac75a84260eefF102B3265C3bA22438b4ab031` |
+
 ## Layout
 
 | Path | What |
