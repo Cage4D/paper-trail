@@ -25,3 +25,8 @@ packages/contracts/broadcast/**/dry-run/
 
 # findings scratch state (throwaway test keys)
 scripts/findings/out/q7-state.json
+
+# vercel CLI link state
+.vercel/
+.vercel
+.env*
