@@ -317,6 +317,9 @@ importers:
       dotenv:
         specifier: ^18.0.10
         version: 18.0.10
+      esbuild:
+        specifier: 0.28.2
+        version: 0.28.2
       oxlint:
         specifier: ^1.58.0
         version: 1.94.0(oxlint-tsgolint@7.0.2007)
