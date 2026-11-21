@@ -108,7 +108,7 @@ describe.runIf(!!process.env.DATABASE_URL)('Phase 5 flow', () => {
       const inv = await http().get(`/exams/${examId}/centres/${A}/invigilators`).expect(200);
       const recipients = inv.body.members.map((m: { mlkemPublicKey: string; x25519PublicKey: string }) => ({ mlkemPublicKey: fromB64url(m.mlkemPublicKey), x25519PublicKey: Uint8Array.from(Buffer.from(m.x25519PublicKey, 'hex')) }));
       const r = prepareRelease({ shareEnvelope: fromB64url(share.body.sealedToExaminer), examinerKeys: k.ex[i].seal, examinerIndex: share.body.examinerIndex, examId, centreId: A, epoch: inv.body.epoch, invigilators: recipients });
-      const signature = await sign(k.ex[i], Action.Release, { examId, centreId: A, blobHash: r.blobHash, examiner: k.ex[i].evm } as never);
+      const signature = await sign(k.ex[i], Action.Release, { examId, centreId: A, blobHash: r.blobHash, examiner: k.ex[i].evm, epoch: BigInt(inv.body.epoch) } as never);
       return http().post(`/exams/${examId}/centres/${A}/release`).set(auth(k.ex[i])).send({ releasedBlob: b64url(r.blob), blobHash: r.blobHash, epoch: inv.body.epoch, signature });
     };
     // non-examiners cannot fetch shares
@@ -127,7 +127,7 @@ describe.runIf(!!process.env.DATABASE_URL)('Phase 5 flow', () => {
     // a release sealed to the OLD members is refused
     const share = await http().get(`/exams/${examId}/centres/${A}/my-share`).set(auth(k.ex[2])).expect(200);
     const stale = prepareRelease({ shareEnvelope: fromB64url(share.body.sealedToExaminer), examinerKeys: k.ex[2].seal, examinerIndex: 2, examId, centreId: A, epoch: 2, invigilators: [k.inv[0].recipient, k.inv[1].recipient] });
-    const sigStale = await sign(k.ex[2], Action.Release, { examId, centreId: A, blobHash: stale.blobHash, examiner: k.ex[2].evm } as never);
+    const sigStale = await sign(k.ex[2], Action.Release, { examId, centreId: A, blobHash: stale.blobHash, examiner: k.ex[2].evm, epoch: 2n } as never);
     expect((await http().post(`/exams/${examId}/centres/${A}/release`).set(auth(k.ex[2])).send({ releasedBlob: b64url(stale.blob), blobHash: stale.blobHash, epoch: 2, signature: sigStale })).status).toBe(400);
 
     const second = await doRelease(2);

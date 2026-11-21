@@ -108,7 +108,11 @@ contract DigestVectorsTest is Test {
             "Release",
             PaperTrailLib.Action.Release,
             PaperTrailLib.releasePayload(
-                _b("Release", "examId"), _b("Release", "centreId"), _b("Release", "blobHash"), _a("Release", "examiner")
+                _b("Release", "examId"),
+                _b("Release", "centreId"),
+                _b("Release", "blobHash"),
+                _a("Release", "examiner"),
+                _u("Release", "epoch")
             )
         );
     }

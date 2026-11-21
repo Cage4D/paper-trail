@@ -31,7 +31,8 @@ export interface ActionFields {
   [Action.CreateExam]: { salt: Hex; board: Hex; examiners: [Hex, Hex, Hex]; startTime: bigint | number; masterCommitment: Hex; committeeBundleHash: Hex };
   [Action.SetCentre]: { examId: Hex; centreId: Hex; commitment: Hex; cipherHash: Hex };
   [Action.RotateEpoch]: { centreId: Hex; board: Hex; epoch: bigint | number; membersHash: Hex; envelopeHash: Hex };
-  [Action.Release]: { examId: Hex; centreId: Hex; blobHash: Hex; examiner: Hex };
+  /** epoch = the group epoch the share was sealed for (bug-hunt finding 1). */
+  [Action.Release]: { examId: Hex; centreId: Hex; blobHash: Hex; examiner: Hex; epoch: bigint | number };
   [Action.SubmitScript]: { examId: Hex; centreId: Hex; pseudonymHash: Hex; scriptHash: Hex; markerEpoch: bigint | number };
   [Action.PublishMarks]: { examId: Hex; merkleRoot: Hex };
   [Action.BindIdentity]: { role: Hex; statementHash: Hex };
@@ -44,7 +45,7 @@ const LAYOUT: { [A in Action]: { types: string[]; order: (keyof ActionFields[A])
   [Action.CreateExam]: { types: ["bytes32", "address", "address[3]", "uint64", "bytes32", "bytes32"], order: ["salt", "board", "examiners", "startTime", "masterCommitment", "committeeBundleHash"] },
   [Action.SetCentre]: { types: ["bytes32", "bytes32", "bytes32", "bytes32"], order: ["examId", "centreId", "commitment", "cipherHash"] },
   [Action.RotateEpoch]: { types: ["bytes32", "address", "uint64", "bytes32", "bytes32"], order: ["centreId", "board", "epoch", "membersHash", "envelopeHash"] },
-  [Action.Release]: { types: ["bytes32", "bytes32", "bytes32", "address"], order: ["examId", "centreId", "blobHash", "examiner"] },
+  [Action.Release]: { types: ["bytes32", "bytes32", "bytes32", "address", "uint64"], order: ["examId", "centreId", "blobHash", "examiner", "epoch"] },
   [Action.SubmitScript]: { types: ["bytes32", "bytes32", "bytes32", "bytes32", "uint64"], order: ["examId", "centreId", "pseudonymHash", "scriptHash", "markerEpoch"] },
   [Action.PublishMarks]: { types: ["bytes32", "bytes32"], order: ["examId", "merkleRoot"] },
   [Action.BindIdentity]: { types: ["address", "bytes32"], order: ["role", "statementHash"] },

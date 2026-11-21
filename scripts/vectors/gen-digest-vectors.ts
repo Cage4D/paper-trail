@@ -44,8 +44,8 @@ add("SetCentre", BOARD, { examId, centreId, commitment: h("vector:commitment"), 
   ["bytes32", "bytes32", "bytes32", "bytes32"]);
 add("RotateEpoch", BOARD, { centreId, board: BOARD, epoch: 3, membersHash: h("vector:members"), envelopeHash: h("vector:envelope") },
   ["bytes32", "address", "uint64", "bytes32", "bytes32"]);
-add("Release", EX[0], { examId, centreId, blobHash: h("vector:blob"), examiner: EX[0] },
-  ["bytes32", "bytes32", "bytes32", "address"]);
+add("Release", EX[0], { examId, centreId, blobHash: h("vector:blob"), examiner: EX[0], epoch: 2 },
+  ["bytes32", "bytes32", "bytes32", "address", "uint64"]);
 add("SubmitScript", BOARD, { examId, centreId, pseudonymHash: h("vector:pseudonym"), scriptHash: h("vector:script"), markerEpoch: 2 },
   ["bytes32", "bytes32", "bytes32", "bytes32", "uint64"]);
 add("PublishMarks", BOARD, { examId, merkleRoot: h("vector:root") }, ["bytes32", "bytes32"]);

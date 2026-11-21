@@ -55,10 +55,11 @@
         "examId": "0x053f7e0ea6bda1a877175d71267b4625b555470bcb6f46a8e452c579149c22ac",
         "centreId": "0xea450e26a6bba7ff17f847ff1fc35d1c59609bb383f3d802ddf0a98fb1ee1b1b",
         "blobHash": "0x954a112018acb253b1f0cea5b87d0584c5af7c02640541ba3521efe652fb0805",
-        "examiner": "0x4f15E68607A43Ebc768AE31c6aA91Cd45C18964C"
+        "examiner": "0x4f15E68607A43Ebc768AE31c6aA91Cd45C18964C",
+        "epoch": 2
       },
-      "payloadHash": "0xb12c64609c7afc096605770e4b0abfb8a7b6608728d3f96bab800b48caa3a384",
-      "digest": "0x802cdd4a131a1a78cf9bd9b5ec301bc0e768567a9b8bd9cb29990d250b8cfcaf"
+      "payloadHash": "0x14ba9cac5901c94f8b0fc9c2254a6c1478ad5cf7b98ce339289d97ccf8cf3774",
+      "digest": "0x09c981450169096c8cc56fdc4e8fb53c79f875055d545b95eaaf8bcc698cd2f6"
     },
     "SubmitScript": {
       "action": 4,

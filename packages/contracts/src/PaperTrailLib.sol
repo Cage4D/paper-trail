@@ -69,12 +69,13 @@ library PaperTrailLib {
         return keccak256(abi.encode(centreId, board, epoch, membersHash, envelopeHash));
     }
 
-    function releasePayload(bytes32 examId, bytes32 centreId, bytes32 blobHash, address examiner)
+    /// @dev `epoch` is the group epoch the share was sealed for (must equal the current one).
+    function releasePayload(bytes32 examId, bytes32 centreId, bytes32 blobHash, address examiner, uint64 epoch)
         internal
         pure
         returns (bytes32)
     {
-        return keccak256(abi.encode(examId, centreId, blobHash, examiner));
+        return keccak256(abi.encode(examId, centreId, blobHash, examiner, epoch));
     }
 
     function submitScriptPayload(

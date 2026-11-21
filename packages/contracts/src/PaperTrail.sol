@@ -195,25 +195,32 @@ contract PaperTrail {
     }
 
     /// @notice An examiner releases their share for one centre, at or after startTime.
-    ///         The share is sealed under the centre's current epoch key of the EXAM'S board,
-    ///         so that group must exist (epoch >= 1). The second distinct release emits
-    ///         `Released` (exactly once).
-    function release(bytes32 examId, bytes32 centreId, bytes32 blobHash, address examiner, bytes calldata sigExaminer)
-        external
-    {
+    ///         The share is sealed to the members of the EXAM board's group for this centre at
+    ///         `epoch`; the examiner SIGNS that epoch and it must still be current when the tx is
+    ///         mined. So a release sealed before a member was removed can never land after the
+    ///         removal (bug-hunt finding 1). The second distinct release emits `Released` once.
+    function release(
+        bytes32 examId,
+        bytes32 centreId,
+        bytes32 blobHash,
+        address examiner,
+        uint64 epoch,
+        bytes calldata sigExaminer
+    ) external {
         Exam storage e = _exam(examId);
         if (!_isExaminer(e, examiner)) revert NotExaminer(examiner);
         // forge-lint: disable-next-line(block-timestamp) -- the exam time gate is block time by design (spec §5)
         if (block.timestamp < e.startTime) revert TooEarly(e.startTime);
         if (commitment[examId][centreId] == bytes32(0)) revert CentreNotSet();
-        uint64 epoch = centreEpoch[e.board][centreId];
-        if (epoch == 0) revert NoEpochGroup();
+        uint64 current = centreEpoch[e.board][centreId];
+        if (current == 0) revert NoEpochGroup();
+        if (epoch != current) revert BadEpoch(current);
         if (hasReleased[examId][centreId][examiner]) revert AlreadyReleased();
         if (blobHash == bytes32(0)) revert ZeroValue();
         _auth(
             examiner,
             PaperTrailLib.Action.Release,
-            PaperTrailLib.releasePayload(examId, centreId, blobHash, examiner),
+            PaperTrailLib.releasePayload(examId, centreId, blobHash, examiner, epoch),
             sigExaminer
         );
         hasReleased[examId][centreId][examiner] = true;

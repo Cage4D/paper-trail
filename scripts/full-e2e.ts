@@ -101,7 +101,7 @@ async function release(i: number, centreId: Hex, expect?: number) {
   const share = await api("GET", `/exams/${examId}/centres/${centreId}/my-share`, k.ex[i]);
   const inv = await api("GET", `/exams/${examId}/centres/${centreId}/invigilators`);
   const r = prepareRelease({ shareEnvelope: fromB64url(share.sealedToExaminer), examinerKeys: k.ex[i].seal, examinerIndex: share.examinerIndex, examId, centreId, epoch: inv.epoch, invigilators: recipients(inv.members) });
-  const signature = await sign(k.ex[i], Action.Release, { examId, centreId, blobHash: r.blobHash, examiner: k.ex[i].evm } as never);
+  const signature = await sign(k.ex[i], Action.Release, { examId, centreId, blobHash: r.blobHash, examiner: k.ex[i].evm, epoch: BigInt(inv.epoch) } as never);
   return api("POST", `/exams/${examId}/centres/${centreId}/release`, k.ex[i], { releasedBlob: b64url(r.blob), blobHash: r.blobHash, epoch: inv.epoch, signature }, expect);
 }
 const early = await release(0, A, 409);

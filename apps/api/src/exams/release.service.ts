@@ -72,8 +72,10 @@ export class ReleaseService {
     const members = await this.keys.resolve(await this.keys.active(exam.boardAddr, groupKey));
     if (!sealedToExactly(blob, members.map((m) => m.mlkemPublicKey))) throw new ApiError('VALIDATION_FAILED', { fields: "releasedBlob (not sealed to exactly the centre's current invigilators)" });
 
-    const r = await this.relayer.relay(Action.Release, s.evm, { examId: exam.onchainId as Hex, centreId: centre.onchainId as Hex, blobHash: b.blobHash as Hex, examiner: s.evm }, b.signature as Hex);
-    await this.db.shareBlob.update({ where: { id: sb!.id }, data: { releasedBlob: blob, releasedEpoch: epoch, releaseTx: r.txHash } });
+    // the examiner signed `epoch`; PaperTrail refuses it unless it is still current when mined (finding 1)
+    const r = await this.relayer.relay(Action.Release, s.evm, { examId: exam.onchainId as Hex, centreId: centre.onchainId as Hex, blobHash: b.blobHash as Hex, examiner: s.evm, epoch: BigInt(b.epoch) }, b.signature as Hex);
+    // releasedEpoch / releaseTx come from the indexed ShareReleased event (chain truth), never from the request
+    await this.db.shareBlob.update({ where: { id: sb!.id }, data: { releasedBlob: blob } });
     await this.indexer.catchUp(true).catch(() => null);
     const fresh = await this.db.centre.findUnique({ where: { id: centre.id } });
     const count = await this.db.shareBlob.count({ where: { examId: exam.onchainId, centreId: centre.onchainId, releaseTx: { not: null } } });

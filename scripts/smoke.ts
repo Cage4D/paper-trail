@@ -94,8 +94,9 @@ for (const [name, centreId] of Object.entries(centres)) {
 // 4. early release: must revert TooEarly. Simulated only (a real failing tx would just burn a window slot).
 async function releaseArgs(role: Role) {
   const blob = h(`smoke:blob:${role}`);
-  const ph = keccak256(enc(["bytes32", "bytes32", "bytes32", "address"], [examId, centres.A, blob, acct[role].evm]));
-  return [examId, centres.A, blob, acct[role].evm, await signAction(role, ACTION.Release, ph)];
+  // the release signs the group epoch it was sealed for (centre A's group is at epoch 1 here)
+  const ph = keccak256(enc(["bytes32", "bytes32", "bytes32", "address", "uint64"], [examId, centres.A, blob, acct[role].evm, 1n]));
+  return [examId, centres.A, blob, acct[role].evm, 1n, await signAction(role, ACTION.Release, ph)];
 }
 try {
   await publicClient.simulateContract({ address: ADDRESS, abi: ABI, functionName: "release", args: await releaseArgs("examiner1"), account: relayerWallet.account });

@@ -3,6 +3,7 @@
  * forged signature and accepts the genuine one. Uses the exam from scripts/out/smoke.json;
  * examiner3 (has not released) signs a release for centre A with ML-DSA-87.
  * Simulation only (eth_call), nothing is sent. Writes out/live-negative.json.
+ * Release payload includes the signed epoch (bug-hunt finding 1); smoke.json's exam is at epoch 1.
  */
 import { readFileSync, writeFileSync } from "node:fs";
 import { BaseError, ContractFunctionRevertedError, encodeAbiParameters, getAddress, keccak256, toHex, type Abi, type Hex } from "viem";
@@ -20,7 +21,8 @@ const enc = (t: string[], v: unknown[]) => encodeAbiParameters(t.map((type) => (
 const setA = await publicClient.getTransactionReceipt({ hash: smoke.steps.find((s: { step: string }) => s.step === "setCentre A").tx });
 const centreA = setA.logs[0].topics[2] as Hex;
 const blob = keccak256(toHex("live-negative:blob"));
-const ph = keccak256(enc(["bytes32", "bytes32", "bytes32", "address"], [smoke.examId, centreA, blob, ex3.evm]));
+const EPOCH = 1n;
+const ph = keccak256(enc(["bytes32", "bytes32", "bytes32", "address", "uint64"], [smoke.examId, centreA, blob, ex3.evm, EPOCH]));
 const digest = (await publicClient.readContract({ address: ADDRESS, abi: ABI, functionName: "nextDigest", args: [3, ex3.evm, ph] })) as Hex;
 const good = pqSign(ex3.pqc.secretKey, Buffer.from(digest.slice(2), "hex"));
 const bad = good.slice(); bad[1000] ^= 0x01;
@@ -28,7 +30,7 @@ const bad = good.slice(); bad[1000] ^= 0x01;
 async function sim(label: string, sig: Uint8Array) {
   try {
     const { request } = await publicClient.simulateContract({ address: ADDRESS, abi: ABI, functionName: "release",
-      args: [smoke.examId, centreA, blob, ex3.evm, toHex(sig)], account: relayer.evm as Hex });
+      args: [smoke.examId, centreA, blob, ex3.evm, EPOCH, toHex(sig)], account: relayer.evm as Hex });
     const gas = await publicClient.estimateGas({ ...request, account: relayer.evm as Hex, to: ADDRESS, data: (await import("viem")).encodeFunctionData({ abi: ABI, functionName: "release", args: request.args }) });
     return { label, ok: true, estimateGas: gas.toString() };
   } catch (e) {

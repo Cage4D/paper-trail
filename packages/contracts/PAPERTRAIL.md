@@ -84,17 +84,17 @@ order (see `PaperTrailLib`).
 - **Effects:** advances that board's QoreSeal epoch group for the centre and emits `EpochChanged(board, centreId, …)`. The envelope itself is stored off-chain by the API; only its hash is recorded here.
 - **Errors:** `ZeroValue`, `BadEpoch(expected)`, `KeyNotRegistered`, `BadSignature`.
 
-### `release(examId, centreId, blobHash, examiner, sigExaminer)`
+### `release(examId, centreId, blobHash, examiner, epoch, sigExaminer)`
 - **Signer:** `examiner`.
-- **Payload:** `(examId, centreId, blobHash, examiner)`.
+- **Payload:** `(examId, centreId, blobHash, examiner, epoch)`. `epoch` is the group epoch the share was sealed for, and it is **signed**.
 - **Requires:**
   - `examiner` is one of the exam's three examiners;
   - `block.timestamp >= startTime`;
   - the centre is set for this exam;
-  - **the exam board's epoch group for the centre exists** (`centreEpoch[exam.board][centreId] >= 1`). The released share is sealed under that group's current key, so another board's group never counts;
+  - **the exam board's epoch group for the centre exists** (`centreEpoch[exam.board][centreId] >= 1`), and **`epoch` equals it** (otherwise `BadEpoch(current)`). The share is sealed to that epoch's members, so a release sealed before a member was removed can never land after the removal, even if delayed or replayed by a relayer;
   - this examiner hasn't released this centre yet.
 - **Effects:** records the release with the **current epoch of the exam board's group** for the centre, and emits `ShareReleased`. The second distinct release emits `Released(examId, centreId, epoch)`, **exactly once**. A third release is still recorded (`ShareReleased`) but doesn't re-emit `Released`.
-- **Errors:** `UnknownExam`, `NotExaminer`, `TooEarly(startTime)`, `CentreNotSet`, `NoEpochGroup`, `AlreadyReleased`, `ZeroValue`, `KeyNotRegistered`, `BadSignature`.
+- **Errors:** `UnknownExam`, `NotExaminer`, `TooEarly(startTime)`, `CentreNotSet`, `NoEpochGroup`, `BadEpoch(current)`, `AlreadyReleased`, `ZeroValue`, `KeyNotRegistered`, `BadSignature`.
 
 ### `submitScript(examId, centreId, pseudonymHash, scriptHash, markerEpoch, sigBoard)`
 - **Signer:** the exam's board. In v1 the board relays it; candidates have no role keys.

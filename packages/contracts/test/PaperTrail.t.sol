@@ -219,10 +219,11 @@ contract PaperTrailTest is PaperTrailBase {
         _setCentre(CENTRE_A);
         vm.warp(startTime - 1);
         bytes32 blob = keccak256("blob");
+        uint64 ep = pt.centreEpoch(board, CENTRE_A); // read before vm.expectRevert
         bytes memory sig =
-            _sign(ex1, PaperTrailLib.Action.Release, PaperTrailLib.releasePayload(examId, CENTRE_A, blob, ex1));
+            _sign(ex1, PaperTrailLib.Action.Release, PaperTrailLib.releasePayload(examId, CENTRE_A, blob, ex1, ep));
         vm.expectRevert(abi.encodeWithSelector(PaperTrail.TooEarly.selector, startTime));
-        pt.release(examId, CENTRE_A, blob, ex1, sig);
+        pt.release(examId, CENTRE_A, blob, ex1, ep, sig);
     }
 
     // ── 9 ── release by a non-examiner (registered key, valid signature) ❌
@@ -231,21 +232,23 @@ contract PaperTrailTest is PaperTrailBase {
         _setCentre(CENTRE_A);
         vm.warp(startTime);
         bytes32 blob = keccak256("blob");
+        uint64 ep = pt.centreEpoch(board, CENTRE_A); // read before vm.expectRevert
         bytes memory sig = _sign(
-            outsider, PaperTrailLib.Action.Release, PaperTrailLib.releasePayload(examId, CENTRE_A, blob, outsider)
+            outsider, PaperTrailLib.Action.Release, PaperTrailLib.releasePayload(examId, CENTRE_A, blob, outsider, ep)
         );
         vm.expectRevert(abi.encodeWithSelector(PaperTrail.NotExaminer.selector, outsider));
-        pt.release(examId, CENTRE_A, blob, outsider, sig);
+        pt.release(examId, CENTRE_A, blob, outsider, ep, sig);
     }
 
     function test09b_release_centreNotSet() public {
         _createExam();
         vm.warp(startTime);
         bytes32 blob = keccak256("blob");
+        uint64 ep = pt.centreEpoch(board, CENTRE_B); // read before vm.expectRevert
         bytes memory sig =
-            _sign(ex1, PaperTrailLib.Action.Release, PaperTrailLib.releasePayload(examId, CENTRE_B, blob, ex1));
+            _sign(ex1, PaperTrailLib.Action.Release, PaperTrailLib.releasePayload(examId, CENTRE_B, blob, ex1, ep));
         vm.expectRevert(PaperTrail.CentreNotSet.selector);
-        pt.release(examId, CENTRE_B, blob, ex1, sig);
+        pt.release(examId, CENTRE_B, blob, ex1, ep, sig);
     }
 
     // ── 10 ── the same examiner releases twice ❌
@@ -256,10 +259,11 @@ contract PaperTrailTest is PaperTrailBase {
         vm.warp(startTime);
         _release(CENTRE_A, ex1);
         bytes32 blob = keccak256("blob-again");
+        uint64 ep = pt.centreEpoch(board, CENTRE_A); // read before vm.expectRevert
         bytes memory sig =
-            _sign(ex1, PaperTrailLib.Action.Release, PaperTrailLib.releasePayload(examId, CENTRE_A, blob, ex1));
+            _sign(ex1, PaperTrailLib.Action.Release, PaperTrailLib.releasePayload(examId, CENTRE_A, blob, ex1, ep));
         vm.expectRevert(PaperTrail.AlreadyReleased.selector);
-        pt.release(examId, CENTRE_A, blob, ex1, sig);
+        pt.release(examId, CENTRE_A, blob, ex1, ep, sig);
     }
 
     // ── 11 ── two releases → Released exactly once, with the centre's current epoch ✅
@@ -379,10 +383,34 @@ contract PaperTrailTest is PaperTrailBase {
         _rotate(CENTRE_A, outsider, 1); // another board's group does not count
         vm.warp(startTime);
         bytes32 blob = keccak256("blob");
+        uint64 ep = pt.centreEpoch(board, CENTRE_A); // read before vm.expectRevert
         bytes memory sig =
-            _sign(ex1, PaperTrailLib.Action.Release, PaperTrailLib.releasePayload(examId, CENTRE_A, blob, ex1));
+            _sign(ex1, PaperTrailLib.Action.Release, PaperTrailLib.releasePayload(examId, CENTRE_A, blob, ex1, ep));
         vm.expectRevert(PaperTrail.NoEpochGroup.selector);
-        pt.release(examId, CENTRE_A, blob, ex1, sig);
+        pt.release(examId, CENTRE_A, blob, ex1, ep, sig);
+    }
+
+    // ── bug-hunt finding 1: a release signed for an old epoch cannot land after a rotation ──
+    function test_release_staleEpochRefused() public {
+        _createExam();
+        _setCentre(CENTRE_A);
+        _rotate(CENTRE_A, board, 1);
+        vm.warp(startTime);
+        bytes32 blob = keccak256("blob-sealed-for-epoch-1");
+        // examiner1 seals for epoch 1 and signs it...
+        bytes memory sig = _sign(ex1, PaperTrailLib.Action.Release, PaperTrailLib.releasePayload(examId, CENTRE_A, blob, ex1, 1));
+        // ...the board removes a member before the release is mined
+        _rotate(CENTRE_A, board, 2);
+        vm.expectRevert(abi.encodeWithSelector(PaperTrail.BadEpoch.selector, uint64(2)));
+        pt.release(examId, CENTRE_A, blob, ex1, 1, sig);
+        // claiming the current epoch with the old signature fails the signature check
+        vm.expectRevert(PaperTrail.BadSignature.selector);
+        pt.release(examId, CENTRE_A, blob, ex1, 2, sig);
+        // a fresh signature for epoch 2 works, and ShareReleased records epoch 2
+        bytes memory sig2 = _sign(ex1, PaperTrailLib.Action.Release, PaperTrailLib.releasePayload(examId, CENTRE_A, blob, ex1, 2));
+        vm.expectEmit(address(pt));
+        emit ShareReleased(examId, CENTRE_A, ex1, 2, blob);
+        pt.release(examId, CENTRE_A, blob, ex1, 2, sig2);
     }
 
     // ── 13 ── submitScript before Released ❌ (and after ✅)

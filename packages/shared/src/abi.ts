@@ -376,6 +376,11 @@ export const PAPERTRAIL_ABI = [
         "internalType": "address"
       },
       {
+        "name": "epoch",
+        "type": "uint64",
+        "internalType": "uint64"
+      },
+      {
         "name": "sigExaminer",
         "type": "bytes",
         "internalType": "bytes"
