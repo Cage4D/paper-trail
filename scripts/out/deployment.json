@@ -1,13 +1,13 @@
 {
   "network": "qorechain-diana",
   "chainId": 9800,
-  "address": "0xdd26128846ea6a35340010ce8be8f5820e264c33",
+  "address": "0xbe6b208bc8990a68740053dad68624914812cf8f",
   "deployer": "0x55E13829472A8752d717B6feB082d38B3DC66633",
-  "tx": "0x862be464d94e90a4458b07314a15bc5c9068cc1cfecff7c4fbdf1cd1f6abac4d",
-  "block": "10432286",
-  "gasUsed": "1611276",
+  "tx": "0x5bdf9effc8834e32ed41881fb2eb58f78a49cb247bb82dc86e7938ec3fa72a15",
+  "block": "10485858",
+  "gasUsed": "1621871",
   "effectiveGasPrice": "112500000000",
-  "costWei": "181268550000000000",
-  "explorer": "https://explore.qore.network/tx/0x862be464d94e90a4458b07314a15bc5c9068cc1cfecff7c4fbdf1cd1f6abac4d",
-  "at": "2026-11-20T12:16:03.302Z"
+  "costWei": "182460487500000000",
+  "explorer": "https://explore.qore.network/tx/0x5bdf9effc8834e32ed41881fb2eb58f78a49cb247bb82dc86e7938ec3fa72a15",
+  "at": "2026-11-21T09:33:19.546Z"
 }

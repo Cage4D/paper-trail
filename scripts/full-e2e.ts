@@ -23,7 +23,7 @@ import { PAPERTRAIL_ABI } from "../packages/shared/src/abi.js";
 import {
   Action, BoardGroups, b64url, bindingStatement, buildAction, buildMarksTree, centreGroupKey, examIdFor, fromB64url, groupChainId,
   markersGroupKey, matchLeak, newPseudonym, openCommitteeBundle, openPaper, openScript, prepareRelease, recipientCardFor,
-  roleKeyFromMnemonic, sealScript, setExam, signAction, signSignIn, statementHash, toHex, verifyMarkProof, type RoleKey,
+  resolveGroupRecipients, roleKeyFromMnemonic, sealScript, setExam, signAction, signSignIn, statementHash, toHex, verifyMarkProof, type RoleKey,
 } from "../packages/core/src/index.js";
 import { mnemonicFor, type Role } from "./lib/env.js";
 import { EVM_RPC, EXPLORER, REST, RPC, bigintJson } from "./lib/chain.js";
@@ -55,8 +55,13 @@ async function sign(who: RoleKey, action: Action, fields: never, nonce?: bigint)
   const n = nonce ?? (await nonceOf(who));
   return toHex(signAction(who.pq.secretKey, buildAction(action, fields, { chainId: 9800, contract: CONTRACT, signer: who.evm, nonce: n }).digest));
 }
-const recipients = (members: { mlkemPublicKey: string; x25519PublicKey: string }[]) =>
-  members.map((m) => ({ mlkemPublicKey: fromB64url(m.mlkemPublicKey), x25519PublicKey: Uint8Array.from(Buffer.from(m.x25519PublicKey, "hex")) }));
+/**
+ * Bug-hunt finding 3: never seal to the API's list as given. Rebuild the recipients from the chain:
+ * the EpochChanged receipt (by tx hash, from the EVM RPC), the current epoch, the board-signed
+ * membersHash, and each card checked against the member's on-chain PQC and KEM keys.
+ */
+const recipients = (g: { board: string; groupChainId: string; epoch: number; epochTx: string; members: { address: string; roleAddress: string; card: never }[] }) =>
+  resolveGroupRecipients({ evmRpc: EVM_RPC, rest: REST, contract: CONTRACT, board: g.board, groupChainId: g.groupChainId, epoch: g.epoch, epochTx: g.epochTx, members: g.members });
 
 // ── 1. sign-in + recipient cards ──
 for (const who of everyone) {
@@ -100,7 +105,7 @@ await addGroup(markersGroupKey(examId), k.m, "marker");
 async function release(i: number, centreId: Hex, expect?: number) {
   const share = await api("GET", `/exams/${examId}/centres/${centreId}/my-share`, k.ex[i]);
   const inv = await api("GET", `/exams/${examId}/centres/${centreId}/invigilators`);
-  const r = prepareRelease({ shareEnvelope: fromB64url(share.sealedToExaminer), examinerKeys: k.ex[i].seal, examinerIndex: share.examinerIndex, examId, centreId, epoch: inv.epoch, invigilators: recipients(inv.members) });
+  const r = prepareRelease({ shareEnvelope: fromB64url(share.sealedToExaminer), examinerKeys: k.ex[i].seal, examinerIndex: share.examinerIndex, examId, centreId, epoch: inv.epoch, invigilators: await recipients(inv) });
   const signature = await sign(k.ex[i], Action.Release, { examId, centreId, blobHash: r.blobHash, examiner: k.ex[i].evm, epoch: BigInt(inv.epoch) } as never);
   return api("POST", `/exams/${examId}/centres/${centreId}/release`, k.ex[i], { releasedBlob: b64url(r.blob), blobHash: r.blobHash, epoch: inv.epoch, signature }, expect);
 }
@@ -136,14 +141,19 @@ step("removed invigilator A2 cannot open centre A", undefined, a2);
 
 // ── 6. scripts → blind marking → published root ──
 const mk = await api("GET", `/exams/${examId}/markers`);
+const markerRecipients = await recipients(mk);
+step(`markers group verified against the chain (epoch ${mk.epoch}, ${markerRecipients.length} members)`);
 const pseudonyms: string[] = [];
-for (const [centreId, n] of [[A, 3], [B, 2]] as const)
+for (const [centreId, n] of [[A, 3], [B, 2]] as const) {
+  // the board hands each candidate a single-use admission ticket (bug-hunt finding 5)
+  const { tickets } = await api("POST", `/exams/${examId}/tickets`, k.board, { centreId, count: n });
   for (let i = 0; i < n; i++) {
     const ps = newPseudonym();
     pseudonyms.push(ps);
-    const s = sealScript({ examId, centreId, pseudonym: ps, answers: { q1: i, centre: centreId === A ? "A" : "B" }, markers: recipients(mk.members) });
-    await api("POST", `/exams/${examId}/scripts`, undefined, { centreId, pseudonymHash: s.pseudonymHash, blob: b64url(s.envelope), scriptHash: s.scriptHash, markerEpoch: mk.epoch });
+    const s = sealScript({ examId, centreId, pseudonym: ps, answers: { q1: i, centre: centreId === A ? "A" : "B" }, markers: markerRecipients });
+    await api("POST", `/exams/${examId}/scripts`, undefined, { centreId, pseudonymHash: s.pseudonymHash, blob: b64url(s.envelope), scriptHash: s.scriptHash, markerEpoch: mk.epoch, ticket: tickets[i] });
   }
+}
 const pending = await api("GET", `/exams/${examId}/scripts/pending`, k.board);
 let n = await nonceOf(k.board);
 const items = [];
