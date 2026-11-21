@@ -13,6 +13,8 @@ const Env = z.object({
   PAPERTRAIL_ADDRESS: z.string().regex(/^0x[0-9a-fA-F]{40}$/),
   PAPERTRAIL_DEPLOY_BLOCK: z.coerce.bigint().default(0n),
   RELAYER_MNEMONIC: z.string().min(1),
+  /** Judge mode (§8): JSON role → BIP-39 mnemonic. DEMO, testnet only; never real users' keys. */
+  DEMO_MNEMONICS: z.string().optional(),
   JWT_SECRET: z.string().min(32),
   ADMIN_TOKEN: z.string().min(16),
   CORS_ORIGIN: z.string().default('http://localhost:5173'),

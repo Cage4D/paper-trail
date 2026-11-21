@@ -7,7 +7,7 @@ import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import pg from 'pg';
 import { config } from '../config.js';
 
-export const LOCK = { relay: 7_000_001, indexer: 7_000_002 } as const;
+export const LOCK = { relay: 7_000_001, indexer: 7_000_002, demo: 7_000_003 } as const;
 
 @Injectable()
 export class LockService implements OnModuleDestroy {

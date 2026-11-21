@@ -33,7 +33,7 @@ describe.runIf(hasDb)('API', () => {
     configureApp(app);
     await app.init();
     db = app.get(PrismaService);
-    for (const t of ['relayJob', 'chainEvent', 'mark', 'script', 'scriptTicket', 'rateLimit', 'member', 'epochEnvelope', 'boardState', 'bindChallenge', 'identityMap', 'shareBlob', 'centre', 'exam', 'authChallenge', 'user', 'indexerCursor'] as const) await (db[t] as { deleteMany: () => Promise<unknown> }).deleteMany();
+    for (const t of ['relayJob', 'chainEvent', 'mark', 'script', 'scriptTicket', 'rateLimit', 'member', 'epochEnvelope', 'boardState', 'bindChallenge', 'identityMap', 'demo', 'shareBlob', 'centre', 'exam', 'authChallenge', 'user', 'indexerCursor'] as const) await (db[t] as { deleteMany: () => Promise<unknown> }).deleteMany();
   });
   afterAll(async () => app?.close());
 

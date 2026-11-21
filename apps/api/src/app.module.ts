@@ -7,11 +7,12 @@ import { ExamsModule } from './exams/exams.module.js';
 import { GroupsModule } from './groups/groups.module.js';
 import { ScriptsModule } from './scripts/scripts.module.js';
 import { AuditModule } from './audit/audit.module.js';
+import { DemoModule } from './demo/demo.module.js';
 import { HealthController } from './health/health.controller.js';
 import { InternalController } from './internal/internal.controller.js';
 
 @Module({
-  imports: [PrismaModule, ChainModule, RelayerModule, GroupsModule, AuthModule, ExamsModule, ScriptsModule, AuditModule],
+  imports: [PrismaModule, ChainModule, RelayerModule, GroupsModule, AuthModule, ExamsModule, ScriptsModule, AuditModule, DemoModule],
   controllers: [HealthController, InternalController],
 })
 export class AppModule {}

@@ -48,7 +48,7 @@ describe.runIf(!!process.env.DATABASE_URL)('bug-hunt regressions', () => {
     configureApp(app);
     await app.init();
     db = app.get(PrismaService);
-    for (const t of ['relayJob', 'chainEvent', 'mark', 'script', 'scriptTicket', 'rateLimit', 'member', 'epochEnvelope', 'boardState', 'bindChallenge', 'identityMap', 'shareBlob', 'centre', 'exam', 'authChallenge', 'user', 'indexerCursor'] as const)
+    for (const t of ['relayJob', 'chainEvent', 'mark', 'script', 'scriptTicket', 'rateLimit', 'member', 'epochEnvelope', 'boardState', 'bindChallenge', 'identityMap', 'demo', 'shareBlob', 'centre', 'exam', 'authChallenge', 'user', 'indexerCursor'] as const)
       await (db[t] as { deleteMany: () => Promise<unknown> }).deleteMany();
     for (const r of all) {
       const { body } = await http().post('/auth/siwq/challenge').send({ address: r.address }).expect(200);

@@ -54,6 +54,7 @@ export class FakeChain {
   client = {
     getBalance: async () => 10n ** 18n,
     getBlockNumber: async () => this.block + this.headOffset,
+    getBlock: async () => ({ number: this.block, timestamp: BigInt(Math.floor(Date.now() / 1000)) }),
     getLogs: async ({ fromBlock, toBlock }: { fromBlock: bigint; toBlock: bigint }) => this.logs.filter((l) => (l.blockNumber as bigint) >= fromBlock && (l.blockNumber as bigint) <= toBlock),
     readContract: async () => 0n,
     simulateContract: async (p: { functionName: string; args: unknown[] }) => {

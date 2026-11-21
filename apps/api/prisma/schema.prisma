@@ -230,6 +230,19 @@ model RelayJob {
   @@index([status])
 }
 
+/// Judge-mode demo runs (spec §8). Every demo is an ordinary exam driven by the DEMO role keys.
+model Demo {
+  id          String   @id @default(cuid())
+  examId      String   @unique // on-chain exam id
+  ip          String
+  centres     Json // { A: centreId, B: centreId }
+  startTime   DateTime
+  boardState  Bytes? // the demo board's BoardGroups state, sealed to the demo board
+  scripts     Json? // { pseudonyms: [...] } of the candidate bots
+  steps       Json // beat log: [{ beat, at, ok, summary, txs }]
+  createdAt   DateTime @default(now())
+}
+
 /// Board-issued, single-use admission tickets for script submission (bug-hunt finding 5).
 model ScriptTicket {
   tokenHash String    @id // SHA3-256 of the ticket

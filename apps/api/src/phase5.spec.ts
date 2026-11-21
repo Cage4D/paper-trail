@@ -66,7 +66,7 @@ describe.runIf(!!process.env.DATABASE_URL)('Phase 5 flow', () => {
     configureApp(app);
     await app.init();
     db = app.get(PrismaService);
-    for (const t of ['relayJob', 'chainEvent', 'mark', 'script', 'scriptTicket', 'rateLimit', 'member', 'epochEnvelope', 'boardState', 'bindChallenge', 'identityMap', 'shareBlob', 'centre', 'exam', 'authChallenge', 'user', 'indexerCursor'] as const)
+    for (const t of ['relayJob', 'chainEvent', 'mark', 'script', 'scriptTicket', 'rateLimit', 'member', 'epochEnvelope', 'boardState', 'bindChallenge', 'identityMap', 'demo', 'shareBlob', 'centre', 'exam', 'authChallenge', 'user', 'indexerCursor'] as const)
       await (db[t] as { deleteMany: () => Promise<unknown> }).deleteMany();
     // everyone signs in and publishes a recipient card
     for (const r of all) {
