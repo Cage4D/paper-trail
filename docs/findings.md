@@ -357,9 +357,17 @@ relying on them.
 
 ---
 
-## Phase 2 live results (PaperTrail on diana)
+## Current deployment: PaperTrail v2
 
-The contract is deployed at `0xDd26128846Ea6A35340010ce8be8F5820E264C33`
+**PaperTrail v2 is at `0xbe6b208Bc8990a68740053Dad68624914812cf8F`** (block 10,485,858,
+[deploy tx](https://explore.qore.network/tx/0x5bdf9effc8834e32ed41881fb2eb58f78a49cb247bb82dc86e7938ec3fa72a15)).
+v2 signs the release epoch (bug-hunt finding 1; see `docs/phase-reports/bughunt-fixes.md`), and this is the
+address to list on the project page. v1 (below, `0xDd26…4C33`) is superseded; its record is
+`scripts/out/deployment-v1.json`.
+
+## Phase 2 live results (PaperTrail v1 on diana)
+
+The v1 contract was deployed at `0xDd26128846Ea6A35340010ce8be8F5820E264C33`
 ([deploy tx](https://explore.qore.network/tx/0x862be464d94e90a4458b07314a15bc5c9068cc1cfecff7c4fbdf1cd1f6abac4d),
 1,611,276 gas). Results are in `scripts/out/smoke.json` and `scripts/findings/out/live-negative.json`.
 
@@ -397,7 +405,7 @@ the chain for them. Every §11 network feature must be visible from those 5. Pro
 | Address | Shows |
 |---|---|
 | relayer | EVM authorisation window, contract deploy, every EVM tx to PaperTrail (which runs the contract's `pqcVerify` + `pqcKeyStatus`), its own PQC + KEM registration |
-| PaperTrail contract (`qor1…` form) | The contract with the Solidity PQC checks, and its events |
+| PaperTrail **v2** contract (`qor1…` form of `0xbe6b…cf8F`) | The contract with the Solidity PQC checks, and its events |
 | board | PQC + KEM registration; ML-DSA signer of createExam / setCentre / rotateEpoch |
 | examiner1 | PQC + KEM registration; release signer |
 | examiner2 | PQC + KEM registration; release signer |
