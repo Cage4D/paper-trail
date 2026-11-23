@@ -11,6 +11,7 @@ category.
 
 ## Live deployment (qorechain-diana testnet)
 
+- **Web app:** https://paper-trail-web-nu.vercel.app (judge mode: "Start the 3-minute demo").
 - **API:** https://paper-trail-api.vercel.app ([`/health`](https://paper-trail-api.vercel.app/health)); judge mode: `POST /demo/start`.
 - **PaperTrail v2 contract:** `0xbe6b208Bc8990a68740053Dad68624914812cf8F`
 
@@ -50,6 +51,9 @@ pnpm -r build && pnpm -r test
 pnpm --filter @paper-trail/core build && pnpm --filter @paper-trail/shared build
 pnpm --filter web dev        # http://localhost:5173, against the deployed API
 ```
+
+Deployed as a static build: `pnpm --filter web build`, then `vercel deploy --prod` of `apps/web/dist`
+with `apps/web/vercel.json` (the SPA rewrite) to the `paper-trail-web` Vercel project.
 
 Configuration is in `apps/web/.env.example` (`VITE_API_URL` and the chain endpoints); copy it
 to `apps/web/.env.local` to override. The API only accepts browser calls from origins listed in
