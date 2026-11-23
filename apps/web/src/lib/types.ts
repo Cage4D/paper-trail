@@ -64,6 +64,8 @@ export interface DemoStart {
   centres: { A: Hex; B: Hex };
   roles: Record<DemoRole, { label: string; address: Hex; roleAddress: string }>;
   roleLinks: Record<DemoRole, string>;
+  /** true: the six setup txs are still landing in the background (see the "set:*" steps) */
+  settingUp?: boolean;
   txs: { tx: Hex; explorer: string }[];
   variants: DemoVariants;
   label: string;
@@ -85,7 +87,8 @@ export interface DemoState {
   startsInSeconds: number;
   centres: { A: Hex; B: Hex };
   steps: DemoStep[];
-  exam: ExamView;
+  /** null until createExam has landed */
+  exam: ExamView | null;
   audit: string;
   events: string;
 }

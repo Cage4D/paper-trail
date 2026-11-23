@@ -385,3 +385,6 @@ button.pt-health { cursor: pointer; }
 .pt-glossary dt { font: 700 17px/24px var(--font-sans); }
 .pt-glossary dd { margin: 4px 0 0; color: var(--ink-muted); font-size: 15px; line-height: 22px; }
 .pt-story { font-size: 17px; line-height: 26px; }
+.pt-xrow--wait { border-style: dashed; background: transparent; }
+.pt-xrow--wait .pt-xrow__mark { background: var(--surface-sunk); border-style: dashed; color: var(--ink-muted); }
+.pt-xrow--now .pt-xrow__mark { background: var(--highlight); border-style: solid; color: var(--on-sticker); }

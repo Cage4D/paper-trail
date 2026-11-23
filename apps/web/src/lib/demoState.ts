@@ -31,8 +31,22 @@ export interface LaterDoc {
   result: string;
 }
 
+/** The six background setup txs, in order, with plain labels (API steps "set:<part>"). */
+export const SETUP_PARTS: { part: string; label: string }[] = [
+  { part: 'createExam', label: 'Exam created' },
+  { part: 'centreA', label: "Centre A's locked copy recorded" },
+  { part: 'centreB', label: "Centre B's locked copy recorded" },
+  { part: 'groupA', label: "Centre A's team set up" },
+  { part: 'groupB', label: "Centre B's team set up" },
+  { part: 'markers', label: "The markers' team set up" },
+];
+
 export interface Derived {
   set?: DemoStep;
+  /** setup failed in the background ("set" ok:false) */
+  setFailed?: DemoStep;
+  /** landed setup txs by part ("set:<part>" steps) */
+  setParts: Record<string, DemoStep>;
   early?: DemoStep; // latest beat-2 refusal
   earlyMessage?: string;
   bot?: DemoStep; // examiner 1's successful release
@@ -76,13 +90,15 @@ export function parseLeakSummary(summary: string): LeakResult['result'] | null {
 export function derive(state: DemoState, cache: DemoCache, live: boolean): Derived {
   const steps = state.steps ?? [];
   const find = (pred: (s: DemoStep) => boolean) => steps.find(pred);
-  const set = find((s) => s.beat === 1 && s.ok);
+  const set = find((s) => s.name === 'set' && s.ok);
+  const setFailed = set ? undefined : find((s) => s.name === 'set' && !s.ok);
+  const setParts = Object.fromEntries(steps.filter((s) => s.name.startsWith('set:') && s.ok).map((s) => [s.name.slice(4), s]));
   const earlies = steps.filter((s) => s.beat === 2 && !s.ok && releaseRole(s));
   const early = earlies[earlies.length - 1];
   const okReleases = steps.filter((s) => s.ok && s.beat === 3 && releaseRole(s));
   const bot = okReleases.find((s) => releaseRole(s) === 'examiner1');
   const judge = okReleases.find((s) => releaseRole(s) !== 'examiner1');
-  const centreA = state.exam?.centres.find((c) => c.centreId.toLowerCase() === state.centres.A.toLowerCase());
+  const centreA = state.exam?.centres?.find((c) => c.centreId.toLowerCase() === state.centres.A.toLowerCase());
   const releasedA = !!centreA?.released || okReleases.some((s) => s.summary.includes('Released')) || okReleases.length >= 2;
   const releaseCountA = Math.max(centreA?.releaseCount ?? 0, okReleases.length);
   const openA1 = find((s) => s.name === 'invigilatorA1 opens centre A' && s.ok);
@@ -104,19 +120,22 @@ export function derive(state: DemoState, cache: DemoCache, live: boolean): Deriv
     a2Later = p.later;
   }
 
-  const states: Derived['states'] = { 1: set ? 'done' : 'running', 2: 'pending', 3: 'pending', 4: 'pending', 5: 'pending', 6: 'pending', 7: 'pending' };
-  states[2] = early ? 'refused' : live ? 'pending' : 'running';
-  if (live) states[3] = releasedA && judge ? 'done' : 'running';
+  const states: Derived['states'] = { 1: set ? 'done' : setFailed ? 'refused' : 'running', 2: 'pending', 3: 'pending', 4: 'pending', 5: 'pending', 6: 'pending', 7: 'pending' };
+  // nothing can be acted on until the exam, centres and teams are on the blockchain
+  states[2] = early ? 'refused' : live || !set ? 'pending' : 'running';
+  if (live && set) states[3] = releasedA && judge ? 'done' : 'running';
   if (states[3] === 'done') states[4] = openA1 ? 'done' : 'running';
   if (states[4] === 'done') states[5] = openA2 && scripts ? 'done' : 'running';
   if (states[5] === 'done') states[6] = leaks.length ? 'done' : 'running';
   if (states[6] === 'done') states[7] = 'running';
   const order = [1, 2, 3, 4, 5, 6, 7] as const;
   // while sealed after the refusal nothing is running: the judge is still on beat 2 (reading the diff)
-  const current = order.find((n) => states[n] === 'running') ?? (live ? 7 : 2);
+  const current = order.find((n) => states[n] === 'running') ?? (!set ? 1 : live ? 7 : 2);
   const doneCount = order.filter((n) => states[n] === 'done' || states[n] === 'refused').length;
   return {
     set,
+    setFailed,
+    setParts,
     early,
     earlyMessage: early?.summary.replace(/^TOO_EARLY:\s*/, ''),
     bot,

@@ -1,6 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router';
-import { IconArrowRight, IconCheck, IconKey, IconLock, IconX } from '@tabler/icons-react';
+import { IconArrowRight, IconCheck, IconClock, IconKey, IconLoader2, IconLock, IconX } from '@tabler/icons-react';
 import stamp from '../assets/stickers/authentic-stamp.svg';
 import canary from '../assets/stickers/canary.svg';
 import envelope from '../assets/stickers/sealed-envelope.svg';
@@ -21,7 +21,7 @@ import { ConfidenceBar, OnChainDetails, Verdict, XRow } from '../components/Verd
 import { ApiError, api } from '../lib/api';
 import { CONTRACT } from '../lib/config';
 import { readDemoCache, writeDemoCache, type DemoCache } from '../lib/demoCache';
-import { DEMO_PAPER_TITLE, derive, parseLeakSummary, PLAYABLE, ROLE_NAME, roleLabel, type Derived } from '../lib/demoState';
+import { DEMO_PAPER_TITLE, derive, parseLeakSummary, SETUP_PARTS, PLAYABLE, ROLE_NAME, roleLabel, type Derived } from '../lib/demoState';
 import { humaniseIsoTimes, mmss, shortHash, utcClock } from '../lib/format';
 import { useElapsed, usePoll } from '../lib/hooks';
 import { parseCopy } from '../lib/paper';
@@ -253,7 +253,7 @@ export function Demo() {
   const title = (() => {
     // the demo exam's on-chain title is a label; the paper's own title is the one to show
     const t = cache.start ? parseCopy(cache.start.variants.master).title : DEMO_PAPER_TITLE;
-    return t ? t.replace(DEMO_TITLE_PREFIX, '') : (state?.exam.title ?? 'Judge mode');
+    return t ? t.replace(DEMO_TITLE_PREFIX, '') : (state?.exam?.title ?? 'Judge mode');
   })();
 
   return (
@@ -402,30 +402,88 @@ const doneChip = (at?: string, text = 'Done') => <Chip status="done">{at ? `${te
 
 // ── beat 1: set ──
 
+/** The six setup txs ticking off as they land (they run in the background after /demo/start). */
+function SetupProgress({ d }: { d: Derived }) {
+  if (d.setFailed)
+    return (
+      <Banner tone="error" action={<Link className="pt-btn pt-btn--sm" to="/">Start a new demo</Link>}>
+        Setting up this demo on the blockchain failed ({d.setFailed.summary.replace(/^[A-Z_]+:\s*/, '')}). Nothing else will run on it.
+      </Banner>
+    );
+  const next = SETUP_PARTS.findIndex((p) => !d.setParts[p.part]);
+  return (
+    <div className="pt-col" style={{ gap: 10 }}>
+      <p className="pt-muted pt-beat__text">
+        Six real transactions are going onto the QoreChain blockchain, one at a time (usually 25–40 s in all). The countdown already includes this. Meanwhile, compare the two copies below.
+      </p>
+      <div className="pt-xrows">
+        {SETUP_PARTS.map((p, i) => {
+          const step = d.setParts[p.part];
+          if (step)
+            return (
+              <XRow key={p.part} yes aside={step.txs[0] && <HashLink value={step.txs[0]} small copy={false} />}>
+                {p.label}
+              </XRow>
+            );
+          return (
+            <div key={p.part} className={`pt-xrow pt-xrow--wait${i === next ? ' pt-xrow--now' : ''}`}>
+              <span className="pt-xrow__mark" aria-hidden>
+                {i === next ? <IconLoader2 size={16} stroke={2} className="pt-spin" /> : <IconClock size={16} stroke={2} />}
+              </span>
+              <span>
+                {p.label}
+                <span className="sr-only">{i === next ? ' (sending now)' : ' (waiting)'}</span>
+              </span>
+              <span className="pt-xrow__aside pt-muted pt-small">{i === next ? 'sending…' : 'waiting'}</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function BeatSet({ d, state, cache, live, collapsed, onToggle }: { d: Derived; state: DemoState; cache: DemoCache; live: boolean; collapsed: boolean; onToggle: () => void }) {
-  const txs = d.set?.txs ?? cache.start?.txs.map((t) => t.tx) ?? [];
-  const centre = (k: 'A' | 'B') => state.exam.centres.find((c) => c.centreId.toLowerCase() === state.centres[k].toLowerCase());
+  // older API answers carried the txs in the start response; newer ones log them as "set:*" steps
+  const txs = d.set?.txs ?? (cache.start?.txs.length ? cache.start.txs.map((t) => t.tx) : SETUP_PARTS.flatMap((p) => d.setParts[p.part]?.txs ?? []));
+  const centre = (k: 'A' | 'B') => state.exam?.centres.find((c) => c.centreId.toLowerCase() === state.centres[k].toLowerCase());
+  const st = d.states[1];
+  const landed = SETUP_PARTS.filter((p) => d.setParts[p.part]).length;
+  const aside =
+    st === 'running' ? (
+      <Chip status="pending">{`Setting up · ${landed} of ${SETUP_PARTS.length}`}</Chip>
+    ) : st === 'refused' ? (
+      <Chip status="failed">Setup failed</Chip>
+    ) : (
+      !collapsed && doneChip(d.set?.at)
+    );
   return (
     <Beat
       n={1}
-      state={d.states[1]}
+      state={st}
       title="Set the exam"
-      aside={!collapsed && doneChip(d.set?.at)}
+      aside={aside}
       collapsed={collapsed}
       onToggle={onToggle}
       toggleLabel="Show the two copies"
       line={`Two centres, two different locked copies, three examiner keys · ${txs.length} blockchain receipts`}
     >
       <p className="pt-beat__lead">
-        The exam board created the exam and sent each of the two <Term k="centre">exam centres</Term> its own locked copy. The key to unlock them is split between three <Term k="examiner">examiners</Term>: any two of them together can open a copy, but one alone can't.
+        {st === 'running' ? 'The exam board is creating the exam and sending' : 'The exam board created the exam and sent'} each of the two <Term k="centre">exam centres</Term> its own locked copy. The key to unlock them is split between three <Term k="examiner">examiners</Term>: any two of them together can open a copy, but one alone can't.
       </p>
-      <span className="pt-eyebrow">Blockchain receipts (each one opens on the QoreChain explorer)</span>
-      <div className="pt-txlist">
-        {txs[0] && <HashLink value={txs[0]} label="createExam" small />}
-        {txs[1] && <HashLink value={txs[1]} label="setCentre A" small />}
-        {txs[2] && <HashLink value={txs[2]} label="setCentre B" small />}
-        {txs.length > 3 && <TxGroup label={`rotateEpoch ×${txs.length - 3}`} txs={txs.slice(3)} />}
-      </div>
+      {st === 'done' ? (
+        <>
+          <span className="pt-eyebrow">Blockchain receipts (each one opens on the QoreChain explorer)</span>
+          <div className="pt-txlist">
+            {txs[0] && <HashLink value={txs[0]} label="createExam" small />}
+            {txs[1] && <HashLink value={txs[1]} label="setCentre A" small />}
+            {txs[2] && <HashLink value={txs[2]} label="setCentre B" small />}
+            {txs.length > 3 && <TxGroup label={`rotateEpoch ×${txs.length - 3}`} txs={txs.slice(3)} />}
+          </div>
+        </>
+      ) : (
+        <SetupProgress d={d} />
+      )}
       <div className="pt-beat__rule">
         {cache.start ? (
           <CanaryDiff variants={cache.start.variants} spotNote={!live} />
@@ -436,7 +494,7 @@ function BeatSet({ d, state, cache, live, collapsed, onToggle }: { d: Derived; s
               The side-by-side copies are shown in the tab that started this demo. The server only keeps them locked, so this tab can't show them. The codes below are what the blockchain recorded for each copy.
             </Note>
             <div className="pt-txlist">
-              <HashLink value={state.exam.masterCommitment} kind="plain" label="master copy code" small />
+              {state.exam && <HashLink value={state.exam.masterCommitment} kind="plain" label="master copy code" small />}
               {centre('A') && <HashLink value={centre('A')!.commitment} kind="plain" label="A" small />}
               {centre('B') && <HashLink value={centre('B')!.commitment} kind="plain" label="B" small />}
             </div>
@@ -462,7 +520,18 @@ function BeatEarly({ d, cache, live, collapsed, onToggle, busy, error, onRelease
   const st = d.states[2];
   const note = cache.early?.[cache.early.length - 1];
   if (st === 'pending')
-    return <Beat n={2} state="pending" title="Try to open it early" line="The start time passed before anyone tried opening it early. (The blockchain only refuses before the start time.)" />;
+    return (
+      <Beat
+        n={2}
+        state="pending"
+        title="Try to open it early"
+        line={
+          live
+            ? 'The start time passed before anyone tried opening it early. (The blockchain only refuses before the start time.)'
+            : 'Once the exam is on the blockchain, try to open it before the start time.'
+        }
+      />
+    );
   return (
     <Beat
       n={2}
@@ -613,7 +682,7 @@ function BeatOpen({ d, state, cache, you, busy, error, onOpen }: { d: Derived; s
   const label = useBusyLabel(busy, 'Opening Centre A’s copy…');
   const st = d.states[4];
   if (st === 'pending') return <Beat n={4} state="pending" title="Open it at the centre" aside={<span className="pt-beat__hint">After it's unlocked</span>} line="An invigilator at Centre A opens the paper and checks it's genuine." />;
-  const commitment = cache.openA1?.commitment ?? state.exam.centres.find((c) => c.centreId.toLowerCase() === state.centres.A.toLowerCase())?.commitment;
+  const commitment = cache.openA1?.commitment ?? state.exam?.centres.find((c) => c.centreId.toLowerCase() === state.centres.A.toLowerCase())?.commitment;
   return (
     <Beat n={4} state={st} title="Open it at the centre" aside={st === 'done' ? <Chip status="done">Opened by Invigilator A1</Chip> : <Chip status="pending">{you === 'invigilatorA1' ? 'Your turn' : 'Next'}</Chip>}>
       {st === 'running' && (

@@ -54,4 +54,25 @@ describe('judge mode state', () => {
     expect(parseOpenSummary('cannot open: NOT_A_MEMBER')).toEqual({ opened: false, code: 'NOT_A_MEMBER', later: [] });
     expect(parseLeakSummary('excerpt of centre B\'s copy → no attribution (confidence 0.40, 10/23 bits)')).toMatchObject({ copy: null, matchedBits: 10, observedBits: 23 });
   });
+
+  it('shows the background setup landing tx by tx, and keeps beat 2 shut until it is done', () => {
+    const parts = [step(1, 'set:createExam', true), step(1, 'set:centreA', true)];
+    const d = derive(state(parts), {}, false);
+    expect(d.states[1]).toBe('running');
+    expect(Object.keys(d.setParts)).toEqual(['createExam', 'centreA']);
+    expect(d.states[2]).toBe('pending');
+    expect(d.current).toBe(1);
+    const done = derive(state([...parts, step(1, 'set', true)]), {}, false);
+    expect(done.states).toMatchObject({ 1: 'done', 2: 'running' });
+  });
+  it('marks a failed setup and never treats progress steps as done', () => {
+    const d = derive(state([step(1, 'set:createExam', true), step(1, 'set', false, 'CHAIN_UNAVAILABLE: x')]), {}, true);
+    expect(d.states[1]).toBe('refused');
+    expect(d.setFailed).toBeDefined();
+    expect(d.states[3]).toBe('pending');
+  });
+  it('copes with exam: null while createExam is still landing', () => {
+    const s = { ...state([]), exam: null };
+    expect(derive(s, {}, false).releasedA).toBe(false);
+  });
 });

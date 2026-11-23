@@ -16,7 +16,7 @@ import { Glossary } from '../components/Term';
 import { REPO_URL } from '../lib/config';
 import { useElapsed } from '../lib/hooks';
 import { getRecentDemo } from '../lib/recent';
-import { START_STEPS, startStage, useStartDemo } from '../lib/useStartDemo';
+import { startStage, useStartDemo } from '../lib/useStartDemo';
 
 const EXAM_ID = /^0x[0-9a-fA-F]{64}$/;
 
@@ -150,7 +150,7 @@ export function Landing() {
             </div>
             <p className="pt-hero__fine" aria-live="polite">
               {busy
-                ? `Step ${stage.step} of ${START_STEPS}: six real testnet transactions (the exam, two centres, three groups). Usually 25–40 s; keep this tab open.`
+                ? 'Preparing your demo exam: usually a few seconds. The blockchain setup carries on, live, on the next page.'
                 : 'No wallet, keys or funds needed. Demo keys are held by the server, testnet only.'}
             </p>
             {error && (
