@@ -22,3 +22,6 @@ export function setRecentDemo(d: RecentDemo) {
     /* storage unavailable: nothing to remember */
   }
 }
+
+/** sessionStorage key judge mode uses to hand a decrypted demo paper to the verify page. */
+export const VERIFY_DRAFT_KEY = 'pt-verify-text';

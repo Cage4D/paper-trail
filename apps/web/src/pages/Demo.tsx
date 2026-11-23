@@ -23,7 +23,7 @@ import { DEMO_PAPER_TITLE, derive, parseLeakSummary, PLAYABLE, ROLE_NAME, roleLa
 import { humaniseIsoTimes, mmss, shortHash, utcClock } from '../lib/format';
 import { useElapsed, usePoll } from '../lib/hooks';
 import { parseCopy } from '../lib/paper';
-import { setRecentDemo } from '../lib/recent';
+import { setRecentDemo, VERIFY_DRAFT_KEY } from '../lib/recent';
 import type { DemoRole, DemoState, EventsPage, LeakResult, OpenResult, ReleaseResult, RemoveResult, ScriptsResult } from '../lib/types';
 
 type ActKey = 'early' | 'bot' | 'judge' | 'openA1' | 'remove' | 'scripts' | 'openA2' | 'leak';
@@ -595,7 +595,22 @@ function BeatOpen({ d, state, cache, you, busy, error, onOpen }: { d: Derived; s
             {commitment && <HashLink value={commitment} kind="plain" label="commitment" small />}
           </Verdict>
           {cache.openA1?.paper ? (
-            <PaperView markdown={cache.openA1.paper} label="Centre A's decrypted paper" />
+            <>
+              <PaperView markdown={cache.openA1.paper} label="Centre A's decrypted paper" />
+              <Link
+                className="pt-btn pt-btn--sm pt-selfstart"
+                to={`/verify?exam=${state.examId}&centre=${state.centres.A}`}
+                onClick={() => {
+                  try {
+                    sessionStorage.setItem(VERIFY_DRAFT_KEY, cache.openA1?.paper ?? '');
+                  } catch {
+                    /* the verify page just starts empty */
+                  }
+                }}
+              >
+                Check it yourself
+              </Link>
+            </>
           ) : (
             <div className="pt-row">
               <span className="pt-muted pt-small">The decrypted paper was shown in the tab that opened it.</span>
