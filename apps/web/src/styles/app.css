@@ -279,3 +279,23 @@ button.pt-health { cursor: pointer; }
   .pt-xrow { grid-template-columns: 28px minmax(0, 1fr); }
   .pt-xrow__aside { grid-column: 2; justify-self: start; }
 }
+
+/* ── audit ── */
+.pt-h1--xl { font-size: 48px; line-height: 52px; }
+.pt-h3--lg { font-size: 22px; line-height: 28px; font-weight: 700; }
+.pt-mono--inline { font-size: 13px; }
+.pt-livechip .pt-health__dot { background: #ffffff; }
+.pt-auditgrid { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 32px; align-items: start; margin-top: 12px; }
+.pt-filters { gap: 4px; }
+.pt-table td .pt-chip { height: 26px; font-size: 13px; }
+.pt-tr--new td { background: #fff7d6; animation: pt-slidein 150ms ease-out; }
+[data-theme="ink"] .pt-tr--new td { background: var(--surface-sunk); }
+@keyframes pt-slidein { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+.pt-table td { transition: background-color 600ms ease-out; }
+.pt-dashnote { border: var(--stroke-2) dashed var(--line-soft); border-radius: var(--radius-lg); padding: 16px 18px; font-size: 14px; line-height: 21px; color: var(--ink-muted); }
+.pt-kv dd .pt-hash { white-space: nowrap; }
+@media (max-width: 960px) { .pt-auditgrid { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 760px) { .pt-h1--xl { font-size: 34px; line-height: 38px; } }
+@media (prefers-reduced-motion: reduce) { .pt-tr--new td { animation: none; } }
+.pt-auditgrid .pt-table { min-width: 620px; }
+.pt-auditgrid .pt-table td:first-child, .pt-auditgrid .pt-table th:first-child { width: 1%; white-space: nowrap; }

@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Route, Routes, useLocation } from 'react-router';
 import { AppPage } from './components/Shell';
+import { Audit, AuditIndex } from './pages/Audit';
 import { Demo } from './pages/Demo';
 import { Landing } from './pages/Landing';
 import { NotFound } from './pages/NotFound';
@@ -34,9 +35,9 @@ export function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/demo/:demoId" element={<Demo />} />
         <Route path="/demo/:demoId/as/:role" element={<Demo />} />
-        <Route path="/audit" element={<Placeholder title="Audit trail" />} />
+        <Route path="/audit" element={<AuditIndex />} />
         <Route path="/exams/:examId" element={<Placeholder title="Exam" />} />
-        <Route path="/exams/:examId/audit" element={<Placeholder title="Audit trail" />} />
+        <Route path="/exams/:examId/audit" element={<Audit />} />
         <Route path="/verify" element={<Placeholder title="Verify a paper" />} />
         <Route path="/marks" element={<Placeholder title="Check my mark" />} />
         <Route path="*" element={<NotFound />} />
