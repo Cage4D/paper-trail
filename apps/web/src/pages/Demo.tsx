@@ -12,6 +12,7 @@ import { Chip } from '../components/Chip';
 import { Countdown, useSecondsUntil } from '../components/Countdown';
 import { HashLink, TxGroup } from '../components/HashLink';
 import { PaperView } from '../components/PaperView';
+import { QorexConnect } from '../components/QorexConnect';
 import { ReleaseMeter } from '../components/ReleaseMeter';
 import { RoleTag } from '../components/RoleTag';
 import { AppPage } from '../components/Shell';
@@ -285,13 +286,14 @@ export function Demo() {
                 </select>
                 <span className="pt-muted pt-small">Switching role changes which actions are yours. Bots play the rest.</span>
               </div>
-              {cache.start?.roles[you] && (
-                <div className="pt-row">
+              <div className="pt-row">
+                {cache.start?.roles[you] && (
                   <Suspense fallback={null}>
                     <PqcBadge key={you} address={cache.start.roles[you].roleAddress} who={ROLE_NAME[you]} />
                   </Suspense>
-                </div>
-              )}
+                )}
+                <QorexConnect />
+              </div>
             </div>
             <div className="pt-demohead__side">
               <Countdown startTime={state.startTime} offsetMs={offsetMs} />

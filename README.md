@@ -32,6 +32,7 @@ category.
 | `packages/core` | Isomorphic crypto core (sealing, splitting, canary copies, signed actions) |
 | `packages/shared` | Zod schemas, types and error codes shared by the API and web app |
 | `apps/api` | NestJS + Prisma API and relayer |
+| `apps/web` | Vite + React web app: judge mode, audit trail, exam page, verify-a-paper and check-my-mark |
 | `scripts/` | Account setup, registration and platform-finding scripts |
 
 ## Getting started
@@ -42,6 +43,26 @@ cp .env.example .env      # fill in locally; never commit it
 pnpm -r build && pnpm -r test
 (cd packages/contracts && forge test)
 ```
+
+## Web app (`apps/web`)
+
+```sh
+pnpm --filter @paper-trail/core build && pnpm --filter @paper-trail/shared build
+pnpm --filter web dev        # http://localhost:5173, against the deployed API
+```
+
+Configuration is in `apps/web/.env.example` (`VITE_API_URL` and the chain endpoints); copy it
+to `apps/web/.env.local` to override. The API only accepts browser calls from origins listed in
+its `CORS_ORIGIN`.
+
+| Route | What |
+|---|---|
+| `/` | Landing page; "Start the 3-minute demo" calls `POST /demo/start` |
+| `/demo/:demoId` | Judge mode: the 7 beats, driven by `/demo/*`, restored from the server's step log on reload |
+| `/exams/:examId/audit` | Live audit trail of on-chain events, with the commitments to check against |
+| `/exams/:examId` | Exam status, centres, epochs and release counts |
+| `/verify` | Hash a paper in the browser and compare with the API and `commitment(examId, centreId)` on-chain |
+| `/marks` | Verify a mark's Merkle proof in the browser against the `MarksPublished` root |
 
 ## Credits
 
@@ -64,6 +85,13 @@ Kits, templates and libraries used (required by the Fest rules):
 - [`@noble/hashes`](https://github.com/paulmillr/noble-hashes), [`@noble/ciphers`](https://github.com/paulmillr/noble-ciphers),
   [`@scure/bip39`](https://github.com/paulmillr/scure-bip39),
   [`shamir-secret-sharing`](https://github.com/privy-io/shamir-secret-sharing) (Privy)
+- Web app: [`@qorechain/react`](https://www.npmjs.com/package/@qorechain/react) (`PqcStatusBadge`, `QoreChainProvider`),
+  [`@qorechain/sdk`](https://www.npmjs.com/package/@qorechain/sdk) (the badge's client),
+  [`@qorechain/qorex-types`](https://www.npmjs.com/package/@qorechain/qorex-types), [React](https://react.dev),
+  [React Router](https://reactrouter.com), [Vite](https://vite.dev), [viem](https://viem.sh) (direct contract reads),
+  [react-markdown](https://github.com/remarkjs/react-markdown), [Tabler Icons](https://tabler.io/icons) (MIT),
+  [Bricolage Grotesque](https://fonts.google.com/specimen/Bricolage+Grotesque) and
+  [JetBrains Mono](https://www.jetbrains.com/lp/mono/) (SIL OFL), [Testing Library](https://testing-library.com)
 - [tsup](https://tsup.egoist.dev), [Vitest](https://vitest.dev), [jsdom](https://github.com/jsdom/jsdom),
   [Zod](https://zod.dev), [viem](https://viem.sh)
 
