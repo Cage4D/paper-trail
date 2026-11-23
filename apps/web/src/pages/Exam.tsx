@@ -113,7 +113,7 @@ export function Exam() {
             <span className="pt-muted pt-small">Each centre gets its own locked copy. Updates every 5 s.</span>
           </div>
           <div className="pt-tablebox">
-            <table className="pt-table">
+            <table className="pt-table pt-table--centres">
               <thead>
                 <tr>
                   <th scope="col">Centre</th>

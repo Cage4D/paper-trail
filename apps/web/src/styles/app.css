@@ -180,11 +180,11 @@ button.pt-health { cursor: pointer; }
 .pt-landsec__aside { font-size: 17px; line-height: 26px; color: var(--ink-muted); max-width: 30rem; }
 .pt-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 24px; }
 .pt-tile h3 { position: relative; }
-.pt-steps4 { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 20px; }
+.pt-steps4 { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
 .pt-steps4 li { display: flex; flex-direction: column; gap: 10px; border-top: var(--stroke-2) solid var(--line); padding-top: 16px; }
 .pt-steps4 span { font: 500 14px/1 var(--font-mono); color: var(--ink-muted); }
 .pt-steps4 strong { font: 700 22px/28px var(--font-display); }
-.pt-toolgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 24px; }
+.pt-toolgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
 .pt-toolcard { width: auto; border-radius: var(--radius-xl); padding: 32px; gap: 16px; }
 .pt-toolcard__text { color: var(--ink-muted); font-size: 15px; line-height: 22px; }
 .pt-claims { border: var(--stroke-2) solid var(--line); border-radius: var(--radius-xl); padding: 32px; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 24px 40px; }
@@ -374,7 +374,7 @@ button.pt-health { cursor: pointer; }
 .pt-canary__top .pt-canary__head { flex: 1 1 320px; flex-direction: column; align-items: flex-start; }
 .pt-canary__top .pt-sticky { margin: 8px 6px 0 0; }
 .pt-landsec__notehead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px 32px; }
-@media (max-width: 760px) { .pt-canary__top .pt-sticky { max-width: none; margin: 6px 8px 0 4px; } }
+@media (max-width: 760px) { .pt-canary__top .pt-sticky { flex: 1 1 auto; max-width: calc(100% - 12px); margin: 6px 8px 0 4px; } }
 
 /* ── plain-language helpers ── */
 .pt-term { position: relative; display: inline; }
@@ -397,3 +397,40 @@ button.pt-health { cursor: pointer; }
   .pt-appbar .pt-wrap { min-height: 56px; padding-right: 0; flex-wrap: nowrap; }
 }
 .pt-applinks { flex-wrap: nowrap; white-space: nowrap; }
+
+/* ── tablet (761–1100px): smaller hero headline and stickers kept to the corners, tile art that
+   never covers the words, and grids that split evenly instead of leaving orphans ── */
+@media (max-width: 1100px) {
+  .pt-steps4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 900px) {
+  .pt-toolgrid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 560px) {
+  .pt-steps4 { grid-template-columns: minmax(0, 1fr); }
+}
+@media (min-width: 761px) and (max-width: 1100px) {
+  .pt-hero__body { padding-top: 120px; padding-bottom: 136px; }
+  .pt-hero__title { font-size: 64px; max-width: 15ch; }
+  .pt-hero__sub { max-width: 34rem; }
+  .pt-hero__art--envelope { width: 150px; left: -36px; top: 26px; }
+  .pt-hero__art--key { width: 140px; right: -30px; top: 22px; }
+  .pt-hero__art--canary { width: 140px; right: 40px; bottom: -26px; }
+  .pt-hero__art--padlock { width: 112px; left: 40px; bottom: -20px; }
+  .pt-tile { padding: 28px; }
+  .pt-tile__art { width: 128px !important; }
+  .pt-tile .pt-eyebrow, .pt-tile h3 { padding-right: 116px; }
+  .pt-tile h3 { font-size: 30px; line-height: 34px; max-width: none; }
+}
+@media (max-width: 1100px) {
+  /* the stepper is the navigation on tablets: the side index only squeezed the two copies */
+  .pt-beatindex { display: none !important; }
+}
+@media (max-width: 900px) {
+  .pt-leak { grid-template-columns: minmax(0, 1fr); }
+}
+.pt-table--centres { min-width: 640px; }
+
+/* a group of receipts ("rotateEpoch ×3 0x… 0x… 0x…") wraps instead of running off narrow screens */
+.pt-hash--group { flex-wrap: wrap; white-space: normal; row-gap: 4px; }
+.pt-hash--group a { white-space: nowrap; }

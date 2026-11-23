@@ -47,7 +47,7 @@ export function HashLink({ value, kind = 'tx', to, label, copy = true, small, ne
 /** Several tx links after one label ("rotateEpoch ×3 0x…, 0x…, 0x…"). */
 export function TxGroup({ label, txs }: { label: string; txs: string[] }) {
   return (
-    <span className="pt-hash">
+    <span className="pt-hash pt-hash--group">
       <span className="pt-hash__label">{label}</span>
       {txs.map((t) => (
         <a key={t} href={explorerTx(t)} target="_blank" rel="noreferrer" title={`${t} (opens the explorer)`}>
