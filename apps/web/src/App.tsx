@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Route, Routes, useLocation } from 'react-router';
 import { AppPage } from './components/Shell';
+import { Landing } from './pages/Landing';
 import { NotFound } from './pages/NotFound';
 
 function ScrollToTop() {
@@ -29,7 +30,7 @@ export function App() {
       </a>
       <ScrollToTop />
       <Routes>
-        <Route path="/" element={<Placeholder title="Landing" />} />
+        <Route path="/" element={<Landing />} />
         <Route path="/demo/:demoId" element={<Placeholder title="Judge mode" />} />
         <Route path="/demo/:demoId/as/:role" element={<Placeholder title="Judge mode" />} />
         <Route path="/audit" element={<Placeholder title="Audit trail" />} />
