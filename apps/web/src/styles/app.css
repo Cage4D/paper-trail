@@ -340,3 +340,9 @@ button.pt-health { cursor: pointer; }
   .pt-score__n { font-size: 44px; }
 }
 .pt-mono--inline { white-space: nowrap; }
+@media (max-width: 760px) {
+  .pt-verdict { padding: 16px; gap: 12px; }
+  .pt-verdict img { width: 56px; }
+  .pt-verdict__big { font-size: 24px; line-height: 28px; }
+  .pt-verdict .pt-hash { flex-wrap: wrap; white-space: normal; }
+}
