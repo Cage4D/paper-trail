@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Route, Routes, useLocation } from 'react-router';
 import { AppPage } from './components/Shell';
+import { Demo } from './pages/Demo';
 import { Landing } from './pages/Landing';
 import { NotFound } from './pages/NotFound';
 
@@ -31,8 +32,8 @@ export function App() {
       <ScrollToTop />
       <Routes>
         <Route path="/" element={<Landing />} />
-        <Route path="/demo/:demoId" element={<Placeholder title="Judge mode" />} />
-        <Route path="/demo/:demoId/as/:role" element={<Placeholder title="Judge mode" />} />
+        <Route path="/demo/:demoId" element={<Demo />} />
+        <Route path="/demo/:demoId/as/:role" element={<Demo />} />
         <Route path="/audit" element={<Placeholder title="Audit trail" />} />
         <Route path="/exams/:examId" element={<Placeholder title="Exam" />} />
         <Route path="/exams/:examId/audit" element={<Placeholder title="Audit trail" />} />
