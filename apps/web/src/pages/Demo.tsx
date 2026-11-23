@@ -15,6 +15,7 @@ import { PaperView } from '../components/PaperView';
 import { QorexConnect } from '../components/QorexConnect';
 import { ReleaseMeter } from '../components/ReleaseMeter';
 import { RoleTag } from '../components/RoleTag';
+import { Term } from '../components/Term';
 import { AppPage } from '../components/Shell';
 import { ConfidenceBar, OnChainDetails, Verdict, XRow } from '../components/Verdict';
 import { ApiError, api } from '../lib/api';
@@ -31,7 +32,7 @@ const PqcBadge = lazy(() => import('../components/PqcBadge'));
 
 type ActKey = 'early' | 'bot' | 'judge' | 'openA1' | 'remove' | 'scripts' | 'openA2' | 'leak';
 
-const BEATS = ['Set', 'Release early', 'Start time', 'Invigilator view', 'Revoke', 'Leak', 'Audit'];
+const BEATS = ['Set the exam', 'Try to open early', 'Two keys open it', 'Open at the centre', 'Remove someone', 'Trace a leak', 'Public record'];
 const DEMO_TITLE_PREFIX = /^Paper Trail Demo Board\s+—\s+/;
 
 const toApiError = (e: unknown) => (e instanceof ApiError ? e : new ApiError('INTERNAL', 'Something went wrong on our side. Try again.'));
@@ -266,13 +267,13 @@ export function Demo() {
         <>
           <section className="pt-wrap pt-demohead">
             <div className="pt-demohead__main">
-              <span className="pt-eyebrow">{d.doneCount >= 6 ? 'Judge mode · 6 of 7 done' : `Judge mode · beat ${d.current} of 7`}</span>
+              <span className="pt-eyebrow">{d.doneCount >= 6 ? 'Live demo · 6 of 7 steps done' : `Live demo · step ${d.current} of 7`}</span>
               <h1 className="pt-h1">{title}</h1>
               <div className="pt-row">
                 <HashLink value={state.examId} to={`/exams/${state.examId}`} label="exam" small />
-                {d.releasedA ? <Chip status="released">Centre A released</Chip> : <Chip status="sealed">Sealed</Chip>}
+                {d.releasedA ? <Chip status="released">Centre A unlocked</Chip> : <Chip status="sealed">Locked</Chip>}
                 <Chip status="epoch" icon={d.remove ? undefined : null}>
-                  {d.remove ? `Centre A · epoch ${d.epochA}` : '2 centres'}
+                  {d.remove ? `Centre A team · v${d.epochA}` : '2 exam centres'}
                 </Chip>
               </div>
               <div className="pt-row pt-rolepick">
@@ -284,7 +285,7 @@ export function Demo() {
                     </option>
                   ))}
                 </select>
-                <span className="pt-muted pt-small">Switching role changes which actions are yours. Bots play the rest.</span>
+                <span className="pt-muted pt-small">Pick who you play. Bots play everyone else.</span>
               </div>
               <div className="pt-row">
                 {cache.start?.roles[you] && (
@@ -303,7 +304,9 @@ export function Demo() {
 
           {!live && (
             <div className="pt-wrap" style={{ paddingBottom: 24 }}>
-              <Banner tone="info">While the paper is sealed, look at how Centre A's and Centre B's copies differ. At 00:00, Examiner 1 (a bot) releases, and then it's your turn.</Banner>
+              <Banner tone="info">
+                <strong>The story:</strong> an exam board has sent a locked exam paper to two exam centres. Nobody can open it before the start time, and even then it takes two of the three examiners' keys. You are Examiner 2. While you wait, compare the two centres' copies below: they're deliberately different. At 00:00, Examiner 1 (played by a bot) uses their key, then it's your turn.
+              </Banner>
             </div>
           )}
           {loadError && (
@@ -314,7 +317,7 @@ export function Demo() {
 
           <div className="pt-wrap pt-demobody">
             <nav aria-label="Beats" className="pt-beatindex pt-desktop">
-              <span className="pt-eyebrow">7 beats</span>
+              <span className="pt-eyebrow">7 steps</span>
               {BEATS.map((b, i) => {
                 const st = d.states[(i + 1) as 1];
                 return (
@@ -378,6 +381,23 @@ function DemoSkeleton() {
   );
 }
 
+/** Plain words for the documents A2 tries in beat 5 (the API's `what` strings). */
+function plainDocument(what: string) {
+  if (/group key/i.test(what)) return "The team's new key (made after A2 was removed)";
+  if (/script/i.test(what)) return "A candidate's answer script";
+  return what.charAt(0).toUpperCase() + what.slice(1);
+}
+
+/** "Can read" / "Locked out", with the system's code on hover. */
+function OutcomeTag({ code }: { code: string }) {
+  const ok = code === 'opened';
+  return (
+    <span className="pt-code" title={ok ? 'opened' : code}>
+      {ok ? 'Can read' : code === 'NOT_A_MEMBER' ? 'Locked out: not on the team' : code === 'NOT_A_RECIPIENT' ? 'Locked out: not sent to A2' : `Locked out (${code})`}
+    </span>
+  );
+}
+
 const doneChip = (at?: string, text = 'Done') => <Chip status="done">{at ? `${text} · ${utcClock(at)}` : text}</Chip>;
 
 // ── beat 1: set ──
@@ -389,14 +409,17 @@ function BeatSet({ d, state, cache, live, collapsed, onToggle }: { d: Derived; s
     <Beat
       n={1}
       state={d.states[1]}
-      title="Set"
+      title="Set the exam"
       aside={!collapsed && doneChip(d.set?.at)}
       collapsed={collapsed}
       onToggle={onToggle}
-      toggleLabel="Show canary diff"
-      line={`2 centres, 2 canary copies, key split 2-of-3 · ${txs.length} txs`}
+      toggleLabel="Show the two copies"
+      line={`Two centres, two different locked copies, three examiner keys · ${txs.length} blockchain receipts`}
     >
-      <p className="pt-beat__lead">Exam set: 2 centres, each with its own encrypted canary copy; the key is split 2-of-3 between the examiners.</p>
+      <p className="pt-beat__lead">
+        The exam board created the exam and sent each of the two <Term k="centre">exam centres</Term> its own locked copy. The key to unlock them is split between three <Term k="examiner">examiners</Term>: any two of them together can open a copy, but one alone can't.
+      </p>
+      <span className="pt-eyebrow">Blockchain receipts (each one opens on the QoreChain explorer)</span>
       <div className="pt-txlist">
         {txs[0] && <HashLink value={txs[0]} label="createExam" small />}
         {txs[1] && <HashLink value={txs[1]} label="setCentre A" small />}
@@ -408,12 +431,12 @@ function BeatSet({ d, state, cache, live, collapsed, onToggle }: { d: Derived; s
           <CanaryDiff variants={cache.start.variants} spotNote={!live} />
         ) : (
           <div className="pt-col">
-            <h3 className="pt-h3">Canary copies: the same paper, two fingerprints</h3>
+            <h3 className="pt-h3">Each centre's copy is slightly different</h3>
             <Note>
-              The side-by-side copies are shown in the tab that started this demo. The server keeps them only as ciphertext, so this tab can't show them; the commitments below are what the chain holds.
+              The side-by-side copies are shown in the tab that started this demo. The server only keeps them locked, so this tab can't show them. The codes below are what the blockchain recorded for each copy.
             </Note>
             <div className="pt-txlist">
-              <HashLink value={state.exam.masterCommitment} kind="plain" label="master commitment" small />
+              <HashLink value={state.exam.masterCommitment} kind="plain" label="master copy code" small />
               {centre('A') && <HashLink value={centre('A')!.commitment} kind="plain" label="A" small />}
               {centre('B') && <HashLink value={centre('B')!.commitment} kind="plain" label="B" small />}
             </div>
@@ -439,20 +462,20 @@ function BeatEarly({ d, cache, live, collapsed, onToggle, busy, error, onRelease
   const st = d.states[2];
   const note = cache.early?.[cache.early.length - 1];
   if (st === 'pending')
-    return <Beat n={2} state="pending" title="Try to release early" line="The start time passed before an early release was tried. The contract only refuses releases before it." />;
+    return <Beat n={2} state="pending" title="Try to open it early" line="The start time passed before anyone tried opening it early. (The blockchain only refuses before the start time.)" />;
   return (
     <Beat
       n={2}
       state={st}
-      title="Try to release early"
+      title="Try to open it early"
       aside={st === 'refused' ? <Chip status="failed">{d.early ? `Refused · ${utcClock(d.early.at)}` : 'Refused'}</Chip> : <Chip status="pending">Your turn</Chip>}
       collapsed={collapsed}
       onToggle={onToggle}
-      line="Refused by the contract: still sealed. Nothing was sent."
+      line="The blockchain refused: still locked. Nothing was sent."
     >
       {st === 'running' && (
         <>
-          <p className="pt-beat__lead">Before the start time, ask the contract to release Centre A as Examiner 1. It should say no.</p>
+          <p className="pt-beat__lead">What if someone tries to open the paper before the start time? Ask the blockchain to unlock Centre A's copy now, as Examiner 1. It should say no.</p>
           <Button variant="primary" size="lg" icon={<IconKey size={20} stroke={2} aria-hidden />} busy={busy} busyLabel={label} onClick={onRelease} className="pt-beat__cta">
             Release as Examiner 1 now
           </Button>
@@ -463,12 +486,12 @@ function BeatEarly({ d, cache, live, collapsed, onToggle, busy, error, onRelease
           <div className="pt-refusal" role="alert">
             <IconLock size={28} stroke={2} aria-hidden style={{ flex: 'none' }} />
             <div>
-              <p className="pt-refusal__title">Refused by the contract</p>
+              <p className="pt-refusal__title">Refused by the blockchain</p>
               <p>{humaniseIsoTimes(note && !note.ok ? note.error.message : (d.earlyMessage ?? ''))}</p>
             </div>
           </div>
           <p className="pt-muted pt-beat__text">
-            Real simulation on QoreChain; nothing was sent. {note && !note.ok ? note.note : 'Examiner 1 asked to release Centre A before the start time and the contract said no.'}
+            This was a real check against the QoreChain blockchain. It refused because the start time hasn't arrived, so nothing was sent and nothing was spent. No one, not even the exam board, can open it early.
           </p>
           {!live && (
             <Button size="sm" busy={busy} busyLabel={label} onClick={onRelease} className="pt-selfstart">
@@ -482,7 +505,7 @@ function BeatEarly({ d, cache, live, collapsed, onToggle, busy, error, onRelease
         <OnChainDetails
           rows={[
             ['Called', 'release(examId, centreA, blobHash, examiner1, epoch, sig), simulated with eth_call'],
-            ['Result', 'Reverted: block.timestamp < startTime (TooEarly)'],
+            ['Result', `Reverted: block.timestamp < startTime (TooEarly)${note && !note.ok ? `. ${note.note}` : ''}`],
             ['Sent', 'Nothing. No transaction, no gas.'],
           ]}
         />
@@ -519,9 +542,9 @@ function BeatRelease({ d, you, judgeRole, secondsLeft, botBusy, botWaiting, botE
       <Beat
         n={3}
         state="pending"
-        title="Start time"
+        title="Two keys open it"
         aside={<span className="pt-beat__hint">in {mmss(secondsLeft)}</span>}
-        line="At 00:00 Examiner 1 (bot) releases. Then you release as Examiner 2, and two of three keys open Centre A's paper."
+        line="At 00:00 Examiner 1 (a bot) uses their key. Then you use yours as Examiner 2, and two of the three keys unlock Centre A's paper."
       />
     );
   const releasedEpoch = d.remove ? Math.max(1, d.epochA - 1) : d.epochA;
@@ -529,11 +552,11 @@ function BeatRelease({ d, you, judgeRole, secondsLeft, botBusy, botWaiting, botE
   const chip =
     st === 'done' ? doneChip(d.judge?.at) : !d.bot ? <Chip status="pending">{botWaiting ? 'Waiting for the chain clock…' : 'Sending…'}</Chip> : busy || pending ? <Chip status="pending">Sending…</Chip> : <Chip status="pending">Your turn</Chip>;
   return (
-    <Beat n={3} state={st} title="Start time" aside={chip}>
+    <Beat n={3} state={st} title="Two keys open it" aside={chip}>
       <div className="pt-xrows">
         {d.bot ? (
           <XRow yes aside={d.bot.txs[0] && <HashLink value={d.bot.txs[0]} small copy={false} />}>
-            <strong>Examiner 1 (bot)</strong> released Centre A · 1 of 2
+            <strong>Examiner 1 (bot)</strong> used their key for Centre A · 1 of 2
           </XRow>
         ) : botError ? (
           <ActionError error={botError} onRetry={onBotRetry} />
@@ -544,26 +567,28 @@ function BeatRelease({ d, you, judgeRole, secondsLeft, botBusy, botWaiting, botE
         )}
         {d.judge && (
           <XRow yes aside={d.judge.txs[0] && <HashLink value={d.judge.txs[0]} small copy={false} />}>
-            <strong>{d.judgeRole === you ? `You, ${ROLE_NAME[d.judgeRole]}` : judgeName}</strong> released Centre A · 2 of 2
+            <strong>{d.judgeRole === you ? `You, ${ROLE_NAME[d.judgeRole]}` : judgeName}</strong> used your key for Centre A · 2 of 2
           </XRow>
         )}
       </div>
       {st === 'done' ? (
-        <Verdict tone="ok" title="Released (2 of 2)" big={false}>
-          <p>Centre A's paper is sealed to its current invigilators, epoch {releasedEpoch}.</p>
+        <Verdict tone="ok" title="Unlocked (2 of 2 keys)" big={false}>
+          <p>
+            Centre A's paper can now be opened, but only by Centre A's <Term k="invigilator">invigilators</Term> (<Term k="team">team version</Term> {releasedEpoch}).
+          </p>
         </Verdict>
       ) : (
         d.bot && (
           <>
-            <p className="pt-beat__lead">One more key opens Centre A's paper. You hold {ROLE_NAME[judgeRole]}'s.</p>
+            <p className="pt-beat__lead">The start time has passed and one key is in. One more opens Centre A's paper, and you hold {ROLE_NAME[judgeRole]}'s.</p>
             {pending ? (
               <PendingTx tx={pending} />
             ) : (
               <Button variant="primary" size="lg" full icon={<IconKey size={22} stroke={2} aria-hidden />} busy={busy} busyLabel={label} onClick={onRelease} className="pt-beat__cta">
-                Release as {ROLE_NAME[judgeRole]} (you)
+                Use my key: release as {ROLE_NAME[judgeRole]} (you)
               </Button>
             )}
-            <p className="pt-muted pt-small">Usually 3–10 s. The button ignores repeat taps.</p>
+            <p className="pt-muted pt-small">This sends a real, signed transaction to the blockchain. Usually 3–10 s; the button ignores repeat taps.</p>
           </>
         )
       )}
@@ -587,13 +612,13 @@ function BeatRelease({ d, you, judgeRole, secondsLeft, botBusy, botWaiting, botE
 function BeatOpen({ d, state, cache, you, busy, error, onOpen }: { d: Derived; state: DemoState; cache: DemoCache; you: DemoRole; busy: boolean; error?: ApiError; onOpen: () => void }) {
   const label = useBusyLabel(busy, 'Opening Centre A’s copy…');
   const st = d.states[4];
-  if (st === 'pending') return <Beat n={4} state="pending" title="Invigilator view" aside={<span className="pt-beat__hint">After release</span>} line="Open the paper as Invigilator A1 and check it's authentic." />;
+  if (st === 'pending') return <Beat n={4} state="pending" title="Open it at the centre" aside={<span className="pt-beat__hint">After it's unlocked</span>} line="An invigilator at Centre A opens the paper and checks it's genuine." />;
   const commitment = cache.openA1?.commitment ?? state.exam.centres.find((c) => c.centreId.toLowerCase() === state.centres.A.toLowerCase())?.commitment;
   return (
-    <Beat n={4} state={st} title="Invigilator view" aside={st === 'done' ? <Chip status="done">Opened as Invigilator A1</Chip> : <Chip status="pending">{you === 'invigilatorA1' ? 'Your turn' : 'Next'}</Chip>}>
+    <Beat n={4} state={st} title="Open it at the centre" aside={st === 'done' ? <Chip status="done">Opened by Invigilator A1</Chip> : <Chip status="pending">{you === 'invigilatorA1' ? 'Your turn' : 'Next'}</Chip>}>
       {st === 'running' && (
         <>
-          <p className="pt-beat__lead">Centre A's paper is released. Open it as Invigilator A1 and check it against the commitment on-chain.</p>
+          <p className="pt-beat__lead">It's exam morning at Centre A. Invigilator A1 opens the paper, and the app checks it's exactly the paper that was set, using the code recorded on the blockchain.</p>
           <Button variant="primary" size="lg" busy={busy} busyLabel={label} onClick={onOpen} className="pt-beat__cta">
             Open as {roleLabel('invigilatorA1', you)}
           </Button>
@@ -602,8 +627,10 @@ function BeatOpen({ d, state, cache, you, busy, error, onOpen }: { d: Derived; s
       {st === 'done' && (
         <>
           <Verdict tone="ok" sticker={stamp} title="Authentic">
-            <p>SHA3-256 matches the commitment recorded on-chain.</p>
-            {commitment && <HashLink value={commitment} kind="plain" label="commitment" small />}
+            <p>
+              This is exactly the paper that was set. Its <Term k="hash">code</Term> matches the one recorded on the blockchain, so not a single character has changed.
+            </p>
+            {commitment && <HashLink value={commitment} kind="plain" label="recorded code" small />}
           </Verdict>
           {cache.openA1?.paper ? (
             <>
@@ -666,12 +693,12 @@ function BeatRevoke({ d, cache, you, inflight, errors, pendingTx, onRemove, onSc
   const scriptsLabel = useBusyLabel(!!inflight.scripts, 'Sealing and submitting 6 scripts…');
   const openLabel = useBusyLabel(!!inflight.openA2, 'Trying everything as A2…');
   const st = d.states[5];
-  if (st === 'pending') return <Beat n={5} state="pending" title="Revoke" line="Remove Invigilator A2, then watch A2 get locked out of what follows." />;
+  if (st === 'pending') return <Beat n={5} state="pending" title="Remove someone" line="The board removes Invigilator A2 from Centre A's team. Watch A2 get locked out of everything sent afterwards." />;
   const newEpoch = cache.remove?.epoch ?? d.epochA;
   const scriptTxs = d.scripts?.txs ?? cache.scripts?.submitted.map((s) => s.txHash) ?? [];
   const removeTx = d.remove?.txs[0] ?? cache.remove?.txHash;
   return (
-    <Beat n={5} state={st} title="Revoke" aside={d.remove ? <Chip status="epoch">{`Epoch ${Math.max(1, newEpoch - 1)} → ${newEpoch}`}</Chip> : <Chip status="pending">Next</Chip>}>
+    <Beat n={5} state={st} title="Remove someone" aside={d.remove ? <Chip status="epoch">{`Team v${Math.max(1, newEpoch - 1)} → v${newEpoch}`}</Chip> : <Chip status="pending">Next</Chip>}>
       {/* 1. remove */}
       <div className="pt-substep">
         <div className="pt-substep__head">
@@ -680,7 +707,7 @@ function BeatRevoke({ d, cache, you, inflight, errors, pendingTx, onRemove, onSc
         </div>
         {d.remove ? (
           <div className="pt-row">
-            <span className="pt-muted pt-small">Centre A group now:</span>
+            <span className="pt-muted pt-small">Centre A's team now:</span>
             <RoleTag kind="invigilator">Invigilator A1</RoleTag>
             <Chip status="revoked">Invigilator A2</Chip>
           </div>
@@ -688,7 +715,7 @@ function BeatRevoke({ d, cache, you, inflight, errors, pendingTx, onRemove, onSc
           <PendingTx tx={pendingTx.remove} />
         ) : (
           <>
-            <p className="pt-muted pt-beat__text">The board rotates Centre A's group to a new epoch without A2. Everything sealed from now on goes to the new members only.</p>
+            <p className="pt-muted pt-beat__text">Say Invigilator A2 has left Centre A. The exam board removes them, which gives Centre A's team a new version without A2. Anything sent from now on is locked to the new team only.</p>
             <Button variant="danger" busy={!!inflight.remove} busyLabel={removeLabel} onClick={onRemove} className="pt-selfstart">
               Remove Invigilator A2{you === 'board' ? ' (you)' : ''}
             </Button>
@@ -700,7 +727,7 @@ function BeatRevoke({ d, cache, you, inflight, errors, pendingTx, onRemove, onSc
       <div className="pt-substep">
         <div className="pt-substep__head">
           <h3 className="pt-substep__title">{d.scripts ? `2. Candidates submitted ${scriptTxs.length} scripts` : '2. Candidates submit scripts'}</h3>
-          {d.scripts && <span className="pt-muted pt-small">sealed to Marker 1 and Marker 2, verified against the chain</span>}
+          {d.scripts && <span className="pt-muted pt-small">locked so only the two markers can read them</span>}
         </div>
         {d.scripts ? (
           <div className="pt-txlist">
@@ -712,7 +739,7 @@ function BeatRevoke({ d, cache, you, inflight, errors, pendingTx, onRemove, onSc
           <PendingTx tx={pendingTx.scripts} />
         ) : d.remove ? (
           <>
-            <p className="pt-muted pt-beat__text">Six candidate bots seal their answer scripts to the markers under pseudonyms. Six transactions, so this takes a little longer.</p>
+            <p className="pt-muted pt-beat__text">After the exam, six candidates (bots) hand in their answers. Each script is locked so only the markers can read it, and carries a <Term k="pseudonym">code name</Term> instead of the candidate's name. Six blockchain receipts, so this takes a little longer.</p>
             <Button variant="primary" busy={!!inflight.scripts} busyLabel={scriptsLabel} onClick={onScripts} className="pt-selfstart">
               Candidates submit scripts
             </Button>
@@ -724,24 +751,24 @@ function BeatRevoke({ d, cache, you, inflight, errors, pendingTx, onRemove, onSc
       </div>
       {/* 3. A2 tries */}
       <div className="pt-substep">
-        <h3 className="pt-substep__title">{d.openA2 ? '3. A2 tried to open everything' : '3. Try to open as A2'}</h3>
+        <h3 className="pt-substep__title">{d.openA2 ? '3. A2 tried to open everything' : '3. Can A2 still get in?'}</h3>
         {d.openA2 && d.a2Paper ? (
           <>
             <div className="pt-xrows">
-              <XRow yes={d.a2Paper.opened} aside={<span className="pt-code">{d.a2Paper.opened ? 'opened' : (d.a2Paper.code ?? 'refused')}</span>}>
-                Centre A paper, released at epoch {Math.max(1, newEpoch - 1)}
+              <XRow yes={d.a2Paper.opened} aside={<OutcomeTag code={d.a2Paper.opened ? 'opened' : (d.a2Paper.code ?? 'refused')} />}>
+                The exam paper (sent while A2 was still on the team)
               </XRow>
               {d.a2Later.map((l) => (
-                <XRow key={l.what} yes={l.result === 'opened'} aside={<span className="pt-code">{l.result}</span>}>
-                  {l.what.charAt(0).toUpperCase() + l.what.slice(1)}
+                <XRow key={l.what} yes={l.result === 'opened'} aside={<OutcomeTag code={l.result} />}>
+                  {plainDocument(l.what)}
                 </XRow>
               ))}
             </div>
-            {d.a2Paper.opened && <Note>A2 could read the paper released while A2 was still a member (epoch {Math.max(1, newEpoch - 1)}). Removal locks A2 out of everything after.</Note>}
+            {d.a2Paper.opened && <Note>A2 can still read the paper that was sent while A2 was on the team. Removing someone can't take back what they already had; it locks them out of everything sent afterwards.</Note>}
           </>
         ) : d.scripts ? (
           <>
-            <p className="pt-muted pt-beat__text">A2 tries the old paper, the group's new epoch key and a candidate script.</p>
+            <p className="pt-muted pt-beat__text">A2 tries to open three things: the exam paper from earlier, the team's new key, and a candidate's answer script.</p>
             <Button variant="primary" busy={!!inflight.openA2} busyLabel={openLabel} onClick={onOpenA2} className="pt-selfstart">
               Try to open as {roleLabel('invigilatorA2', you)}
             </Button>
@@ -770,7 +797,7 @@ function BeatRevoke({ d, cache, you, inflight, errors, pendingTx, onRemove, onSc
 function BeatLeak({ d, cache, busy, error, onLeak }: { d: Derived; cache: DemoCache; busy: boolean; error?: ApiError; onLeak: () => void }) {
   const label = useBusyLabel(busy, 'Tracing the excerpt…');
   const st = d.states[6];
-  if (st === 'pending') return <Beat n={6} state="pending" title="Leak" line="Simulate a leak from Centre B and trace it back." />;
+  if (st === 'pending') return <Beat n={6} state="pending" title="Trace a leak" line="Someone leaks part of Centre B's copy online. Can we tell where it came from?" />;
   const last = cache.leaks?.[cache.leaks.length - 1];
   const fromSteps = !last && d.leaks.length ? parseLeakSummary(d.leaks[d.leaks.length - 1].summary) : null;
   const result = last?.result ?? fromSteps;
@@ -784,7 +811,7 @@ function BeatLeak({ d, cache, busy, error, onLeak }: { d: Derived; cache: DemoCa
     <Beat
       n={6}
       state={st}
-      title="Leak"
+      title="Trace a leak"
       aside={
         st === 'done' ? (
           <Button size="sm" busy={busy} busyLabel={label} onClick={onLeak}>
@@ -797,7 +824,7 @@ function BeatLeak({ d, cache, busy, error, onLeak }: { d: Derived; cache: DemoCa
     >
       {st === 'running' && (
         <>
-          <p className="pt-beat__lead">Someone at Centre B retypes three questions and posts them online. Paste-ready, typos and all. Where did it come from?</p>
+          <p className="pt-beat__lead">Someone at Centre B retypes three questions and posts them online, typos and all. Because every centre's copy is slightly different, the leaked text still gives away which copy it came from.</p>
           <Button variant="primary" size="lg" busy={busy} busyLabel={label} onClick={onLeak} className="pt-beat__cta">
             Simulate a leak from Centre B
           </Button>
@@ -806,34 +833,34 @@ function BeatLeak({ d, cache, busy, error, onLeak }: { d: Derived; cache: DemoCa
       {st === 'done' && result && (
         <div className="pt-leak">
           <div className="pt-col" style={{ gap: 10 }}>
-            <span className="pt-eyebrow">Leaked excerpt, as found</span>
+            <span className="pt-eyebrow">The leaked text, as found online</span>
             {last ? <pre className="pt-excerpt">{last.leakedExcerpt}</pre> : <p className="pt-muted pt-small">The excerpt was shown in the tab that ran the leak. Simulate another to see one here.</p>}
           </div>
           <div className="pt-col" style={{ gap: 14 }}>
             {result.copy ? (
               <Verdict tone="bad" sticker={canary} title={`Traced to ${result.copy}`} big>
                 <p>
-                  {result.matchedBits}/{result.observedBits} fingerprint bits matched
+                  {result.matchedBits === result.observedBits ? `All ${result.observedBits}` : `${result.matchedBits} of ${result.observedBits}`} hidden differences in the leak match this copy
                 </p>
               </Verdict>
             ) : (
               <Verdict tone="neutral" title="No clear match" big>
-                <p>This excerpt is too close to more than one copy to attribute.</p>
+                <p>This text is too close to more than one copy to say which one leaked. We won't guess.</p>
               </Verdict>
             )}
             <ConfidenceBar value={result.confidence} />
-            {Number.isFinite(result.distanceToRunnerUp) && <p className="pt-muted pt-small">Runner-up is {result.distanceToRunnerUp} bits further away.</p>}
+            {Number.isFinite(result.distanceToRunnerUp) && <p className="pt-muted pt-small">The next closest copy differs from the leak in {result.distanceToRunnerUp} more places.</p>}
             {last?.centre && (
               <dl className="pt-kv">
                 {last.centre.epoch !== undefined && (
                   <>
-                    <dt>Epoch</dt>
+                    <dt>Team version</dt>
                     <dd className="pt-mono">{last.centre.epoch}</dd>
                   </>
                 )}
                 {!!last.centre.recipients?.length && (
                   <>
-                    <dt>Recipients</dt>
+                    <dt>Who received it</dt>
                     <dd className="pt-col" style={{ gap: 4 }}>
                       {last.centre.recipients.map((r) => (
                         <span key={r.address} className="pt-row" style={{ gap: 8 }}>
@@ -846,7 +873,7 @@ function BeatLeak({ d, cache, busy, error, onLeak }: { d: Derived; cache: DemoCa
                 )}
                 {last.centre.setTx && (
                   <>
-                    <dt>Copy set</dt>
+                    <dt>Copy recorded in</dt>
                     <dd>
                       <HashLink value={last.centre.setTx} small copy={false} />
                     </dd>
@@ -854,7 +881,7 @@ function BeatLeak({ d, cache, busy, error, onLeak }: { d: Derived; cache: DemoCa
                 )}
                 {last.centre.epochTx && (
                   <>
-                    <dt>Group epoch</dt>
+                    <dt>Team set up in</dt>
                     <dd>
                       <HashLink value={last.centre.epochTx} small copy={false} />
                     </dd>
@@ -866,7 +893,7 @@ function BeatLeak({ d, cache, busy, error, onLeak }: { d: Derived; cache: DemoCa
         </div>
       )}
       <ActionError error={error} onRetry={onLeak} />
-      {st === 'done' && <Note>{last?.note ?? 'Canary attribution names the centre whose copy leaked, or the committee (which holds every copy).'}</Note>}
+      {st === 'done' && <Note>A leaked copy points to the centre it was sent to, or to the exam board and examiners, who hold every copy. It can't tell those apart.</Note>}
     </Beat>
   );
 }
@@ -875,11 +902,11 @@ function BeatLeak({ d, cache, busy, error, onLeak }: { d: Derived; cache: DemoCa
 
 function BeatAudit({ d, examId, count }: { d: Derived; examId: string; count: number | null }) {
   const st = d.states[7];
-  if (st === 'pending') return <Beat n={7} state="pending" title="Audit" line="Every event above, on-chain, in one timeline." />;
+  if (st === 'pending') return <Beat n={7} state="pending" title="Public record" line="Every step above is recorded on the public blockchain. See them all in one list." />;
   return (
-    <Beat n={7} state={st} title="Audit">
+    <Beat n={7} state={st} title="Public record">
       <div className="pt-row" style={{ justifyContent: 'space-between' }}>
-        <p className="pt-beat__lead">Every event above, on-chain, in one timeline{count !== null ? `: ${count} events for this exam.` : '.'}</p>
+        <p className="pt-beat__lead">Every step above is recorded on the public blockchain, where nobody can change it afterwards{count !== null ? `: ${count} records for this exam.` : '.'}</p>
         <Link className="pt-btn pt-btn--primary" to={`/exams/${examId}/audit`}>
           Open the audit trail
           <IconArrowRight size={18} stroke={2} aria-hidden />

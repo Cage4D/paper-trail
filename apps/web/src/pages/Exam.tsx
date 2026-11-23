@@ -66,7 +66,7 @@ export function Exam() {
               <span className="pt-eyebrow">Exam</span>
               {exam.status === 'CREATED' ? <Chip status="done" icon={null}>Created</Chip> : exam.status === 'FAILED' ? <Chip status="failed">Failed</Chip> : <Chip status="pending" icon={null}>Pending</Chip>}
               <Chip status={releasedCount === exam.centres.length && releasedCount ? 'released' : releasedCount ? 'pending' : 'sealed'} icon={null}>
-                {releasedCount} of {exam.centres.length} centres released
+                {releasedCount} of {exam.centres.length} centres unlocked
               </Chip>
             </div>
             <h1 className="pt-h1 pt-h1--xl">{exam.title}</h1>
@@ -85,7 +85,7 @@ export function Exam() {
                   <HashLink key={x} value={x} kind="address" copy={false} />
                 ))}
               </dd>
-              <dt>Master commitment</dt>
+              <dt>Master copy code</dt>
               <dd>
                 <HashLink value={exam.masterCommitment} kind="plain" copy={false} />
               </dd>
@@ -110,17 +110,17 @@ export function Exam() {
         <div className="pt-col" style={{ gap: 16 }}>
           <div className="pt-row" style={{ justifyContent: 'space-between' }}>
             <h2 className="pt-h2">Centres</h2>
-            <span className="pt-muted pt-small">Updates every 5 s</span>
+            <span className="pt-muted pt-small">Each centre gets its own locked copy. Updates every 5 s.</span>
           </div>
           <div className="pt-tablebox">
             <table className="pt-table">
               <thead>
                 <tr>
                   <th scope="col">Centre</th>
-                  <th scope="col">Commitment</th>
-                  <th scope="col">Cipher hash</th>
-                  <th scope="col">Epoch</th>
-                  <th scope="col">Release</th>
+                  <th scope="col">Paper code</th>
+                  <th scope="col">Locked file code</th>
+                  <th scope="col">Team version</th>
+                  <th scope="col">Keys used</th>
                   <th scope="col">Status</th>
                 </tr>
               </thead>
@@ -148,7 +148,7 @@ export function Exam() {
                       <ReleaseMeter mini count={c.releaseCount} released={c.released} />
                     </td>
                     <td>
-                      {c.released ? <Chip status="done">Released</Chip> : c.releaseCount === 1 ? <Chip status="pending">Waiting for 2nd</Chip> : <Chip status="sealed">Sealed</Chip>}
+                      {c.released ? <Chip status="done">Unlocked</Chip> : c.releaseCount === 1 ? <Chip status="pending">Waiting for a 2nd key</Chip> : <Chip status="sealed">Locked</Chip>}
                     </td>
                   </tr>
                 ))}

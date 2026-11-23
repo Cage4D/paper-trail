@@ -3,6 +3,7 @@ import { diffWords, parseCopy, type CopyQuestion, type ParsedCopy } from '../lib
 import type { DemoVariants, QuestionDiff } from '../lib/types';
 import { HashLink } from './HashLink';
 import { StickyNote } from './StickyNote';
+import { Term } from './Term';
 
 type Side = 'A' | 'B';
 
@@ -115,8 +116,8 @@ export function CanaryDiff({ variants, spotNote = false }: { variants: DemoVaria
     <div className="pt-canary">
       <div className="pt-canary__top">
         <div className="pt-canary__head">
-          <h3 className="pt-h3">Canary copies: the same paper, two fingerprints</h3>
-          <span className="pt-muted pt-small">No answers are marked on any copy.</span>
+          <h3 className="pt-h3">Same exam, two different copies</h3>
+          <span className="pt-muted pt-small">Each centre gets its own <Term k="canary">canary copy</Term>. No answers are marked on any copy.</span>
         </div>
         {spotNote && spot && (
           <StickyNote>
@@ -126,20 +127,20 @@ export function CanaryDiff({ variants, spotNote = false }: { variants: DemoVaria
       </div>
       <div className="pt-stats">
         <div className="pt-stat">
-          <div className="pt-stat__v">≥ {variants.minPairDistanceBits} bits</div>
-          <div className="pt-stat__l">apart, between any two copies</div>
+          <div className="pt-stat__v">{variants.minPairDistanceBits}+</div>
+          <div className="pt-stat__l">hidden differences between any two copies</div>
         </div>
         <div className="pt-stat">
           <div className="pt-stat__v">
             {variants.differences.togglesDiffer} of {variants.differences.toggles}
           </div>
-          <div className="pt-stat__l">phrasing toggles differ, A vs B</div>
+          <div className="pt-stat__l">wording choices differ between A and B</div>
         </div>
         <div className="pt-stat">
           <div className="pt-stat__v">
             {moved} of {total}
           </div>
-          <div className="pt-stat__l">questions moved or reshuffled</div>
+          <div className="pt-stat__l">questions moved or answer options reshuffled</div>
         </div>
       </div>
       <div className="pt-diff">
@@ -147,14 +148,14 @@ export function CanaryDiff({ variants, spotNote = false }: { variants: DemoVaria
         <Sheet side="B" data={rowsB} show={show} />
       </div>
       <p className="pt-muted pt-small">
-        Highlighted words are phrasing toggles that differ. Purple tags show where the same question sits in the other copy.
+        Yellow words are worded differently in the other copy. Purple tags show where the same question sits in the other copy.
         {all ? '' : ' Showing the start of Section A.'}
       </p>
       <button type="button" className="pt-btn pt-btn--sm" style={{ alignSelf: 'flex-start' }} aria-expanded={all} onClick={() => setAll((x) => !x)}>
         {all ? 'Show fewer questions' : `Show all ${total} questions`}
       </button>
       <div className="pt-txlist">
-        <HashLink value={variants.commitments.master} kind="plain" label="master commitment" small />
+        <HashLink value={variants.commitments.master} kind="plain" label="recorded codes: master" small />
         <HashLink value={variants.commitments.A} kind="plain" label="A" small />
         <HashLink value={variants.commitments.B} kind="plain" label="B" small />
       </div>

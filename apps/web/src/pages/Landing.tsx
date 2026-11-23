@@ -12,6 +12,7 @@ import { Button } from '../components/Button';
 import { Field } from '../components/Field';
 import { Footer, ThemeToggle } from '../components/Shell';
 import { StickyNote } from '../components/StickyNote';
+import { Glossary } from '../components/Term';
 import { REPO_URL } from '../lib/config';
 import { useElapsed } from '../lib/hooks';
 import { getRecentDemo } from '../lib/recent';
@@ -24,6 +25,7 @@ function NavBar({ onStart, busy }: { onStart: () => void; busy: boolean }) {
   const links = (
     <>
       <a href="#how">How it works</a>
+      <a href="#words">Words explained</a>
       <Link to="/audit">Audit trail</Link>
       <Link to="/verify">Verify a paper</Link>
       <Link to="/marks">Check my mark</Link>
@@ -99,7 +101,7 @@ function AuditCard() {
   return (
     <form className="pt-card pt-toolcard" onSubmit={submit} noValidate>
       <h3 className="pt-h3">View an exam's audit trail</h3>
-      <p className="pt-toolcard__text">Every on-chain event for one exam, with explorer links.</p>
+      <p className="pt-toolcard__text">Every step for one exam, as recorded on the public blockchain.</p>
       <Field label="Exam id" error={err} className="pt-field--flex">
         <input className="pt-input pt-input--mono" value={id} onChange={(e) => (setId(e.target.value), setErr(null))} placeholder="0x8c41f2…" spellCheck={false} autoComplete="off" />
       </Field>
@@ -136,7 +138,7 @@ export function Landing() {
               A post-quantum chain of custody for <span className="pt-hl">exam papers</span>.
             </h1>
             <p className="pt-hero__sub">
-              Every centre gets its own sealed, fingerprinted copy. Two of three examiners must release it at the start time, and a leaked copy names its source.
+              Exam papers leak. Paper Trail locks each exam centre's copy until the start time, needs two of three examiners to unlock it, and makes every copy slightly different, so a leaked copy gives away where it came from.
             </p>
             <div className="pt-hero__ctas">
               <Button variant="primary" size="lg" onClick={start} busy={busy} busyLabel={`${stage.label} ${s} s`} iconRight={<IconArrowRight size={20} stroke={2} aria-hidden />}>
@@ -163,20 +165,20 @@ export function Landing() {
           <div className="pt-wrap pt-col" style={{ gap: 40 }}>
             <div className="pt-landsec__head">
               <h2 className="pt-landsec__title">Four guarantees, all on-chain</h2>
-              <p className="pt-landsec__aside">Every action is signed with ML-DSA-87 and checked on QoreChain by the pqcVerify precompile. The server stores only ciphertext and hashes.</p>
+              <p className="pt-landsec__aside">Every step is signed with a quantum-safe digital signature and checked by the QoreChain blockchain itself, where it stays on public record. Our server only ever holds locked copies: it can't read a paper or fake a step.</p>
             </div>
             <div className="pt-tiles">
               <Tile art={canary} artStyle={{ right: -24, top: 24, transform: 'rotate(10deg)' }} eyebrow="Canary copies" title="A leak names its source">
-                Each centre's copy has its own question order, option order and phrasing. Paste a leaked excerpt and the detector says which copy it came from.
+                Every centre's copy has its own question order, answer order and wording. Paste in a leaked excerpt and Paper Trail tells you which centre's copy it came from.
               </Tile>
               <Tile art={keyRing} artStyle={{ right: -34, top: 6, width: 250, transform: 'rotate(-10deg)' }} eyebrow="2-of-3 release" title="Two keys to open">
-                The paper's key is split between three examiners. Two must release it, and the contract refuses anything before the start time.
+                The key to the paper is split between three examiners. Any two can unlock it together, and the blockchain refuses everyone, even them, before the start time.
               </Tile>
               <Tile art={padlock} artStyle={{ right: -20, top: 20, transform: 'rotate(8deg)' }} eyebrow="Revocable groups" title="Remove someone, lock them out">
-                Released papers are sealed to the centre's current invigilators. Remove one and they can't open anything sent after.
+                An unlocked paper opens only for that centre's current staff. Remove someone from the team and they can't open anything sent afterwards.
               </Tile>
               <Tile art={stamp} artStyle={{ right: -16, top: 20, transform: 'rotate(-6deg)' }} eyebrow="Signed on-chain" title="Every action has a receipt">
-                Releases, revocations and scripts are ML-DSA-87 signed and verified on-chain. Answer scripts are sealed to markers under pseudonyms.
+                Every unlock, removal and answer script is signed and recorded on the public blockchain. Markers see a code name, never the candidate's name, and candidates can check their own mark.
               </Tile>
             </div>
           </div>
@@ -195,11 +197,11 @@ export function Landing() {
               </li>
               <li>
                 <span>02 · Release</span>
-                <strong>An early release is refused; at start time you release as Examiner 2</strong>
+                <strong>Opening it early is refused; at the start time you unlock it as Examiner 2</strong>
               </li>
               <li>
                 <span>03 · Open and revoke</span>
-                <strong>An invigilator opens an authentic copy; a removed one is locked out</strong>
+                <strong>A centre opens a genuine copy; a removed staff member is locked out</strong>
               </li>
               <li>
                 <span>04 · Trace</span>
@@ -214,18 +216,26 @@ export function Landing() {
             <AuditCard />
             <div className="pt-card pt-toolcard">
               <h3 className="pt-h3">Verify a paper</h3>
-              <p className="pt-toolcard__text">Hash a paper in your browser and compare it with the commitment on-chain.</p>
+              <p className="pt-toolcard__text">Check a paper is exactly the one that was set, without sending it anywhere.</p>
               <Link className="pt-btn" to="/verify" style={{ alignSelf: 'flex-start', marginTop: 'auto' }}>
                 Verify a paper
               </Link>
             </div>
             <div className="pt-card pt-toolcard">
               <h3 className="pt-h3">Check my mark</h3>
-              <p className="pt-toolcard__text">Prove your score against the Merkle root the board published on-chain.</p>
+              <p className="pt-toolcard__text">Use the code name on your ticket to prove your mark is the one the board published.</p>
               <Link className="pt-btn" to="/marks" style={{ alignSelf: 'flex-start', marginTop: 'auto' }}>
                 Check my mark
               </Link>
             </div>
+          </div>
+        </section>
+
+        <section id="words" className="pt-landsec pt-landsec--tight">
+          <div className="pt-wrap pt-col" style={{ gap: 24 }}>
+            <h2 className="pt-landsec__title pt-landsec__title--sm">Words explained</h2>
+            <p className="pt-landsec__aside" style={{ maxWidth: '62ch' }}>New to exams or blockchains? These are the words you'll see in the demo. Words with a dotted underline explain themselves when you tap them.</p>
+            <Glossary />
           </div>
         </section>
 
@@ -234,13 +244,13 @@ export function Landing() {
             <div className="pt-claims">
               <div className="pt-col" style={{ gap: 10 }}>
                 <h2 className="pt-claims__title">What we claim, and what we don't</h2>
-                <p className="pt-toolcard__text">The server can't read papers and can't forge actions. Every action is signed and checked on-chain.</p>
+                <p className="pt-toolcard__text">Our server can't read papers and can't fake anyone's actions. Every step is signed and checked on the blockchain. Here's what it doesn't protect against.</p>
               </div>
               <ul>
-                <li>The exam board runs the centre groups, so it can read what's sealed to them. It never gets two shares unless two examiners release.</li>
-                <li>A leaked copy names its centre or the committee, since examiners and the board hold every copy.</li>
-                <li>A removed invigilator can still read what was sent before the removal.</li>
-                <li>Metadata (who, when, sizes) is public on-chain. QoreSeal is 0.1.0, pending external review. Testnet only.</li>
+                <li>The exam board manages the centres' teams, so it can read what's sent to them. It can never unlock a paper on its own: that still takes two examiners.</li>
+                <li>A leaked copy points to its centre, or to the board and examiners, who hold every copy. It can't tell those apart.</li>
+                <li>Someone removed from a team can still read what was sent to them before they were removed.</li>
+                <li>Who did what, and when, is public on the blockchain; only the papers and answers are secret. The encryption library (QoreSeal 0.1.0) hasn't had an outside review yet. This runs on a practice blockchain (testnet) only.</li>
               </ul>
             </div>
           </div>

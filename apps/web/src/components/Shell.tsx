@@ -80,8 +80,8 @@ export function DemoBar({ demoId }: { demoId?: string }) {
     <div className="pt-demobar" role="note">
       <div className="pt-wrap">
         <IconFlask size={18} stroke={2} aria-hidden />
-        <span className="pt-desktop-inline">DEMO — testnet only. Demo keys are held by this server; bots play the other roles.</span>
-        <span className="pt-phone-inline">DEMO — testnet only. Demo keys are held by this server.</span>
+        <span className="pt-desktop-inline">DEMO — testnet only. A practice blockchain: nothing costs real money. The server holds the demo keys and bots play the other roles.</span>
+        <span className="pt-phone-inline">DEMO — testnet only. Practice blockchain, demo keys.</span>
         {demoId && <span className="pt-demobar__id pt-desktop-inline">demo {demoId.slice(0, 8)}</span>}
       </div>
     </div>

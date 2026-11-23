@@ -6,6 +6,7 @@ import { Banner } from '../components/Banner';
 import { Button } from '../components/Button';
 import { Chip } from '../components/Chip';
 import { Field } from '../components/Field';
+import { Term } from '../components/Term';
 import { HashLink } from '../components/HashLink';
 import { AppPage } from '../components/Shell';
 import { ApiError, api } from '../lib/api';
@@ -28,6 +29,17 @@ const FILL: Record<string, string> = {
   MarksPublished: 'sealed',
 };
 
+/** Plain names for the contract's events (the technical name stays on hover). */
+const LABEL: Record<string, string> = {
+  ExamCreated: 'Exam created',
+  CentreSet: 'Copy sent',
+  EpochChanged: 'Team updated',
+  ShareReleased: 'Key used',
+  Released: 'Paper unlocked',
+  ScriptSubmitted: 'Answers handed in',
+  MarksPublished: 'Marks published',
+};
+
 const s = (v: unknown) => (v === undefined || v === null ? '' : String(v));
 const M = ({ children }: { children: ReactNode }) => <span className="pt-mono pt-mono--inline">{children}</span>;
 
@@ -48,7 +60,7 @@ export function AuditIndex() {
       <section className="pt-wrap pt-section pt-col" style={{ gap: 24, maxWidth: 760, marginLeft: 'auto', marginRight: 'auto' }}>
         <img src={padlock} alt="" aria-hidden="true" className="pt-empty__art" />
         <h1 className="pt-h1">Audit trail</h1>
-        <p className="pt-lead">Every on-chain event for one exam, oldest first, each with its explorer link. Paste an exam id to open its trail.</p>
+        <p className="pt-lead">Every step of one exam, oldest first, as recorded on the public blockchain. Paste an exam id to see its record.</p>
         <form className="pt-col" onSubmit={submit} noValidate>
           <Field label="Exam id" error={err} help={recent ? 'Filled in with the demo you ran in this tab.' : undefined} className="pt-field--flex">
             <input className="pt-input pt-input--mono" value={id} onChange={(e) => (setId(e.target.value), setErr(null))} placeholder="0x8c41f2…" spellCheck={false} autoComplete="off" />
@@ -120,7 +132,7 @@ export function Audit() {
   const centreName = useCallback((id: string | null) => centres.find((c) => c.centreId.toLowerCase() === (id ?? '').toLowerCase())?.name ?? null, [centres]);
   const groupName = (id: string | null) => {
     const n = centreName(id);
-    return n ? `${n} group` : 'Markers group';
+    return n ? `${n}'s team` : "The markers' team";
   };
 
   const describe = (e: AuditEvent): ReactNode => {
@@ -130,7 +142,7 @@ export function Audit() {
         const ex = (d.examiners as string[] | undefined) ?? [];
         return (
           <>
-            Board <M>{shortHash(s(d.board))}</M> created the exam; examiners {ex.map((x, i) => (
+            The exam board <M>{shortHash(s(d.board))}</M> created the exam and named three examiners: {ex.map((x, i) => (
               <Fragment key={x}>
                 {i ? ', ' : ''}
                 <M>{shortHash(x)}</M>
@@ -142,38 +154,37 @@ export function Audit() {
       case 'CentreSet':
         return (
           <>
-            {centreName(e.centreId) ?? 'A centre'} set; commitment <M>{shortHash(s(d.commitment))}</M>
+            {centreName(e.centreId) ?? 'A centre'}'s locked copy was sent and its code recorded: <M>{shortHash(s(d.commitment))}</M>
           </>
         );
       case 'EpochChanged':
         return (
           <>
-            {groupName(s(d.centreId) || e.centreId)} at epoch {s(d.epoch)}
-            {Number(d.epoch) > 1 ? ' (membership changed)' : ''}
+            {Number(d.epoch) > 1 ? `${groupName(s(d.centreId) || e.centreId)} changed: now team version ${s(d.epoch)}` : `${groupName(s(d.centreId) || e.centreId)} set up (team version 1)`}
           </>
         );
       case 'ShareReleased':
         return (
           <>
-            Examiner <M>{shortHash(s(d.examiner))}</M> released for {centreName(e.centreId) ?? 'a centre'} at epoch {s(d.epoch)}
+            Examiner <M>{shortHash(s(d.examiner))}</M> used their key for {centreName(e.centreId) ?? 'a centre'}
           </>
         );
       case 'Released':
         return (
           <>
-            {centreName(e.centreId) ?? 'A centre'} released, 2 of 2, sealed to epoch {s(d.epoch)}
+            {centreName(e.centreId) ?? 'A centre'}'s paper unlocked: 2 of 2 keys used. Only its team (version {s(d.epoch)}) can open it
           </>
         );
       case 'ScriptSubmitted':
         return (
           <>
-            Script from {centreName(e.centreId) ?? 'a centre'}, pseudonym hash <M>{shortHash(s(d.pseudonymHash))}</M>, sealed to markers at epoch {s(d.markerEpoch)}
+            An answer script from {centreName(e.centreId) ?? 'a centre'}, locked for the markers, under a code name
           </>
         );
       case 'MarksPublished':
         return (
           <>
-            Marks root <M>{shortHash(s(d.merkleRoot))}</M> published
+            The board published everyone's marks as one marks code: <M>{shortHash(s(d.merkleRoot))}</M>
           </>
         );
       default:
@@ -211,9 +222,11 @@ export function Audit() {
   const eventRow = (e: AuditEvent, isNew: boolean, extra?: ReactNode) => (
     <tr key={e.cursor} className={isNew ? 'pt-tr--new' : undefined}>
       <td>
-        <Chip status={(FILL[e.name] ?? 'sealed') as never} icon={null}>
-          {e.name}
-        </Chip>
+        <span title={`${e.name} (the contract's event name)`}>
+          <Chip status={(FILL[e.name] ?? 'sealed') as never} icon={null}>
+            {LABEL[e.name] ?? e.name}
+          </Chip>
+        </span>
       </td>
       <td>
         {isNew && <strong>New · </strong>}
@@ -235,7 +248,7 @@ export function Audit() {
           {title ?? 'Exam'}
         </Link>
         <h1 className="pt-h1 pt-h1--xl">Audit trail</h1>
-        <p className="pt-lead">Every on-chain event for this exam, oldest first. Each one was signed with ML-DSA-87 and verified by the contract.</p>
+        <p className="pt-lead">Every step of this exam, oldest first, exactly as it was written to the public QoreChain blockchain. Each step was signed with a quantum-safe signature and checked before it was recorded, and nobody can change it afterwards.</p>
         <div className="pt-row" style={{ gap: '10px 24px' }}>
           <HashLink value={examId} to={`/exams/${examId}`} label="exam" small />
           {audit && (
@@ -270,7 +283,7 @@ export function Audit() {
           <div className="pt-auditgrid">
             <div className="pt-col" style={{ gap: 16 }}>
               <div className="pt-row" style={{ justifyContent: 'space-between' }}>
-                <h2 className="pt-h3 pt-h3--lg">{events.length} events</h2>
+                <h2 className="pt-h3 pt-h3--lg">{events.length} records</h2>
                 <div className="pt-row pt-filters" role="group" aria-label="Filter by centre">
                   {[{ id: 'all', name: 'All centres' }, ...centres.map((c) => ({ id: c.centreId, name: c.name }))].map((f) => (
                     <button key={f.id} type="button" className={`pt-btn pt-btn--sm${filter === f.id ? '' : ' pt-btn--ghost'}`} aria-pressed={filter === f.id} onClick={() => setFilter(f.id)}>
@@ -284,10 +297,10 @@ export function Audit() {
                   <caption className="sr-only">On-chain events for this exam, oldest first</caption>
                   <thead>
                     <tr>
-                      <th scope="col">Event</th>
+                      <th scope="col">Step</th>
                       <th scope="col">What happened</th>
                       <th scope="col">Block</th>
-                      <th scope="col">Tx</th>
+                      <th scope="col">Receipt</th>
                     </tr>
                   </thead>
                   <tbody aria-live="polite" aria-relevant="additions">
@@ -309,13 +322,15 @@ export function Audit() {
                         <Fragment key={key}>
                           <tr className={r.isNew ? 'pt-tr--new' : undefined}>
                             <td>
-                              <Chip status="sealed" icon={null}>
-                                ScriptSubmitted
-                              </Chip>
+                              <span title="ScriptSubmitted (the contract's event name)">
+                                <Chip status="sealed" icon={null}>
+                                  Answers handed in
+                                </Chip>
+                              </span>
                             </td>
                             <td>
                               {r.isNew && <strong>New · </strong>}
-                              {r.items.length} scripts from {centreName(first.centreId) ?? 'a centre'}, sealed to markers at epoch {s(first.data.markerEpoch)}{' '}
+                              {r.items.length} answer scripts from {centreName(first.centreId) ?? 'a centre'}, each locked for the markers under a code name{' '}
                               <button type="button" className="pt-linkbtn" aria-expanded={isOpen} onClick={() => setOpen((o) => (o.has(key) ? new Set([...o].filter((k) => k !== key)) : new Set([...o, key])))}>
                                 {isOpen ? 'Hide' : `Show ${r.items.length}`}
                               </button>
@@ -335,15 +350,17 @@ export function Audit() {
                   </tbody>
                 </table>
               </div>
-              <p className="pt-muted pt-small">New events appear at the bottom with a yellow wash for 3 s. Block numbers are QoreChain EVM blocks.</p>
+              <p className="pt-muted pt-small">New steps appear at the bottom, highlighted for 3 s. "Block" is the blockchain's page number for each record; each receipt opens on the QoreChain explorer.</p>
             </div>
 
             <aside className="pt-col" style={{ gap: 20 }}>
               <div className="pt-cardx">
                 <h2 className="pt-h3 pt-h3--lg">Check it yourself</h2>
-                <p className="pt-muted pt-small">{audit.check.how}</p>
+                <p className="pt-muted pt-small" title={audit.check.how}>
+                  When the exam was set, a short code (a <Term k="hash">hash</Term>) of each centre's copy was recorded on the blockchain. Paste a copy into Verify a paper: if its code matches, it's exactly the paper that was set.
+                </p>
                 <dl className="pt-kv">
-                  <dt>Master</dt>
+                  <dt>Master copy</dt>
                   <dd>
                     <HashLink value={audit.check.masterCommitment} kind="plain" small />
                   </dd>
@@ -353,12 +370,12 @@ export function Audit() {
                       <dd className="pt-col" style={{ gap: 2 }}>
                         <HashLink value={c.commitment} kind="plain" small />
                         <span className="pt-hash__label" title={c.cipherHash}>
-                          cipher {shortHash(c.cipherHash)}
+                          locked file {shortHash(c.cipherHash)}
                         </span>
                       </dd>
                     </Fragment>
                   ))}
-                  <dt>Marks root</dt>
+                  <dt>Marks code</dt>
                   <dd>{audit.check.marksRoot ? <HashLink value={audit.check.marksRoot} kind="plain" small /> : <span className="pt-muted">Not published yet</span>}</dd>
                 </dl>
                 <div className="pt-row">
@@ -370,7 +387,7 @@ export function Audit() {
                   </Link>
                 </div>
               </div>
-              <p className="pt-dashnote">Metadata (who acted, when, sizes) is public on-chain. Only paper and script contents are confidential.</p>
+              <p className="pt-dashnote">Who did what, and when, is public on the blockchain. Only the papers and answer scripts themselves are secret.</p>
             </aside>
           </div>
         )}

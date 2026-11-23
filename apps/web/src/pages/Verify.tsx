@@ -140,7 +140,7 @@ export function Verify() {
           <div className="pt-col" style={{ gap: 12 }}>
             <h1 className="pt-h1 pt-h1--xl">Verify a paper</h1>
             <p className="pt-lead">
-              Paste or drop a paper. Your browser hashes it with SHA3-256 and compares the result with the commitment recorded on-chain when the paper was set. The text never leaves this device.
+              Got a copy of an exam paper and want to know it's genuine? Paste or drop it here. Your browser works out the paper's code (a SHA3-256 hash) and compares it with the code recorded on the blockchain when the paper was set. The text never leaves this device.
             </p>
           </div>
           <img src={stamp} alt="" aria-hidden="true" className="pt-pagehead__art" />
@@ -183,14 +183,14 @@ export function Verify() {
             <Button type="submit" variant="primary" busy={busy} busyLabel={`Checking… ${s} s`} className="pt-selfstart">
               Check this paper
             </Button>
-            <p className="pt-muted pt-small">The check uses the exact bytes. A single changed character, space or line break gives a completely different hash.</p>
+            <p className="pt-muted pt-small">The check is exact: change a single character, space or line break and the code comes out completely different.</p>
           </form>
 
           <div className="pt-col" style={{ gap: 16 }} aria-live="polite">
             {checkError && <Banner tone="error">{checkError.message}</Banner>}
             {!result && !checkError && (
               <div className="pt-placeholder">
-                <p className="pt-muted">The result appears here: your hash, the API's commitment and the value read from the contract, side by side.</p>
+                <p className="pt-muted">The result appears here: your paper's code next to the code the server holds and the code recorded on the blockchain.</p>
               </div>
             )}
             {result && (
@@ -200,7 +200,7 @@ export function Verify() {
                     <p>This is {result.centreName}'s copy, exactly as it was set.</p>
                   </Verdict>
                 ) : result.chain.error && result.api.error ? (
-                  <Banner tone="error">Couldn't read the commitment from the API or the contract. Try again in a minute.</Banner>
+                  <Banner tone="error">Couldn't read the recorded code from the server or the blockchain. Try again in a minute.</Banner>
                 ) : (
                   <Verdict tone="bad" title="Doesn't match — don't use this paper" big={false}>
                     <p>This paper doesn't match what was set. Report it to the exam board.</p>
@@ -209,23 +209,23 @@ export function Verify() {
                 <div className="pt-cardx pt-sources">
                   <div className="pt-source">
                     <div>
-                      <strong>Your text, hashed here</strong>
-                      <p className="pt-muted pt-small">SHA3-256 of {result.bytes.toLocaleString('en-GB')} bytes</p>
+                      <strong>Your paper's code, worked out here</strong>
+                      <p className="pt-muted pt-small">SHA3-256 hash of {result.bytes.toLocaleString('en-GB')} bytes of text</p>
                     </div>
                     <HashLink value={result.hash} kind="plain" small />
                   </div>
                   <XRow yes={!!matchApi} aside={result.api.value ? <HashLink value={result.api.value} kind="plain" small copy={false} /> : <span className="pt-code">{result.api.error}</span>}>
-                    Paper Trail API{result.api.value && !matchApi ? ' — different' : ''}
+                    Code held by the Paper Trail server{result.api.value && !matchApi ? ' — different' : ''}
                   </XRow>
                   <XRow yes={!!matchChain} aside={result.chain.value ? <HashLink value={result.chain.value} kind="plain" small copy={false} /> : <span className="pt-code">unavailable</span>}>
-                    Read from the contract{result.chain.value && !matchChain ? ' — different' : ''}
+                    Code recorded on the blockchain{result.chain.value && !matchChain ? ' — different' : ''}
                     <span className="pt-source__sub">
                       commitment(examId, centreId) on {shortHash(CONTRACT)}
                     </span>
                   </XRow>
                 </div>
                 {sourcesDisagree && (
-                  <Banner tone="error">The API and the contract disagree about this centre's commitment. Trust the contract's value, and report the difference to the exam board.</Banner>
+                  <Banner tone="error">The Paper Trail server and the blockchain disagree about this centre's code. Trust the blockchain's code, and report the difference to the exam board.</Banner>
                 )}
                 {!ok && result.newlineHint && (
                   <Note>
@@ -234,7 +234,7 @@ export function Verify() {
                 )}
                 {!ok && !result.newlineHint && (result.chain.value || result.api.value) && (
                   <Note>
-                    Hashed here <span className="pt-mono">{shortHash(result.hash)}</span>, on-chain <span className="pt-mono">{shortHash(result.chain.value ?? result.api.value ?? '')}</span>. If you expected a match, check you picked the right centre and that the text wasn't reformatted when copied.
+                    Your paper's code is <span className="pt-mono">{shortHash(result.hash)}</span>; the recorded one is <span className="pt-mono">{shortHash(result.chain.value ?? result.api.value ?? '')}</span>. If you expected a match, check you picked the right centre and that the text wasn't reformatted when it was copied.
                   </Note>
                 )}
               </>

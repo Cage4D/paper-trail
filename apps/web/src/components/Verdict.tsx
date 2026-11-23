@@ -47,7 +47,7 @@ export function ConfidenceBar({ value }: { value: number }) {
 }
 
 /** Collapsible "What happened on-chain": Called / Events / Auth / Result rows. */
-export function OnChainDetails({ rows, summary = 'What happened on-chain' }: { rows: [string, ReactNode][]; summary?: string }) {
+export function OnChainDetails({ rows, summary = 'Technical details: what happened on the blockchain' }: { rows: [string, ReactNode][]; summary?: string }) {
   return (
     <details className="pt-details">
       <summary>

@@ -42,17 +42,17 @@ export default function PqcBadge({ address, who }: { address: string; who: strin
           isLoading ? (
             <span className="pt-chip pt-chip--sealed">
               <IconLoader2 size={15} stroke={2} className="pt-spin" aria-hidden />
-              Checking {who}'s key…
+              Checking {who}'s signing key…
             </span>
           ) : error ? null : isRegistered ? (
             <span className="pt-chip pt-chip--authentic" title={`${address}: ML-DSA-87 key registered on QoreChain`}>
               <IconRosetteDiscountCheck size={15} stroke={2} aria-hidden />
-              {who}: ML-DSA-87 key on-chain
+              {who}'s quantum-safe key is registered
             </span>
           ) : (
             <span className="pt-chip pt-chip--failed" title={address}>
               <IconX size={15} stroke={2} aria-hidden />
-              {who}: no PQC key
+              {who} has no quantum-safe key
             </span>
           )
         }
