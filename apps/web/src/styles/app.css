@@ -108,3 +108,47 @@ button.pt-health { cursor: pointer; }
 /* empty states: one sticker each */
 .pt-empty { display: flex; flex-direction: column; align-items: flex-start; gap: 16px; }
 .pt-empty__art { width: 160px; height: auto; }
+
+/* countdown */
+.pt-count__at { font: 400 12px/16px var(--font-mono); color: var(--ink-muted); }
+.pt-count--live .pt-count__at { color: var(--on-sticker); }
+.pt-count--live .pt-count__digits span { color: #111111; }
+.pt-count--compact { padding: 12px 14px; gap: 4px; }
+.pt-count--compact .pt-count__digits { font-size: 24px; line-height: 28px; gap: 2px; }
+.pt-count--compact .pt-count__digits span { background: transparent; padding: 0; }
+.pt-count--compact.pt-count--live .pt-count__digits span { background: transparent; }
+
+/* release meter */
+.pt-meter__key svg { display: block; }
+.pt-minimeter { display: inline-flex; align-items: center; gap: 6px; }
+.pt-minimeter__key { width: 26px; height: 26px; border: var(--stroke-2) dashed var(--line); border-radius: var(--radius-sm); background: transparent; }
+.pt-minimeter__key--on { border-style: solid; background: var(--highlight); }
+.pt-minimeter__key--done { background: var(--sticker-mint); }
+.pt-minimeter__text { font: 600 14px/20px var(--font-sans); margin-left: 4px; }
+
+/* role tags */
+.pt-role__dot svg { display: block; }
+.pt-role--revoked { background: var(--surface-sunk); color: var(--ink-muted); text-decoration: line-through; text-decoration-thickness: 2px; }
+
+/* verdicts, rows */
+.pt-verdict__icon { flex: none; width: 56px; height: 56px; display: grid; place-items: center; border-radius: 50%; border: var(--stroke-2) solid #111111; color: #111111; }
+.pt-verdict--neutral { background: var(--surface-sunk); color: var(--ink); }
+.pt-verdict__text { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.pt-verdict__title { margin: 0; font: 700 18px/24px var(--font-sans); }
+.pt-verdict .pt-hash, .pt-verdict .pt-hash a, .pt-verdict .pt-hash__label { color: #111111; }
+.pt-verdict .pt-hash button { background: #ffffff; color: #111111; border-color: #111111; }
+.pt-xrow__aside { justify-self: end; min-width: 0; }
+.pt-xrow__mark svg { display: block; }
+
+/* details */
+.pt-details summary { min-height: 32px; }
+.pt-details__chev { transition: transform 90ms ease-out; }
+.pt-details[open] .pt-details__chev { transform: rotate(90deg); }
+
+/* paper */
+.pt-paper p { margin: 0 0 4px; }
+.pt-paper h4 + p, .pt-paper h5 + p { color: #4a463f; }
+.pt-paper ul { margin-top: 2px; }
+
+/* notes */
+.pt-note > div { min-width: 0; }
