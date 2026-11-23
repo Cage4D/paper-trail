@@ -329,7 +329,7 @@ export function Demo() {
               })}
             </nav>
             <ol className="pt-stepper">
-              <BeatSet d={d} state={state} cache={cache} collapsed={isCollapsed(1)} onToggle={() => toggle(1)} />
+              <BeatSet d={d} state={state} cache={cache} live={live} collapsed={isCollapsed(1)} onToggle={() => toggle(1)} />
               <BeatEarly d={d} cache={cache} live={live} collapsed={isCollapsed(2)} onToggle={() => toggle(2)} busy={!!inflight.early} error={errors.early} onRelease={releaseEarly} />
               <BeatRelease
                 d={d}
@@ -382,7 +382,7 @@ const doneChip = (at?: string, text = 'Done') => <Chip status="done">{at ? `${te
 
 // ── beat 1: set ──
 
-function BeatSet({ d, state, cache, collapsed, onToggle }: { d: Derived; state: DemoState; cache: DemoCache; collapsed: boolean; onToggle: () => void }) {
+function BeatSet({ d, state, cache, live, collapsed, onToggle }: { d: Derived; state: DemoState; cache: DemoCache; live: boolean; collapsed: boolean; onToggle: () => void }) {
   const txs = d.set?.txs ?? cache.start?.txs.map((t) => t.tx) ?? [];
   const centre = (k: 'A' | 'B') => state.exam.centres.find((c) => c.centreId.toLowerCase() === state.centres[k].toLowerCase());
   return (
@@ -405,7 +405,7 @@ function BeatSet({ d, state, cache, collapsed, onToggle }: { d: Derived; state: 
       </div>
       <div className="pt-beat__rule">
         {cache.start ? (
-          <CanaryDiff variants={cache.start.variants} />
+          <CanaryDiff variants={cache.start.variants} spotNote={!live} />
         ) : (
           <div className="pt-col">
             <h3 className="pt-h3">Canary copies: the same paper, two fingerprints</h3>

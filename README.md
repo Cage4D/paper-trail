@@ -95,7 +95,7 @@ Kits, templates and libraries used (required by the Fest rules):
   [React Router](https://reactrouter.com), [Vite](https://vite.dev), [viem](https://viem.sh) (direct contract reads),
   [react-markdown](https://github.com/remarkjs/react-markdown), [Tabler Icons](https://tabler.io/icons) (MIT),
   [Bricolage Grotesque](https://fonts.google.com/specimen/Bricolage+Grotesque) and
-  [JetBrains Mono](https://www.jetbrains.com/lp/mono/) (SIL OFL), [Testing Library](https://testing-library.com)
+  [JetBrains Mono](https://www.jetbrains.com/lp/mono/) and [Caveat](https://fonts.google.com/specimen/Caveat) (SIL OFL), [Testing Library](https://testing-library.com)
 - [tsup](https://tsup.egoist.dev), [Vitest](https://vitest.dev), [jsdom](https://github.com/jsdom/jsdom),
   [Zod](https://zod.dev), [viem](https://viem.sh)
 

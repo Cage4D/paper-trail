@@ -3,13 +3,15 @@ import { Link, useLocation, useNavigate } from 'react-router';
 import { IconArrowRight, IconFlask, IconMenu2, IconX } from '@tabler/icons-react';
 import envelope from '../assets/stickers/sealed-envelope.svg';
 import key from '../assets/stickers/key.svg';
+import keyRing from '../assets/stickers/key-ring.svg';
 import canary from '../assets/stickers/canary.svg';
 import padlock from '../assets/stickers/padlock.svg';
 import stamp from '../assets/stickers/authentic-stamp.svg';
 import { Banner } from '../components/Banner';
 import { Button } from '../components/Button';
 import { Field } from '../components/Field';
-import { Footer } from '../components/Shell';
+import { Footer, ThemeToggle } from '../components/Shell';
+import { StickyNote } from '../components/StickyNote';
 import { REPO_URL } from '../lib/config';
 import { useElapsed } from '../lib/hooks';
 import { getRecentDemo } from '../lib/recent';
@@ -36,7 +38,10 @@ function NavBar({ onStart, busy }: { onStart: () => void; busy: boolean }) {
         <Link className="pt-nav__brand" to="/">
           paper trail
         </Link>
-        <div className="pt-nav__links pt-desktop">{links}</div>
+        <div className="pt-nav__links pt-desktop">
+          {links}
+          <ThemeToggle />
+        </div>
         <button type="button" className="pt-menubtn pt-phone" aria-expanded={open} aria-controls="pt-landsheet" aria-label={open ? 'Close menu' : 'Open menu'} onClick={() => setOpen((o) => !o)}>
           {open ? <IconX size={24} stroke={2} aria-hidden /> : <IconMenu2 size={24} stroke={2} aria-hidden />}
         </button>
@@ -48,6 +53,10 @@ function NavBar({ onStart, busy }: { onStart: () => void; busy: boolean }) {
       {open && (
         <div id="pt-landsheet" className="pt-sheetmenu pt-phone" onClick={() => setOpen(false)}>
           <nav aria-label="Main">{links}</nav>
+          <div className="pt-sheetmenu__tools" onClick={(e) => e.stopPropagation()}>
+            <span className="pt-small pt-muted">Theme</span>
+            <ThemeToggle />
+          </div>
         </div>
       )}
     </>
@@ -110,7 +119,7 @@ export function Landing() {
     if (hash) document.getElementById(hash.slice(1))?.scrollIntoView();
   }, [hash]);
   return (
-    <div className="pt-page pt-landing" data-theme="ink">
+    <div className="pt-page pt-landing">
       <NavBar onStart={start} busy={busy} />
       <main id="main" className="pt-main">
         <header className="pt-hero">
@@ -160,7 +169,7 @@ export function Landing() {
               <Tile art={canary} artStyle={{ right: -24, top: 24, transform: 'rotate(10deg)' }} eyebrow="Canary copies" title="A leak names its source">
                 Each centre's copy has its own question order, option order and phrasing. Paste a leaked excerpt and the detector says which copy it came from.
               </Tile>
-              <Tile art={key} artStyle={{ right: -40, top: 30, transform: 'rotate(-12deg)' }} eyebrow="2-of-3 release" title="Two keys to open">
+              <Tile art={keyRing} artStyle={{ right: -34, top: 6, width: 250, transform: 'rotate(-10deg)' }} eyebrow="2-of-3 release" title="Two keys to open">
                 The paper's key is split between three examiners. Two must release it, and the contract refuses anything before the start time.
               </Tile>
               <Tile art={padlock} artStyle={{ right: -20, top: 20, transform: 'rotate(8deg)' }} eyebrow="Revocable groups" title="Remove someone, lock them out">
@@ -175,7 +184,10 @@ export function Landing() {
 
         <section className="pt-landsec pt-landsec--tight">
           <div className="pt-wrap pt-col" style={{ gap: 32 }}>
-            <h2 className="pt-landsec__title pt-landsec__title--sm">How the demo runs</h2>
+            <div className="pt-landsec__notehead">
+              <h2 className="pt-landsec__title pt-landsec__title--sm">How the demo runs</h2>
+              <StickyNote>No wallet needed. Just press start.</StickyNote>
+            </div>
             <ol className="pt-steps4">
               <li>
                 <span>01 · Set</span>

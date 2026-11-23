@@ -7,15 +7,17 @@
     <meta name="color-scheme" content="light dark" />
     <title>Paper Trail</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=JetBrains+Mono:wght@400;500&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=JetBrains+Mono:wght@400;500&family=Caveat:wght@600;700&display=swap" />
     <script>
-      // Apply the saved or system theme before first paint (not a secret; per-viewer preference).
+      // One theme for the whole site: light ("paper") unless the viewer chose dark ("ink") with the
+      // toggle. Applied before first paint; the choice is a per-viewer preference, not a secret.
       (function () {
         var t = null;
         try { t = localStorage.getItem('pt-theme'); } catch (e) {}
-        if (t !== 'paper' && t !== 'ink') t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'ink' : 'paper';
+        if (t !== 'ink') t = 'paper';
         document.documentElement.setAttribute('data-theme', t);
       })();
     </script>

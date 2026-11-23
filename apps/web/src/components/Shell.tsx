@@ -7,7 +7,7 @@ import { getRecentDemo } from '../lib/recent';
 import { HashLink } from './HashLink';
 import { HealthChip } from './HealthChip';
 
-function ThemeToggle() {
+export function ThemeToggle() {
   const [theme, toggle] = useTheme();
   const next = theme === 'ink' ? 'light' : 'dark';
   return (
@@ -88,10 +88,10 @@ export function DemoBar({ demoId }: { demoId?: string }) {
   );
 }
 
-/** Footer, always on ink. */
+/** Footer: follows the site theme like everything else. */
 export function Footer() {
   return (
-    <footer className="pt-footer" data-theme="ink">
+    <footer className="pt-footer">
       <div className="pt-wrap">
         <Link className="pt-wordmark" to="/">
           paper trail

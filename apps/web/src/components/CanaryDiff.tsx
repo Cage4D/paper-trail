@@ -2,6 +2,7 @@ import { Fragment, useMemo, useState } from 'react';
 import { diffWords, parseCopy, type CopyQuestion, type ParsedCopy } from '../lib/paper';
 import type { DemoVariants, QuestionDiff } from '../lib/types';
 import { HashLink } from './HashLink';
+import { StickyNote } from './StickyNote';
 
 type Side = 'A' | 'B';
 
@@ -91,7 +92,8 @@ function Sheet({ side, data, show }: { side: Side; data: Row[][]; show: number }
 }
 
 /** Beat 1's canary diff: the same paper, two fingerprints. Sheets are always white paper. */
-export function CanaryDiff({ variants }: { variants: DemoVariants }) {
+/** `spotNote`: show the "spot the difference" sticky note (judge mode, only while the paper is sealed). */
+export function CanaryDiff({ variants, spotNote = false }: { variants: DemoVariants; spotNote?: boolean }) {
   const [all, setAll] = useState(false);
   const { A, total, moved, rowsA, rowsB } = useMemo(() => {
     const A = parseCopy(variants.A);
@@ -101,12 +103,26 @@ export function CanaryDiff({ variants }: { variants: DemoVariants }) {
     return { A, B, total: qs.length, moved, rowsA: rows('A', A, B, qs), rowsB: rows('B', B, A, qs) };
   }, [variants]);
   const firstSection = A.sections[0]?.questions.length ?? 4;
+  // the question that moved furthest between the two copies, as displayed numbers
+  const spot = useMemo(() => {
+    // Section A only: the sheets show the start of Section A until expanded, so the note points at visible questions
+    const all = (rowsA[0] ?? []).filter((r) => r.other && r.diff);
+    const best = all.reduce<(typeof all)[number] | undefined>((m, r) => (!m || Math.abs(r.diff!.positionA - r.diff!.positionB) > Math.abs(m.diff!.positionA - m.diff!.positionB) ? r : m), undefined);
+    return best && best.q.number !== best.other!.number ? { a: best.q.number, b: best.other!.number } : null;
+  }, [rowsA]);
   const show = all ? total : Math.min(4, firstSection);
   return (
     <div className="pt-canary">
-      <div className="pt-canary__head">
-        <h3 className="pt-h3">Canary copies: the same paper, two fingerprints</h3>
-        <span className="pt-muted pt-small">No answers are marked on any copy.</span>
+      <div className="pt-canary__top">
+        <div className="pt-canary__head">
+          <h3 className="pt-h3">Canary copies: the same paper, two fingerprints</h3>
+          <span className="pt-muted pt-small">No answers are marked on any copy.</span>
+        </div>
+        {spotNote && spot && (
+          <StickyNote>
+            Spot the difference: Q{spot.a} in Centre A is Q{spot.b} in Centre B. That's how a leak names its source.
+          </StickyNote>
+        )}
       </div>
       <div className="pt-stats">
         <div className="pt-stat">

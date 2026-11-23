@@ -1,5 +1,5 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "vite",
-  "rewrites": [{ "source": "/((?!assets/|favicon.svg).*)", "destination": "/index.html" }]
+  "rewrites": [{ "source": "/((?!assets/|favicon.svg|apple-touch-icon.png).*)", "destination": "/index.html" }]
 }

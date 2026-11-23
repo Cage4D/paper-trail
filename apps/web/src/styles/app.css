@@ -112,11 +112,7 @@ button.pt-health { cursor: pointer; }
 /* countdown */
 .pt-count__at { font: 400 12px/16px var(--font-mono); color: var(--ink-muted); }
 .pt-count--live .pt-count__at { color: var(--on-sticker); }
-.pt-count--live .pt-count__digits span { color: #111111; }
 .pt-count--compact { padding: 12px 14px; gap: 4px; }
-.pt-count--compact .pt-count__digits { font-size: 24px; line-height: 28px; gap: 2px; }
-.pt-count--compact .pt-count__digits span { background: transparent; padding: 0; }
-.pt-count--compact.pt-count--live .pt-count__digits span { background: transparent; }
 
 /* release meter */
 .pt-meter__key svg { display: block; }
@@ -267,9 +263,9 @@ button.pt-health { cursor: pointer; }
   .pt-demohead__main { flex-basis: 100%; }
   .pt-demohead__side { display: grid; grid-template-columns: 1fr 1fr; width: 100%; gap: 12px; }
   .pt-demohead__side .pt-count, .pt-demohead__side .pt-meter { padding: 12px 14px; }
-  .pt-demohead__side .pt-count__digits { font-size: 22px; line-height: 28px; gap: 2px; }
-  .pt-demohead__side .pt-count__digits span { padding: 0 2px; background: transparent; }
   .pt-demohead__side .pt-count__at { display: none; }
+  .pt-count .pt-flips { --flip-fs: 30px; --flip-h: 42px; --flip-w: 27px; }
+  .pt-demohead__side .pt-count .pt-flips { --flip-fs: 20px; --flip-h: 30px; --flip-w: 19px; gap: 2px; }
   .pt-demohead__side .pt-meter__key { width: 36px; height: 36px; }
   .pt-rolepick__select { flex: 1 1 auto; }
   .pt-rolepick .pt-muted { display: none; }
@@ -347,3 +343,35 @@ button.pt-health { cursor: pointer; }
   .pt-verdict .pt-hash { flex-wrap: wrap; white-space: normal; }
 }
 .pt-hero__ctas .pt-btn--primary[aria-busy="true"] { height: auto; min-height: 56px; padding-top: 10px; padding-bottom: 10px; text-align: left; line-height: 22px; }
+
+/* ── flip-clock countdown: one split-flap card per digit; only changed digits flip ── */
+.pt-flips { --flip-fs: 34px; --flip-h: 46px; --flip-w: 28px; --flip-bg: var(--surface-sunk); --flip-ink: var(--ink); display: flex; align-items: center; gap: 4px; font: 500 var(--flip-fs)/var(--flip-h) var(--font-mono); }
+.pt-count--live .pt-flips { --flip-bg: #ffffff; --flip-ink: #111111; }
+.pt-count--compact .pt-flips { --flip-fs: 22px; --flip-h: 32px; --flip-w: 20px; gap: 2px; }
+.pt-flips__pair { display: inline-flex; gap: 3px; }
+.pt-flips__sep { font-weight: 700; padding: 0 2px; }
+.pt-flip { position: relative; display: inline-block; width: var(--flip-w); height: var(--flip-h); border: var(--stroke-2) solid var(--line); border-radius: var(--radius-sm); background: var(--flip-bg); color: var(--flip-ink); overflow: hidden; perspective: 240px; box-sizing: content-box; }
+.pt-flip::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; border-top: var(--stroke-1) solid var(--line-soft); z-index: 3; }
+.pt-count--live .pt-flip::after { border-top-color: #cfc7b4; }
+.pt-flip__half { position: absolute; left: 0; right: 0; height: 50%; overflow: hidden; background: var(--flip-bg); backface-visibility: hidden; }
+.pt-flip__half > span { display: block; height: var(--flip-h); line-height: var(--flip-h); text-align: center; }
+.pt-flip__top { top: 0; }
+.pt-flip__bottom { bottom: 0; }
+.pt-flip__bottom > span { margin-top: calc(var(--flip-h) / -2); }
+.pt-flip__flap { z-index: 2; }
+.pt-flip__flap--out { transform-origin: 50% 100%; animation: pt-flip-out 140ms ease-in forwards; }
+.pt-flip__flap--in { transform-origin: 50% 0; transform: rotateX(90deg); animation: pt-flip-in 140ms ease-out 140ms forwards; }
+@keyframes pt-flip-out { from { transform: rotateX(0deg); } to { transform: rotateX(-90deg); } }
+@keyframes pt-flip-in { from { transform: rotateX(90deg); } to { transform: rotateX(0deg); } }
+@media (prefers-reduced-motion: reduce) { .pt-flip__flap { display: none; } }
+
+/* ── sticky note: #fff7d6 paper (never --highlight), ink border, hard shadow, tape, Caveat ── */
+.pt-sticky { position: relative; flex: none; max-width: 260px; padding: 20px 18px 14px; background: #fff7d6; color: #111111; border: var(--stroke-2) solid var(--line); border-radius: 2px; box-shadow: var(--shadow-md); transform: rotate(-2deg); }
+.pt-sticky__tape { position: absolute; top: -11px; left: 50%; width: 76px; height: 20px; transform: translateX(-50%) rotate(3deg); background: rgba(244, 240, 230, 0.85); border: var(--stroke-1) solid rgba(17, 17, 17, 0.35); }
+.pt-sticky__text { font: 700 22px/26px "Caveat", "Bradley Hand", cursive; color: #111111; }
+[data-theme="ink"] .pt-sticky__tape { background: rgba(244, 240, 230, 0.9); }
+.pt-canary__top { display: flex; flex-wrap: wrap; gap: 20px 28px; align-items: flex-start; justify-content: space-between; }
+.pt-canary__top .pt-canary__head { flex: 1 1 320px; flex-direction: column; align-items: flex-start; }
+.pt-canary__top .pt-sticky { margin: 8px 6px 0 0; }
+.pt-landsec__notehead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px 32px; }
+@media (max-width: 760px) { .pt-canary__top .pt-sticky { max-width: none; margin: 6px 8px 0 4px; } }
