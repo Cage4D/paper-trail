@@ -362,6 +362,9 @@ importers:
       '@qorechain/react':
         specifier: 0.14.0
         version: 0.14.0(react@19.3.1)(viem@2.58.1(typescript@5.9.3)(zod@4.6.7))
+      '@qorechain/sdk':
+        specifier: 0.14.0
+        version: 0.14.0(viem@2.58.1(typescript@5.9.3)(zod@4.6.7))
       '@tabler/icons-react':
         specifier: 3.52.0
         version: 3.52.0(react@19.3.1)

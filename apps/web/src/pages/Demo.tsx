@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { IconArrowRight, IconCheck, IconKey, IconLock, IconX } from '@tabler/icons-react';
 import stamp from '../assets/stickers/authentic-stamp.svg';
@@ -25,6 +25,8 @@ import { useElapsed, usePoll } from '../lib/hooks';
 import { parseCopy } from '../lib/paper';
 import { setRecentDemo, VERIFY_DRAFT_KEY } from '../lib/recent';
 import type { DemoRole, DemoState, EventsPage, LeakResult, OpenResult, ReleaseResult, RemoveResult, ScriptsResult } from '../lib/types';
+
+const PqcBadge = lazy(() => import('../components/PqcBadge'));
 
 type ActKey = 'early' | 'bot' | 'judge' | 'openA1' | 'remove' | 'scripts' | 'openA2' | 'leak';
 
@@ -283,6 +285,13 @@ export function Demo() {
                 </select>
                 <span className="pt-muted pt-small">Switching role changes which actions are yours. Bots play the rest.</span>
               </div>
+              {cache.start?.roles[you] && (
+                <div className="pt-row">
+                  <Suspense fallback={null}>
+                    <PqcBadge key={you} address={cache.start.roles[you].roleAddress} who={ROLE_NAME[you]} />
+                  </Suspense>
+                </div>
+              )}
             </div>
             <div className="pt-demohead__side">
               <Countdown startTime={state.startTime} offsetMs={offsetMs} />
