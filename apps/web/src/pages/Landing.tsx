@@ -13,7 +13,7 @@ import { Footer } from '../components/Shell';
 import { REPO_URL } from '../lib/config';
 import { useElapsed } from '../lib/hooks';
 import { getRecentDemo } from '../lib/recent';
-import { useStartDemo } from '../lib/useStartDemo';
+import { START_STEPS, startStage, useStartDemo } from '../lib/useStartDemo';
 
 const EXAM_ID = /^0x[0-9a-fA-F]{64}$/;
 
@@ -56,6 +56,12 @@ function NavBar({ onStart, busy }: { onStart: () => void; busy: boolean }) {
 
 function StartError({ code, message, onRetry }: { code: string; message: string; onRetry: () => void }) {
   const recent = getRecentDemo();
+  if (code === 'TIMEOUT')
+    return (
+      <Banner tone="wait" action={recent && <Link className="pt-btn pt-btn--sm" to={`/demo/${recent.demoId}`}>Open the last demo</Link>}>
+        This is taking much longer than usual. The demo may still have been created on QoreChain, but this page never got its id. Starts are limited to 5 per hour, so wait a minute or two before starting another.
+      </Banner>
+    );
   if (code === 'RATE_LIMITED')
     return (
       <Banner tone="error" action={recent && <Link className="pt-btn pt-btn--sm" to={`/demo/${recent.demoId}`}>Open the last demo</Link>}>
@@ -98,6 +104,7 @@ function AuditCard() {
 export function Landing() {
   const { start, busy, error } = useStartDemo();
   const s = useElapsed(busy);
+  const stage = startStage(s);
   const { hash } = useLocation();
   useEffect(() => {
     if (hash) document.getElementById(hash.slice(1))?.scrollIntoView();
@@ -123,7 +130,7 @@ export function Landing() {
               Every centre gets its own sealed, fingerprinted copy. Two of three examiners must release it at the start time, and a leaked copy names its source.
             </p>
             <div className="pt-hero__ctas">
-              <Button variant="primary" size="lg" onClick={start} busy={busy} busyLabel={`Setting up the exam on QoreChain… ${s} s`} iconRight={<IconArrowRight size={20} stroke={2} aria-hidden />}>
+              <Button variant="primary" size="lg" onClick={start} busy={busy} busyLabel={`${stage.label} ${s} s`} iconRight={<IconArrowRight size={20} stroke={2} aria-hidden />}>
                 Start the 3-minute demo
               </Button>
               <Link className="pt-btn pt-btn--lg" to="/audit">
@@ -131,7 +138,9 @@ export function Landing() {
               </Link>
             </div>
             <p className="pt-hero__fine" aria-live="polite">
-              {busy ? 'Six real testnet transactions: the exam, two centres and three groups. Usually 15–40 s.' : 'No wallet, keys or funds needed. Demo keys are held by the server, testnet only.'}
+              {busy
+                ? `Step ${stage.step} of ${START_STEPS}: six real testnet transactions (the exam, two centres, three groups). Usually 25–40 s; keep this tab open.`
+                : 'No wallet, keys or funds needed. Demo keys are held by the server, testnet only.'}
             </p>
             {error && (
               <div className="pt-hero__error">

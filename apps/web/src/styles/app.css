@@ -346,3 +346,4 @@ button.pt-health { cursor: pointer; }
   .pt-verdict__big { font-size: 24px; line-height: 28px; }
   .pt-verdict .pt-hash { flex-wrap: wrap; white-space: normal; }
 }
+.pt-hero__ctas .pt-btn--primary[aria-busy="true"] { height: auto; min-height: 56px; padding-top: 10px; padding-bottom: 10px; text-align: left; line-height: 22px; }
