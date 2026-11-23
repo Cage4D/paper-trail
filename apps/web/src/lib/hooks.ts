@@ -18,15 +18,15 @@ export function setTheme(t: Theme) {
   themeListeners.forEach((l) => l());
 }
 
+// Module-level (stable) subscribe functions: an inline one would resubscribe on every render.
+function subscribeTheme(l: () => void) {
+  themeListeners.add(l);
+  return () => void themeListeners.delete(l);
+}
+const serverTheme = (): Theme => 'paper';
+
 export function useTheme(): [Theme, () => void] {
-  const theme = useSyncExternalStore(
-    (l) => {
-      themeListeners.add(l);
-      return () => themeListeners.delete(l);
-    },
-    readTheme,
-    () => 'paper' as Theme,
-  );
+  const theme = useSyncExternalStore(subscribeTheme, readTheme, serverTheme);
   return [theme, () => setTheme(theme === 'ink' ? 'paper' : 'ink')];
 }
 
@@ -102,6 +102,7 @@ const healthListeners = new Set<() => void>();
 let healthTimer: ReturnType<typeof setInterval> | null = null;
 
 async function refreshHealth() {
+  lastHealthFetch = Date.now();
   try {
     const health = await api<Health>('/health', { timeoutMs: 30_000 });
     healthState = { status: 'ok', health };
@@ -111,25 +112,27 @@ async function refreshHealth() {
   healthListeners.forEach((l) => l());
 }
 
+let lastHealthFetch = 0;
+
+function subscribeHealth(l: () => void) {
+  healthListeners.add(l);
+  if (!healthTimer) {
+    // re-mounts (route changes) within a minute reuse the last answer instead of refetching
+    if (Date.now() - lastHealthFetch > 30_000) void refreshHealth();
+    healthTimer = setInterval(refreshHealth, 60_000);
+  }
+  return () => {
+    healthListeners.delete(l);
+    if (!healthListeners.size && healthTimer) {
+      clearInterval(healthTimer);
+      healthTimer = null;
+    }
+  };
+}
+const readHealth = () => healthState;
+
 export function useHealth(): HealthState {
-  return useSyncExternalStore(
-    (l) => {
-      healthListeners.add(l);
-      if (!healthTimer) {
-        void refreshHealth();
-        healthTimer = setInterval(refreshHealth, 60_000);
-      }
-      return () => {
-        healthListeners.delete(l);
-        if (!healthListeners.size && healthTimer) {
-          clearInterval(healthTimer);
-          healthTimer = null;
-        }
-      };
-    },
-    () => healthState,
-    () => healthState,
-  );
+  return useSyncExternalStore(subscribeHealth, readHealth, readHealth);
 }
 
 // ── clipboard ──
