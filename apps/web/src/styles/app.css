@@ -388,3 +388,12 @@ button.pt-health { cursor: pointer; }
 .pt-xrow--wait { border-style: dashed; background: transparent; }
 .pt-xrow--wait .pt-xrow__mark { background: var(--surface-sunk); border-style: dashed; color: var(--ink-muted); }
 .pt-xrow--now .pt-xrow__mark { background: var(--highlight); border-style: solid; color: var(--on-sticker); }
+
+/* the global nav collapses into the menu below 1100px (six links + health + theme need the room) */
+.pt-navnarrow { display: none !important; }
+@media (max-width: 1100px) {
+  .pt-navwide { display: none !important; }
+  .pt-navnarrow { display: flex !important; }
+  .pt-appbar .pt-wrap { min-height: 56px; padding-right: 0; flex-wrap: nowrap; }
+}
+.pt-applinks { flex-wrap: nowrap; white-space: nowrap; }

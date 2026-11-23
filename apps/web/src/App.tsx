@@ -3,6 +3,7 @@ import { Route, Routes, useLocation } from 'react-router';
 import { AppPage } from './components/Shell';
 import { Audit, AuditIndex } from './pages/Audit';
 import { Demo } from './pages/Demo';
+import { DemoHome } from './pages/DemoHome';
 import { Exam } from './pages/Exam';
 import { Landing } from './pages/Landing';
 import { NotFound } from './pages/NotFound';
@@ -39,6 +40,7 @@ export function App() {
       <ScrollToTop />
       <Routes>
         <Route path="/" element={<Landing />} />
+        <Route path="/demo" element={<DemoHome />} />
         <Route path="/demo/:demoId" element={<Demo />} />
         <Route path="/demo/:demoId/as/:role" element={<Demo />} />
         <Route path="/audit" element={<AuditIndex />} />

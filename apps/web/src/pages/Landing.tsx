@@ -1,91 +1,23 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
-import { IconArrowRight, IconFlask, IconMenu2, IconX } from '@tabler/icons-react';
+import { IconArrowRight, IconFlask } from '@tabler/icons-react';
 import envelope from '../assets/stickers/sealed-envelope.svg';
 import key from '../assets/stickers/key.svg';
 import keyRing from '../assets/stickers/key-ring.svg';
 import canary from '../assets/stickers/canary.svg';
 import padlock from '../assets/stickers/padlock.svg';
 import stamp from '../assets/stickers/authentic-stamp.svg';
-import { Banner } from '../components/Banner';
 import { Button } from '../components/Button';
 import { Field } from '../components/Field';
-import { Footer, ThemeToggle } from '../components/Shell';
+import { AppBar, Footer } from '../components/Shell';
+import { StartError } from '../components/StartError';
 import { StickyNote } from '../components/StickyNote';
 import { Glossary } from '../components/Term';
-import { REPO_URL } from '../lib/config';
 import { useElapsed } from '../lib/hooks';
 import { getRecentDemo } from '../lib/recent';
 import { startStage, useStartDemo } from '../lib/useStartDemo';
 
 const EXAM_ID = /^0x[0-9a-fA-F]{64}$/;
-
-function NavBar({ onStart, busy }: { onStart: () => void; busy: boolean }) {
-  const [open, setOpen] = useState(false);
-  const links = (
-    <>
-      <a href="#how">How it works</a>
-      <a href="#words">Words explained</a>
-      <Link to="/audit">Audit trail</Link>
-      <Link to="/verify">Verify a paper</Link>
-      <Link to="/marks">Check my mark</Link>
-      <a href={REPO_URL} target="_blank" rel="noreferrer">
-        GitHub
-      </a>
-    </>
-  );
-  return (
-    <>
-      <nav className="pt-nav pt-landnav" aria-label="Main">
-        <Link className="pt-nav__brand" to="/">
-          paper trail
-        </Link>
-        <div className="pt-nav__links pt-desktop">
-          {links}
-          <ThemeToggle />
-        </div>
-        <button type="button" className="pt-menubtn pt-phone" aria-expanded={open} aria-controls="pt-landsheet" aria-label={open ? 'Close menu' : 'Open menu'} onClick={() => setOpen((o) => !o)}>
-          {open ? <IconX size={24} stroke={2} aria-hidden /> : <IconMenu2 size={24} stroke={2} aria-hidden />}
-        </button>
-        <button type="button" className="pt-nav__cta" onClick={onStart} aria-busy={busy || undefined}>
-          <span className="pt-desktop-inline">{busy ? 'Setting up…' : 'Start the demo'}</span>
-          <span className="pt-phone-inline">{busy ? '…' : 'Demo'}</span>
-        </button>
-      </nav>
-      {open && (
-        <div id="pt-landsheet" className="pt-sheetmenu pt-phone" onClick={() => setOpen(false)}>
-          <nav aria-label="Main">{links}</nav>
-          <div className="pt-sheetmenu__tools" onClick={(e) => e.stopPropagation()}>
-            <span className="pt-small pt-muted">Theme</span>
-            <ThemeToggle />
-          </div>
-        </div>
-      )}
-    </>
-  );
-}
-
-function StartError({ code, message, onRetry }: { code: string; message: string; onRetry: () => void }) {
-  const recent = getRecentDemo();
-  if (code === 'TIMEOUT')
-    return (
-      <Banner tone="wait" action={recent && <Link className="pt-btn pt-btn--sm" to={`/demo/${recent.demoId}`}>Open the last demo</Link>}>
-        This is taking much longer than usual. The demo may still have been created on QoreChain, but this page never got its id. Starts are limited to 5 per hour, so wait a minute or two before starting another.
-      </Banner>
-    );
-  if (code === 'RATE_LIMITED')
-    return (
-      <Banner tone="error" action={recent && <Link className="pt-btn pt-btn--sm" to={`/demo/${recent.demoId}`}>Open the last demo</Link>}>
-        {message} The demo is limited to 5 runs per hour. Open the last demo instead.
-      </Banner>
-    );
-  const retryable = ['CHAIN_UNAVAILABLE', 'INTERNAL', 'NETWORK', 'TIMEOUT', 'RELAYER_BUSY'].includes(code);
-  return (
-    <Banner tone="error" action={retryable && <Button size="sm" onClick={onRetry}>Try again</Button>}>
-      {message}
-    </Banner>
-  );
-}
 
 function AuditCard() {
   const navigate = useNavigate();
@@ -122,7 +54,7 @@ export function Landing() {
   }, [hash]);
   return (
     <div className="pt-page pt-landing">
-      <NavBar onStart={start} busy={busy} />
+      <AppBar />
       <main id="main" className="pt-main">
         <header className="pt-hero">
           <img src={envelope} alt="" aria-hidden="true" className="pt-hero__art pt-hero__art--envelope" />

@@ -3,7 +3,6 @@ import { Link, useLocation } from 'react-router';
 import { IconBrandGithub, IconFlask, IconMenu2, IconMoon, IconSun, IconX } from '@tabler/icons-react';
 import { BADGE_URL, CONTRACT, PROJECT_URL, REPO_URL } from '../lib/config';
 import { useTheme } from '../lib/hooks';
-import { getRecentDemo } from '../lib/recent';
 import { HashLink } from './HashLink';
 import { HealthChip } from './HealthChip';
 
@@ -17,52 +16,58 @@ export function ThemeToggle() {
   );
 }
 
-function useAppLinks() {
+/** The global navigation: the same links, in the same order, on every page. Only the highlight moves. */
+const NAV = [
+  { to: '/demo', label: 'Demo', match: (p: string) => p.startsWith('/demo') },
+  { to: '/audit', label: 'Audit trail', match: (p: string) => p === '/audit' || p.startsWith('/exams/') },
+  { to: '/verify', label: 'Verify a paper', match: (p: string) => p === '/verify' },
+  { to: '/marks', label: 'Check my mark', match: (p: string) => p === '/marks' },
+  { to: '/#how', label: 'How it works', match: () => false },
+] as const;
+
+function NavLinks() {
   const { pathname } = useLocation();
-  const recent = getRecentDemo();
-  return [
-    { to: recent ? `/demo/${recent.demoId}` : '/', label: 'Demo', current: pathname.startsWith('/demo') },
-    { to: recent ? `/exams/${recent.examId}/audit` : '/audit', label: 'Audit', current: pathname === '/audit' || pathname.startsWith('/exams/') },
-    { to: '/verify', label: 'Verify', current: pathname === '/verify' },
-    { to: '/marks', label: 'Marks', current: pathname === '/marks' },
-  ];
+  return (
+    <>
+      {NAV.map((l) => (
+        <Link key={l.label} to={l.to} aria-current={l.match(pathname) ? 'page' : undefined}>
+          {l.label}
+        </Link>
+      ))}
+      <a href={REPO_URL} target="_blank" rel="noreferrer">
+        GitHub
+      </a>
+    </>
+  );
 }
 
-/** App header on paper: wordmark, links, health, theme toggle. Phone: wordmark + menu sheet. */
+/** The one site header, identical on every page: wordmark, links, health, theme toggle. Phone: wordmark + menu sheet. */
 export function AppBar() {
-  const links = useAppLinks();
   const [open, setOpen] = useState(false);
   const { pathname } = useLocation();
-  useEffect(() => setOpen(false), [pathname]);
+  const { hash } = useLocation();
+  useEffect(() => setOpen(false), [pathname, hash]);
   return (
     <header className="pt-appbar">
       <div className="pt-wrap">
         <Link className="pt-wordmark" to="/">
           paper trail
         </Link>
-        <nav className="pt-applinks pt-desktop" aria-label="Main">
-          {links.map((l) => (
-            <Link key={l.label} to={l.to} aria-current={l.current ? 'page' : undefined}>
-              {l.label}
-            </Link>
-          ))}
+        <nav className="pt-applinks pt-navwide" aria-label="Main">
+          <NavLinks />
         </nav>
-        <span className="pt-appbar__tools pt-desktop">
+        <span className="pt-appbar__tools pt-navwide">
           <HealthChip />
           <ThemeToggle />
         </span>
-        <button type="button" className="pt-menubtn pt-phone" aria-expanded={open} aria-controls="pt-sheet" aria-label={open ? 'Close menu' : 'Open menu'} onClick={() => setOpen((o) => !o)}>
+        <button type="button" className="pt-menubtn pt-navnarrow" aria-expanded={open} aria-controls="pt-sheet" aria-label={open ? 'Close menu' : 'Open menu'} onClick={() => setOpen((o) => !o)}>
           {open ? <IconX size={24} stroke={2} aria-hidden /> : <IconMenu2 size={24} stroke={2} aria-hidden />}
         </button>
       </div>
       {open && (
-        <div id="pt-sheet" className="pt-sheetmenu pt-phone">
+        <div id="pt-sheet" className="pt-sheetmenu pt-navnarrow">
           <nav aria-label="Main">
-            {links.map((l) => (
-              <Link key={l.label} to={l.to} aria-current={l.current ? 'page' : undefined}>
-                {l.label}
-              </Link>
-            ))}
+            <NavLinks />
           </nav>
           <div className="pt-sheetmenu__tools">
             <HealthChip />
