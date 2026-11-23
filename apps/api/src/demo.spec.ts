@@ -48,17 +48,33 @@ describe.runIf(!!process.env.DATABASE_URL && !!process.env.DEMO_MNEMONICS)('judg
   });
   afterAll(async () => app?.close());
 
-  it('beat 1: /demo/start sets the exam, centres and groups and returns both canary variants', async () => {
+  it('beat 1: /demo/start answers at once with both canary variants, then sets the exam, centres and groups in the background', async () => {
     start = (await http().post('/demo/start').expect(201)).body;
     demoId = start.demoId;
     expect(start.label).toMatch(/DEMO — testnet only/);
-    expect(start.txs).toHaveLength(6); // createExam, setCentre ×2, rotateEpoch ×3
+    expect(start.settingUp).toBe(true);
+    expect(start.txs).toEqual([]); // the six txs arrive as "set:*" steps on GET /demo/:id
     expect(start.variants.A).not.toBe(start.variants.B);
     expect(start.variants.minPairDistanceBits).toBeGreaterThanOrEqual(20);
     expect(start.variants.differences.questions).toHaveLength(12);
     expect(Object.keys(start.roleLinks)).toEqual([...DEMO_ROLES]);
+    // the start time covers the setup too: about 90 s + the 30 s setup budget from now
+    expect(start.startsInSeconds).toBeGreaterThan(100);
+    await app.get(DemoService).whenSetUp(demoId);
     const v = (await http().get(`/demo/${demoId}`).expect(200)).body;
+    expect(v.steps.map((s: { name: string }) => s.name)).toEqual(['set:createExam', 'set:centreA', 'set:centreB', 'set:groupA', 'set:groupB', 'set:markers', 'set']);
+    expect(v.steps.at(-1)).toMatchObject({ beat: 1, ok: true });
+    expect(v.steps.at(-1).txs).toHaveLength(6); // createExam, setCentre ×2, rotateEpoch ×3
     expect(v.exam.centres.every((c: { confirmed: boolean; epoch: number }) => c.confirmed && c.epoch === 1)).toBe(true);
+  });
+
+  it('acts are refused while a demo is still being set up', async () => {
+    const d = await db.demo.create({ data: { examId: '0x' + 'f'.repeat(64), ip: 'x', centres: { A: '0x' + '1'.repeat(64), B: '0x' + '2'.repeat(64) }, startTime: new Date(), steps: [] } });
+    const r = await http().post(`/demo/${d.id}/act`).send({ as: 'examiner1', action: 'release' });
+    expect(r.status).toBe(422);
+    expect(r.body.error.message).toMatch(/still being set up/);
+    expect((await http().get(`/demo/${d.id}`).expect(200)).body.exam).toBeNull();
+    await db.demo.delete({ where: { id: d.id } });
   });
 
   it('beat 2: an early release is refused by the contract (TOO_EARLY), nothing is sent', async () => {
@@ -97,7 +113,7 @@ describe.runIf(!!process.env.DATABASE_URL && !!process.env.DEMO_MNEMONICS)('judg
 
   it('beat 7: the demo log and the audit timeline hold every beat', async () => {
     const v = (await http().get(`/demo/${demoId}`).expect(200)).body;
-    expect(v.steps.map((s: { beat: number }) => s.beat)).toEqual([1, 2, 3, 3, 4, 5, 5, 5, 6]);
+    expect(v.steps.map((s: { beat: number }) => s.beat)).toEqual([1, 1, 1, 1, 1, 1, 1, 2, 3, 3, 4, 5, 5, 5, 6]);
     const audit = (await http().get(v.audit).expect(200)).body;
     const names = new Set(audit.timeline.map((e: { name: string }) => e.name));
     for (const n of ['ExamCreated', 'CentreSet', 'EpochChanged', 'ShareReleased', 'Released', 'ScriptSubmitted']) expect(names.has(n)).toBe(true);

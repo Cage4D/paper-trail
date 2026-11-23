@@ -15,6 +15,7 @@
  * (two judges never race each other's nonces).
  */
 import { Inject, Injectable, Logger } from '@nestjs/common';
+import { waitUntil } from '@vercel/functions';
 import type { Hex } from 'viem';
 import {
   Action, BoardGroups, SAMPLE_PAPER, b64url, buildAction, centreGroupKey, examIdFor, fromB64url, groupChainId, markersGroupKey, matchLeak,
@@ -42,6 +43,8 @@ const LABEL: Record<DemoRole, string> = {
 };
 const CENTRE_OF: Partial<Record<DemoRole, 'A' | 'B'>> = { invigilatorA1: 'A', invigilatorA2: 'A', invigilatorB1: 'B' };
 export const DEMO_START_DELAY_S = 90;
+/** Extra countdown that covers the background setup (six txs, usually 25–40 s), so ~90 s remain to read the diff. */
+export const DEMO_SETUP_BUDGET_S = 30;
 const CANDIDATES = 6;
 
 interface Step {
@@ -127,75 +130,121 @@ export class DemoService {
     this.log.log(`demo ${id} beat ${step.beat} ${step.name}: ${step.ok ? 'ok' : 'refused'} — ${step.summary}`);
   }
 
+  /** Acts and leaks need the exam, centres and groups on chain (beat 1 finished). */
+  private assertSetUp(d: { steps: unknown }) {
+    const steps = (d.steps as unknown as Step[]) ?? [];
+    if (steps.some((x) => x.name === 'set' && x.ok)) return;
+    if (steps.some((x) => x.name === 'set' && !x.ok)) throw new ApiError('ACTION_REJECTED', { reason: 'setting up this demo failed; start a new one' });
+    throw new ApiError('ACTION_REJECTED', { reason: 'the demo exam is still being set up on QoreChain; try again in a few seconds' });
+  }
+
   private explorer = (tx: string) => (tx?.startsWith('0x') ? `${this.chain.explorer}/tx/${tx}` : tx);
 
   // ── beat 1: set ──
+
+  /**
+   * Setup runs in the background (Vercel waitUntil) so POST /demo/start answers in a few seconds
+   * with the demo id and both canary variants (built locally, before any transaction). Each of the
+   * six txs is logged to `steps` as it lands ("set:<part>"), then the closing "set" step; GET
+   * /demo/:id polling shows beat 1 filling in. Exposed for tests: `whenSetUp(demoId)`.
+   */
+  private setups = new Map<string, Promise<void>>();
+  whenSetUp(demoId: string): Promise<void> {
+    return this.setups.get(demoId) ?? Promise.resolve();
+  }
 
   async start(ip: string) {
     await this.limits.hit(`demo:${ip}`, 5, 60 * 60_000);
     const keys = this.keys();
     const s = Object.fromEntries(await Promise.all(DEMO_ROLES.map(async (r) => [r, await this.session(r)]))) as Record<DemoRole, Session>;
-    return this.locks.withLock(LOCK.demo, async () => {
-      const board = keys.board;
-      const salt = toHex(randomBytes(32)) as Hex;
-      const examId = examIdFor(board.evm, salt).toLowerCase() as Hex;
-      const centres = { A: toHex(randomBytes(32)) as Hex, B: toHex(randomBytes(32)) as Hex };
-      const part = (k: RoleKey) => ({ address: k.evm, recipient: k.recipient });
-      const setup = await setExam({ paperMarkdown: SAMPLE_PAPER, examId, examiners: [part(keys.examiner1), part(keys.examiner2), part(keys.examiner3)], board: part(board), centreIds: [centres.A, centres.B] });
-      const startTime = Number((await this.chain.client.getBlock()).timestamp) + DEMO_START_DELAY_S;
-      const examiners = [keys.examiner1.evm, keys.examiner2.evm, keys.examiner3.evm] as [Hex, Hex, Hex];
-      const txs: string[] = [];
-      const created = await this.exams.create(s.board, {
-        title: 'Judge mode — DEMO (testnet only)', salt, startTime, examiners, masterCommitment: setup.masterCommitment, committeeBlob: b64url(setup.committeeEnvelope),
-        signature: await this.sign('board', Action.CreateExam, { salt, board: board.evm, examiners, startTime: BigInt(startTime), masterCommitment: setup.masterCommitment, committeeBundleHash: setup.committeeBundleHash } as never),
-      });
-      txs.push(created.txHash);
-      const demo = await this.db.demo.create({ data: { examId, ip, centres, startTime: new Date(startTime * 1000), steps: [] } });
-      for (const c of setup.centres) {
-        const r = await this.exams.setCentre(s.board, examId, {
-          name: c.centreId === centres.A ? 'Centre A' : 'Centre B', centreId: c.centreId, commitment: c.commitment, cipherBlob: b64url(c.cipher), shares: c.shares.map((x) => b64url(x)) as [string, string, string],
-          signature: await this.sign('board', Action.SetCentre, { examId, centreId: c.centreId, commitment: c.commitment, cipherHash: c.cipherHash } as never),
-        });
-        txs.push(r.txHash);
-      }
-      const bg = new BoardGroups();
-      const addGroup = async (groupKey: string, roles: DemoRole[], role: 'invigilator' | 'marker') => {
-        const rot = bg.create(groupKey, Object.fromEntries(roles.map((r) => [keys[r].evm, keys[r].recipient])));
-        const r = await this.groups.add(s.board, groupKey, {
-          addresses: roles.map((x) => keys[x].evm), role, envelope: b64url(rot.envelope!), epoch: Number(rot.epoch), membersHash: rot.membersHash,
-          signature: await this.sign('board', Action.RotateEpoch, { centreId: groupChainId(groupKey), board: board.evm, epoch: rot.epoch, membersHash: rot.membersHash, envelopeHash: rot.envelopeHash } as never),
-          sealedBoardState: b64url(bg.exportSealed(board.recipient)),
-        });
-        txs.push(r.txHash);
-      };
-      await addGroup(centreGroupKey(centres.A), ['invigilatorA1', 'invigilatorA2'], 'invigilator');
-      await addGroup(centreGroupKey(centres.B), ['invigilatorB1'], 'invigilator');
-      await addGroup(markersGroupKey(examId), ['marker1', 'marker2'], 'marker');
-      await this.db.demo.update({ where: { id: demo.id }, data: { boardState: new Uint8Array(bg.exportSealed(board.recipient)) } });
-      await this.logStep(demo.id, { beat: 1, name: 'set', ok: true, summary: 'exam, 2 centres (2-of-3 shares sealed to the examiners), invigilator and marker groups', txs });
+    const board = keys.board;
+    const salt = toHex(randomBytes(32)) as Hex;
+    const examId = examIdFor(board.evm, salt).toLowerCase() as Hex;
+    const centres = { A: toHex(randomBytes(32)) as Hex, B: toHex(randomBytes(32)) as Hex };
+    const part = (k: RoleKey) => ({ address: k.evm, recipient: k.recipient });
+    // local crypto only: the paper, both canary copies, the 2-of-3 shares and their envelopes
+    const setup = await setExam({ paperMarkdown: SAMPLE_PAPER, examId, examiners: [part(keys.examiner1), part(keys.examiner2), part(keys.examiner3)], board: part(board), centreIds: [centres.A, centres.B] });
+    // the start time is fixed now (createExam signs it): the countdown covers the setup as well
+    const startTime = Number((await this.chain.client.getBlock()).timestamp) + DEMO_START_DELAY_S + DEMO_SETUP_BUDGET_S;
+    const demo = await this.db.demo.create({ data: { examId, ip, centres, startTime: new Date(startTime * 1000), steps: [] } });
 
-      // canary variants: the board is a committee member, so it can open the bundle and re-derive every copy
-      const committee = openCommitteeBundle({ envelope: setup.committeeEnvelope, keys: board.seal, examId });
-      return {
-        demoId: demo.id,
-        examId,
-        startTime: new Date(startTime * 1000).toISOString(),
-        startsInSeconds: Math.max(0, startTime - Math.floor(Date.now() / 1000)),
-        centres,
-        roles: Object.fromEntries(DEMO_ROLES.map((r) => [r, { label: LABEL[r], address: keys[r].evm, roleAddress: keys[r].address }])),
-        roleLinks: Object.fromEntries(DEMO_ROLES.map((r) => [r, `/demo/${demo.id}/as/${r}`])),
-        txs: txs.map((t) => ({ tx: t, explorer: this.explorer(t) })),
-        variants: {
-          master: committee.copies.master.text,
-          A: committee.copies.centres[centres.A].text,
-          B: committee.copies.centres[centres.B].text,
-          commitments: { master: setup.masterCommitment, A: setup.centres[0].commitment, B: setup.centres[1].commitment },
-          minPairDistanceBits: committee.copies.minPairDistance,
-          differences: this.differences(committee, centres),
-        },
-        label: 'DEMO — testnet only. Demo keys are held by this server; real users keep their own keys.',
-      };
+    const work = this.locks
+      .withLock(LOCK.demo, () => this.runSetup(demo.id, { s, setup, examId, salt, centres, startTime }))
+      .catch(async (e) => {
+        const err = e instanceof ApiError ? e : null;
+        this.log.error(`demo ${demo.id} setup failed: ${(e as Error).message}`);
+        await this.logStep(demo.id, { beat: 1, name: 'set', ok: false, summary: err ? `${err.code}: ${err.message}` : 'INTERNAL: setting up the exam failed', txs: [] }).catch(() => undefined);
+      })
+      .finally(() => this.setups.delete(demo.id));
+    this.setups.set(demo.id, work);
+    waitUntil(work);
+
+    // canary variants: the board is a committee member, so it can open the bundle and re-derive every copy
+    const committee = openCommitteeBundle({ envelope: setup.committeeEnvelope, keys: board.seal, examId });
+    return {
+      demoId: demo.id,
+      examId,
+      startTime: new Date(startTime * 1000).toISOString(),
+      startsInSeconds: Math.max(0, startTime - Math.floor(Date.now() / 1000)),
+      centres,
+      settingUp: true,
+      roles: Object.fromEntries(DEMO_ROLES.map((r) => [r, { label: LABEL[r], address: keys[r].evm, roleAddress: keys[r].address }])),
+      roleLinks: Object.fromEntries(DEMO_ROLES.map((r) => [r, `/demo/${demo.id}/as/${r}`])),
+      txs: [] as { tx: string; explorer: string }[], // filled in by the "set:*" steps on GET /demo/:id
+      variants: {
+        master: committee.copies.master.text,
+        A: committee.copies.centres[centres.A].text,
+        B: committee.copies.centres[centres.B].text,
+        commitments: { master: setup.masterCommitment, A: setup.centres[0].commitment, B: setup.centres[1].commitment },
+        minPairDistanceBits: committee.copies.minPairDistance,
+        differences: this.differences(committee, centres),
+      },
+      label: 'DEMO — testnet only. Demo keys are held by this server; real users keep their own keys.',
+    };
+  }
+
+  /** The six setup transactions, in order, each logged as it lands. Runs under the demo lock. */
+  private async runSetup(
+    demoId: string,
+    a: { s: Record<DemoRole, Session>; setup: Awaited<ReturnType<typeof setExam>>; examId: Hex; salt: Hex; centres: { A: Hex; B: Hex }; startTime: number },
+  ) {
+    const keys = this.keys();
+    const board = keys.board;
+    const { s, setup, examId, salt, centres, startTime } = a;
+    const txs: string[] = [];
+    const landed = async (name: string, summary: string, tx: string) => {
+      txs.push(tx);
+      await this.logStep(demoId, { beat: 1, name: `set:${name}`, ok: true, summary, txs: [tx] });
+    };
+    const examiners = [keys.examiner1.evm, keys.examiner2.evm, keys.examiner3.evm] as [Hex, Hex, Hex];
+    const created = await this.exams.create(s.board, {
+      title: 'Judge mode — DEMO (testnet only)', salt, startTime, examiners, masterCommitment: setup.masterCommitment, committeeBlob: b64url(setup.committeeEnvelope),
+      signature: await this.sign('board', Action.CreateExam, { salt, board: board.evm, examiners, startTime: BigInt(startTime), masterCommitment: setup.masterCommitment, committeeBundleHash: setup.committeeBundleHash } as never),
     });
+    await landed('createExam', 'exam created', created.txHash);
+    for (const c of setup.centres) {
+      const which = c.centreId === centres.A ? 'A' : 'B';
+      const r = await this.exams.setCentre(s.board, examId, {
+        name: `Centre ${which}`, centreId: c.centreId, commitment: c.commitment, cipherBlob: b64url(c.cipher), shares: c.shares.map((x) => b64url(x)) as [string, string, string],
+        signature: await this.sign('board', Action.SetCentre, { examId, centreId: c.centreId, commitment: c.commitment, cipherHash: c.cipherHash } as never),
+      });
+      await landed(`centre${which}`, `centre ${which}'s copy recorded`, r.txHash);
+    }
+    const bg = new BoardGroups();
+    const addGroup = async (name: string, groupKey: string, roles: DemoRole[], role: 'invigilator' | 'marker') => {
+      const rot = bg.create(groupKey, Object.fromEntries(roles.map((r) => [keys[r].evm, keys[r].recipient])));
+      const r = await this.groups.add(s.board, groupKey, {
+        addresses: roles.map((x) => keys[x].evm), role, envelope: b64url(rot.envelope!), epoch: Number(rot.epoch), membersHash: rot.membersHash,
+        signature: await this.sign('board', Action.RotateEpoch, { centreId: groupChainId(groupKey), board: board.evm, epoch: rot.epoch, membersHash: rot.membersHash, envelopeHash: rot.envelopeHash } as never),
+        sealedBoardState: b64url(bg.exportSealed(board.recipient)),
+      });
+      await landed(name, `${name.replace(/^group/, 'group ')} at epoch 1`, r.txHash);
+    };
+    await addGroup('groupA', centreGroupKey(centres.A), ['invigilatorA1', 'invigilatorA2'], 'invigilator');
+    await addGroup('groupB', centreGroupKey(centres.B), ['invigilatorB1'], 'invigilator');
+    await addGroup('markers', markersGroupKey(examId), ['marker1', 'marker2'], 'marker');
+    await this.db.demo.update({ where: { id: demoId }, data: { boardState: new Uint8Array(bg.exportSealed(board.recipient)) } });
+    await this.logStep(demoId, { beat: 1, name: 'set', ok: true, summary: 'exam, 2 centres (2-of-3 shares sealed to the examiners), invigilator and marker groups', txs });
   }
 
   /** Per-question canary differences between centre A's and centre B's copies (for the UI diff). */
@@ -218,6 +267,7 @@ export class DemoService {
   async act(id: string, as: string, action: string, params: Record<string, string> = {}) {
     const d = await this.load(id);
     if (!(DEMO_ROLES as readonly string[]).includes(as) && as !== 'candidates') throw new ApiError('VALIDATION_FAILED', { fields: 'as' });
+    this.assertSetUp(d);
     return this.locks.withLock(LOCK.demo, async () => {
       if (action === 'release' && /^examiner[123]$/.test(as)) return this.doRelease(d, as as DemoRole, (params.centre as 'A' | 'B') ?? 'A');
       if (action === 'open' && CENTRE_OF[as as DemoRole]) return this.doOpen(d, as as DemoRole);
@@ -345,6 +395,7 @@ export class DemoService {
 
   async leak(id: string, centre: 'A' | 'B' = 'B') {
     const d = await this.load(id);
+    this.assertSetUp(d);
     const keys = this.keys();
     const exam = await this.db.exam.findUnique({ where: { onchainId: d.examId }, include: { centres: true } });
     const committee = openCommitteeBundle({ envelope: exam!.committeeBlob, keys: keys.board.seal, examId: d.examId as Hex });
@@ -371,7 +422,11 @@ export class DemoService {
 
   async get(id: string) {
     const d = await this.load(id);
-    const view = await this.exams.view(d.examId);
+    // null until createExam has landed (setup runs in the background after /demo/start answers)
+    const view = await this.exams.view(d.examId).catch((e) => {
+      if (e instanceof ApiError && e.code === 'NOT_FOUND') return null;
+      throw e;
+    });
     return {
       demoId: d.id, examId: d.examId, startTime: d.startTime.toISOString(), startsInSeconds: Math.max(0, Math.ceil((d.startTime.getTime() - Date.now()) / 1000)), centres: d.centres,
       steps: d.steps, exam: view, audit: `/exams/${d.examId}/audit`, events: `/exams/${d.examId}/events`,

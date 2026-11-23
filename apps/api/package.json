@@ -35,6 +35,7 @@
     "@qorechain/qoreseal": "0.1.0",
     "@qorechain/qoresign": "0.2.0",
     "@qorechain/sdk": "0.14.0",
+    "@vercel/functions": "3.11.3",
     "cookie-parser": "^1.4.7",
     "jose": "^6.2.18",
     "pg": "^8.23.1",
