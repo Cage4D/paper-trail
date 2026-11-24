@@ -13,6 +13,7 @@ category.
 
 - **Web app:** https://paper-trail-web-nu.vercel.app (judge mode: "Start the 3-minute demo").
 - **API:** https://paper-trail-api.vercel.app ([`/health`](https://paper-trail-api.vercel.app/health)); judge mode: `POST /demo/start`.
+- **Before judging:** see the [pre-judging checklist](docs/PRE_JUDGING.md) (relayer funds, EVM window, live checks).
 - **PaperTrail v2 contract:** `0xbe6b208Bc8990a68740053Dad68624914812cf8F`
 
 ### Project-page addresses (max 5, read on chain)
