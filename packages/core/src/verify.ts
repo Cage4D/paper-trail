@@ -45,6 +45,12 @@ export async function resolveGroupRecipients(args: {
   /** tx hash of the EpochChanged event for `epoch` (the API gives it; the chain proves it) */
   epochTx: string;
   members: GroupMember[];
+  /**
+   * Optional fetch for the ML-KEM key lookup (QoreSeal's KEM registry on `rest`). Browsers need it:
+   * the native REST endpoint sends no CORS headers, so a web client answers the same request
+   * from the EVM JSON-RPC (qor_getKEMKey) instead. Defaults to the global fetch.
+   */
+  fetch?: (url: string, init?: RequestInit) => Promise<Response>;
 }): Promise<SealRecipient[]> {
   const fail = (why: string): never => {
     throw new GroupVerificationError(`group not verified: ${why}`);
@@ -81,7 +87,7 @@ export async function resolveGroupRecipients(args: {
       if (parseAddress(m.roleAddress).hex.toLowerCase() !== m.address.toLowerCase()) fail(`address mismatch for ${m.roleAddress}`);
       const [registered, algorithmId, pubkey] = (await client.readContract({ address: PQC_STATUS, abi: ABI, functionName: "pqcKeyStatus", args: [getAddress(m.address)] })) as readonly [boolean, number, Hex];
       if (!registered || algorithmId !== 1) fail(`${m.roleAddress} has no registered ML-DSA-87 key`);
-      const mlkemPublicKey = await fetchMlkemPublicKey({ rest: args.rest, address: m.roleAddress });
+      const mlkemPublicKey = await fetchMlkemPublicKey({ rest: args.rest, address: m.roleAddress, ...(args.fetch ? { fetch: args.fetch } : {}) });
       try {
         return verifyRecipientCard({ card: m.card, chainId: CHAIN_ID, address: m.roleAddress, pqPublicKey: fromHex(pubkey), mlkemPublicKey });
       } catch {
@@ -89,4 +95,38 @@ export async function resolveGroupRecipients(args: {
       }
     }),
   );
+}
+
+/**
+ * A fetch for `resolveGroupRecipients({ fetch })` in browsers. QoreSeal reads ML-KEM keys from the
+ * native REST endpoint (`/qorechain/pqc/v1/kem/<address>`), which sends no CORS headers; the EVM
+ * JSON-RPC serves the same registry as `qor_getKEMKey` with CORS. This answers the REST request
+ * from the RPC, in the REST response's shape. Any other URL goes to the global fetch unchanged.
+ */
+export function kemFetchViaEvmRpc(evmRpc: string): (url: string, init?: RequestInit) => Promise<Response> {
+  return async (url, init) => {
+    const m = /\/qorechain\/pqc\/v1\/kem\/([^/?#]+)$/.exec(url);
+    if (!m) return globalThis.fetch(url, init);
+    const res = await globalThis.fetch(evmRpc, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "qor_getKEMKey", params: [decodeURIComponent(m[1])] }),
+    });
+    const body = (await res.json()) as { result?: { found?: boolean; address?: string; algorithm_id?: number; algorithm_name?: string; public_key?: string; registered_height?: string | number } };
+    const r = body.result;
+    if (!res.ok || !r) return new Response(JSON.stringify({}), { status: 502 });
+    if (!r.found) return new Response(JSON.stringify({ found: false }), { status: 200 });
+    const pk = typeof r.public_key === "string" && r.public_key.startsWith("0x") ? b64(fromHex(r.public_key)) : r.public_key;
+    return new Response(
+      JSON.stringify({ found: true, key: { address: r.address, algorithm_id: r.algorithm_id, algorithm_name: r.algorithm_name, public_key: pk, registered_height: String(r.registered_height ?? "") } }),
+      { status: 200, headers: { "Content-Type": "application/json" } },
+    );
+  };
+}
+
+/** Standard base64 (QoreSeal's KEM registry format). */
+function b64(bytes: Uint8Array): string {
+  let s = "";
+  for (const x of bytes) s += String.fromCharCode(x);
+  return btoa(s);
 }
