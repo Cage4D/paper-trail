@@ -451,3 +451,12 @@ button.pt-health { cursor: pointer; }
   .pt-navnarrow { display: flex !important; }
   .pt-appbar .pt-wrap { min-height: 56px; padding-right: 0; flex-wrap: nowrap; }
 }
+.pt-story { border: var(--stroke-2) solid var(--line); border-radius: var(--radius-md); background: #fff7d6; color: #111111; padding: 14px 18px; font-size: 15px; line-height: 22px; }
+.pt-filepreview { max-height: 180px; overflow: auto; font-size: 12px; line-height: 17px; }
+.pt-quicklab > summary { cursor: pointer; list-style: none; }
+.pt-quicklab > summary::-webkit-details-marker { display: none; }
+.pt-quicklab > summary::before { content: "▸ "; }
+.pt-quicklab[open] > summary::before { content: "▾ "; }
+.pt-quicklab .pt-cardx { box-shadow: none; }
+.pt-diy { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; justify-content: space-between; padding: 14px 16px; border: var(--stroke-2) dashed var(--line); border-radius: var(--radius-md); }
+.pt-diy > .pt-col { flex: 1 1 260px; }

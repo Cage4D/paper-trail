@@ -730,9 +730,20 @@ function BeatOpen({ d, state, cache, you, busy, error, onOpen }: { d: Derived; s
       )}
       <ActionError error={error} onRetry={onOpen} />
       {st === 'done' && (
-        <Note>
-          In this demo the server opened the paper with Invigilator A1's demo key, so you don't need a wallet. A real invigilator opens it in their own browser with their own key. <Link to="/try">See that encryption run in your browser</Link>.
-        </Note>
+        <>
+          <Note>In this demo the server opened the paper with Invigilator A1's demo key, so you don't need a wallet. A real invigilator opens it in their own browser with their own key.</Note>
+          <div className="pt-diy">
+            <div className="pt-col" style={{ gap: 4 }}>
+              <strong>Do it yourself</strong>
+              <span className="pt-small">
+                Lock a message for {cache.start?.roles.invigilatorA1 ? "Invigilator A1's" : 'a'} registered QoreChain address in your own browser, then make and register your own key to open messages locked for you.
+              </span>
+            </div>
+            <Link className="pt-btn pt-btn--sm" to={`/try?to=${encodeURIComponent(cache.start?.roles.invigilatorA1?.roleAddress ?? 'qor1u39s6c9ujvy9kpuz22p0mzck4q9k7f5y6nv85d')}#seal`}>
+              Try encryption
+            </Link>
+          </div>
+        </>
       )}
       {st === 'done' && (
         <OnChainDetails

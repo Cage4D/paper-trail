@@ -24,7 +24,7 @@ type Stranger = { opened: boolean; code?: string; stranger: string };
 
 const errText = (e: unknown) => (e instanceof WorkerError || e instanceof ApiError ? e.message : e instanceof Error ? e.message : String(e));
 
-export function TryEncryption() {
+function QuickLab() {
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [key, setKey] = useState<KeyInfo | null>(null);
@@ -36,7 +36,6 @@ export function TryEncryption() {
   const [stranger, setStranger] = useState<Stranger | null>(null);
   const s = useElapsed(!!busy);
 
-  useEffect(() => () => stopWorker(), []); // forget the keys when leaving the page
 
   const run = async (what: string, f: () => Promise<void>) => {
     if (busy) return;
@@ -80,21 +79,7 @@ export function TryEncryption() {
   const label = (what: string, text: string) => (busy === what ? `${text} ${s} s` : undefined);
 
   return (
-    <AppPage>
-      <section className="pt-wrap pt-section pt-col" style={{ gap: 28 }}>
-        <div className="pt-pagehead">
-          <div className="pt-col" style={{ gap: 12 }}>
-            <h1 className="pt-h1 pt-h1--xl">Try the encryption</h1>
-            <p className="pt-lead">
-              Everything on this page happens in your own browser, with the same code Paper Trail uses to lock exam papers and answer scripts. Make a key, lock a message so only chosen people can read it, then open it again. Nothing you type here is sent anywhere.
-            </p>
-          </div>
-          <img src={envelope} alt="" aria-hidden="true" className="pt-pagehead__art" />
-        </div>
-
-        <Banner tone="demo">
-          DEMO — testnet only. The key made here is a throwaway: it isn't registered on QoreChain, holds nothing, and is forgotten when you leave this page. Its 24 secret words are never shown or saved.
-        </Banner>
+    <div className="pt-col" style={{ gap: 20 }}>
         {error && <Banner tone="error">{error}</Banner>}
 
         <ol className="pt-lab">
@@ -196,18 +181,379 @@ export function TryEncryption() {
           </li>
         </ol>
 
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────────────────────
+// Seal to any QoreChain address, and open with your own registered key.
+
+/** Marker 1 of the demo: a registered QoreChain address with a published card (one-click example). */
+export const EXAMPLE_ADDRESS = 'qor1u39s6c9ujvy9kpuz22p0mzck4q9k7f5y6nv85d';
+const FAUCET = 'https://dashboard.qorechain.io/faucet';
+const KEY_STORE = 'pt-my-key';
+/** Two registration transactions at the default 0.1 QOR fee, with a little room. */
+const REGISTER_MIN_QOR = 0.21;
+
+type SealResult = { results: { address: string; ok: boolean; mode?: string; error?: string }[]; fileText?: string; mode?: string; bytes?: number };
+type MyStatus = { address: string; pqc: string; kem: string; balance: string };
+type OpenResult = { opened: boolean; text?: string; code?: string; to: string[]; mode: string; mine: boolean };
+
+function loadBlob(): EncryptedBlob | null {
+  try {
+    const v = JSON.parse(localStorage.getItem(KEY_STORE) ?? 'null');
+    return v && typeof v.address === 'string' && typeof v.ciphertext === 'string' ? v : null;
+  } catch {
+    return null;
+  }
+}
+type EncryptedBlob = { v: 1; kdf: 'argon2id'; params: unknown; salt: string; nonce: string; ciphertext: string; address: string };
+
+function download(name: string, text: string) {
+  const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+const statusWord = (s: string) => (s === 'registered' ? 'registered on QoreChain' : s === 'not-registered' ? 'not registered yet' : 'a different key is registered for this address');
+
+export function TryEncryption() {
+  const [busy, setBusy] = useState<string | null>(null);
+  const [error, setError] = useState<{ where: string; text: string } | null>(null);
+  const s = useElapsed(!!busy);
+  const [params] = useState(() => new URLSearchParams(window.location.search));
+
+  // ── 1. seal to addresses
+  const [toText, setToText] = useState(() => params.get('to') ?? EXAMPLE_ADDRESS);
+  const [message, setMessage] = useState('The paper opens at 09:00 tomorrow. Bring a calculator.');
+  const [sealRes, setSealRes] = useState<SealResult | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [cards, setCards] = useState<Record<string, unknown> | null>(null);
+
+  // ── 2. my key
+  const [blob, setBlob] = useState<EncryptedBlob | null>(() => loadBlob());
+  const [unlocked, setUnlocked] = useState<string | null>(null);
+  const [pass, setPass] = useState('');
+  const [pass2, setPass2] = useState('');
+  const [status, setStatus] = useState<MyStatus | null>(null);
+  const [regTx, setRegTx] = useState<{ pqcTx: string | null; kemTx: string | null } | null>(null);
+
+  // ── 3. open
+  const [fileText, setFileText] = useState('');
+  const [openRes, setOpenRes] = useState<OpenResult | null>(null);
+
+  useEffect(() => () => stopWorker(), []); // wipe keys when leaving the page
+  useEffect(() => {
+    if (window.location.hash) document.getElementById(window.location.hash.slice(1))?.scrollIntoView();
+  }, []);
+  useEffect(() => {
+    // recipient cards are public; with one, the browser seals hybrid after checking it against the chain
+    api<{ roleAddress: string; sealCard: unknown }[]>('/directory', { timeoutMs: 30_000 })
+      .then((rows) => setCards(Object.fromEntries(rows.filter((r) => r.sealCard).map((r) => [r.roleAddress, r.sealCard]))))
+      .catch(() => setCards({}));
+  }, []);
+
+  const run = async (what: string, f: () => Promise<void>) => {
+    if (busy) return;
+    setBusy(what);
+    setError(null);
+    try {
+      await f();
+    } catch (e) {
+      setError({ where: what, text: errText(e) });
+    } finally {
+      setBusy(null);
+    }
+  };
+  const label = (what: string, text: string) => (busy === what ? `${text} ${s} s` : undefined);
+  const err = (where: string) => error?.where === where && <Banner tone="error">{error.text}</Banner>;
+
+  const addresses = toText.split(/[\s,]+/).map((a) => a.trim()).filter(Boolean);
+  const sealIt = () =>
+    run('seal', async () => {
+      if (!addresses.length) throw new Error('Add at least one qor1 address.');
+      if (!message) throw new Error('Write a message to lock.');
+      setSealRes(await ask<SealResult>({ type: 'seal-to', text: message, addresses, cards: cards ?? {} }));
+      setCopied(false);
+    });
+
+  const createKey = () =>
+    run('create', async () => {
+      if (pass.length < 8) throw new Error('Use a passphrase of at least 8 characters.');
+      if (pass !== pass2) throw new Error("The two passphrases don't match.");
+      const r = await ask<{ blob: EncryptedBlob; address: string }>({ type: 'my-create', passphrase: pass });
+      try {
+        localStorage.setItem(KEY_STORE, JSON.stringify(r.blob));
+      } catch {
+        /* storage blocked: the key works until the page closes */
+      }
+      setBlob(r.blob);
+      setUnlocked(r.address);
+      setPass('');
+      setPass2('');
+      setStatus(await ask<MyStatus>({ type: 'my-status' }));
+    });
+  const unlock = () =>
+    run('unlock', async () => {
+      if (!blob) return;
+      const r = await ask<{ address: string }>({ type: 'my-unlock', blob, passphrase: pass });
+      setUnlocked(r.address);
+      setPass('');
+      setStatus(await ask<MyStatus>({ type: 'my-status' }));
+    });
+  const refresh = () => run('status', async () => setStatus(await ask<MyStatus>({ type: 'my-status' })));
+  const register = () =>
+    run('register', async () => {
+      const r = await ask<{ pqcTx: string | null; kemTx: string | null; status: MyStatus; balance: string }>({ type: 'my-register' });
+      setRegTx({ pqcTx: r.pqcTx, kemTx: r.kemTx });
+      setStatus({ ...r.status, balance: r.balance });
+    });
+  const forget = () => {
+    if (!window.confirm('Forget this key? It is removed from this browser for good. Anything sealed to its address can no longer be opened here.')) return;
+    void ask({ type: 'my-forget' });
+    try {
+      localStorage.removeItem(KEY_STORE);
+    } catch {
+      /* nothing stored */
+    }
+    setBlob(null);
+    setUnlocked(null);
+    setStatus(null);
+    setRegTx(null);
+    setOpenRes(null);
+  };
+  const openIt = () =>
+    run('open', async () => {
+      if (!fileText.trim()) throw new Error('Paste a sealed message or choose a .ptseal file.');
+      setOpenRes(await ask<OpenResult>({ type: 'my-open', fileText }));
+    });
+
+  const registered = status?.pqc === 'registered' && status?.kem === 'registered';
+  const canRegister = !!status && !registered && Number(status.balance) >= REGISTER_MIN_QOR && status.pqc !== 'other-key' && status.kem !== 'other-key';
+
+  return (
+    <AppPage>
+      <section className="pt-wrap pt-section pt-col" style={{ gap: 28 }}>
+        <div className="pt-pagehead">
+          <div className="pt-col" style={{ gap: 12 }}>
+            <h1 className="pt-h1 pt-h1--xl">Try the encryption</h1>
+            <p className="pt-lead">
+              Lock a message so that only the owners of chosen QoreChain addresses can read it, then open messages locked for you with a key that lives in your browser. All the locking and opening happens here, with the same code that locks Paper Trail's exam papers. Your message is never sent to our server.
+            </p>
+          </div>
+          <img src={envelope} alt="" aria-hidden="true" className="pt-pagehead__art" />
+        </div>
+
+        <Banner tone="demo">
+          DEMO — testnet only. Keys made on this page are for QoreChain's practice network. Their 24 secret words are never shown, sent or saved in plain form.
+        </Banner>
+
+        <div className="pt-story">
+          <strong>Try it with a friend (or two browsers):</strong> in browser A, make a key below, register it, and share its qor1 address. In browser B, lock a message for that address and send A the file. Back in A, open it. Only A's key can.
+        </div>
+
+        {/* ── 1 ── */}
+        <article className="pt-cardx pt-lab__step" id="seal">
+          <h2 className="pt-h3 pt-h3--lg">1. Lock a message for any QoreChain address</h2>
+          <p className="pt-muted">
+            Your browser reads each address's registered quantum-safe keys straight from QoreChain: its ML-KEM-1024 locking key, and its ML-DSA-87 key to check a recipient card when one is published. Without a card, the message is locked with the ML-KEM-1024 key alone.
+          </p>
+          <Field label="Recipients: qor1 addresses, one per line" help={<>Filled in with Marker 1 from the demo, a registered address. <button type="button" className="pt-linkbtn" onClick={() => setToText(EXAMPLE_ADDRESS)}>Use the example</button>{unlocked && <> · <button type="button" className="pt-linkbtn" onClick={() => setToText((t) => (t.includes(unlocked) ? t : `${t.trim()}\n${unlocked}`.trim()))}>Add my address</button></>}</>} className="pt-field--flex">
+            <textarea className="pt-input pt-input--mono" rows={3} value={toText} onChange={(e) => (setToText(e.target.value), setSealRes(null))} spellCheck={false} />
+          </Field>
+          <Field label="Message" className="pt-field--flex">
+            <textarea className="pt-input" rows={3} value={message} onChange={(e) => (setMessage(e.target.value), setSealRes(null))} />
+          </Field>
+          <Button variant="primary" icon={<IconLock size={18} stroke={2} aria-hidden />} busy={busy === 'seal'} busyLabel={label('seal', 'Checking the addresses on QoreChain, then locking…')} onClick={sealIt} className="pt-selfstart">
+            Check the addresses and lock
+          </Button>
+          {err('seal')}
+          {sealRes && (
+            <>
+              <div className="pt-xrows">
+                {sealRes.results.map((r) => (
+                  <XRow key={r.address} yes={r.ok} aside={r.ok ? <span className="pt-code" title={r.mode}>{r.mode === 'hybrid' ? 'card checked' : 'ML-KEM only'}</span> : undefined}>
+                    <span className="pt-mono pt-mono--inline" style={{ overflowWrap: 'anywhere' }}>{r.address}</span>
+                    <span className="pt-source__sub" style={{ fontFamily: 'var(--font-sans)', fontSize: 13 }}>
+                      {r.ok
+                        ? r.mode === 'hybrid'
+                          ? 'ML-KEM-1024 key registered; its recipient card matches its ML-DSA-87 key on QoreChain'
+                          : 'ML-KEM-1024 key registered on QoreChain; no recipient card published'
+                        : r.error}
+                    </span>
+                  </XRow>
+                ))}
+              </div>
+              {sealRes.fileText && (
+                <>
+                  <Verdict tone="ok" icon={<IconLock size={32} stroke={2.5} />} title={`Locked for ${sealRes.results.length} address${sealRes.results.length === 1 ? '' : 'es'}`} big={false}>
+                    <p>
+                      {sealRes.bytes?.toLocaleString('en-GB')} bytes, {sealRes.mode === 'hybrid' ? 'ML-KEM-1024 + X25519' : 'ML-KEM-1024'}. Only the owners of these addresses can open it. Send them the file.
+                    </p>
+                  </Verdict>
+                  <div className="pt-row">
+                    <Button variant="primary" onClick={() => download('message.ptseal', sealRes.fileText!)}>
+                      Download message.ptseal
+                    </Button>
+                    <Button onClick={() => void navigator.clipboard?.writeText(sealRes.fileText!).then(() => setCopied(true))}>{copied ? 'Copied' : 'Copy as text'}</Button>
+                    <Button variant="ghost" onClick={() => (setFileText(sealRes.fileText!), document.getElementById('open')?.scrollIntoView())}>
+                      Try opening it below
+                    </Button>
+                  </div>
+                  <pre className="pt-excerpt pt-cipher pt-filepreview" aria-label="The sealed message file">{sealRes.fileText}</pre>
+                </>
+              )}
+            </>
+          )}
+        </article>
+
+        {/* ── 2 ── */}
+        <article className="pt-cardx pt-lab__step" id="key">
+          <h2 className="pt-h3 pt-h3--lg">2. Your own registered key</h2>
+          <p className="pt-muted">
+            Make a key in this browser and register its public halves on QoreChain, so anyone can lock messages for your address. The key is kept in this browser, encrypted with your passphrase (Argon2id and AES-256-GCM). Forget the passphrase or clear this site's data and the key is gone: it's a practice key.
+          </p>
+          {!blob && !unlocked && (
+            <div className="pt-row pt-row--fields">
+              <Field label="Passphrase (8+ characters)" className="pt-field--grow">
+                <input className="pt-input" type="password" autoComplete="new-password" value={pass} onChange={(e) => setPass(e.target.value)} />
+              </Field>
+              <Field label="Type it again" className="pt-field--grow">
+                <input className="pt-input" type="password" autoComplete="new-password" value={pass2} onChange={(e) => setPass2(e.target.value)} />
+              </Field>
+            </div>
+          )}
+          {!blob && !unlocked && (
+            <Button variant="primary" icon={<IconKey size={18} stroke={2} aria-hidden />} busy={busy === 'create'} busyLabel={label('create', 'Making and encrypting your key…')} onClick={createKey} className="pt-selfstart">
+              Make my key
+            </Button>
+          )}
+          {blob && !unlocked && (
+            <>
+              <p>
+                This browser has a key for <HashLink value={blob.address} kind="plain" small />. Enter its passphrase to use it.
+              </p>
+              <div className="pt-row">
+                <Field label="Passphrase" className="pt-field--grow">
+                  <input className="pt-input" type="password" autoComplete="current-password" value={pass} onChange={(e) => setPass(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && unlock()} />
+                </Field>
+              </div>
+              <div className="pt-row">
+                <Button variant="primary" icon={<IconLockOpen size={18} stroke={2} aria-hidden />} busy={busy === 'unlock'} busyLabel={label('unlock', 'Unlocking…')} onClick={unlock}>
+                  Unlock my key
+                </Button>
+                <Button variant="ghost" onClick={forget}>
+                  Forget this key
+                </Button>
+              </div>
+            </>
+          )}
+          {err('create')}
+          {err('unlock')}
+          {unlocked && status && (
+            <>
+              <dl className="pt-kv">
+                <dt>Your address</dt>
+                <dd>
+                  <HashLink value={status.address} kind="plain" small />
+                </dd>
+                <dt>Balance</dt>
+                <dd>
+                  {status.balance} testnet QOR{' '}
+                  <a href={FAUCET} target="_blank" rel="noreferrer">
+                    Get testnet QOR from the faucet
+                  </a>
+                </dd>
+                <dt>Signing key (ML-DSA-87)</dt>
+                <dd>{statusWord(status.pqc)}</dd>
+                <dt>Locking key (ML-KEM-1024)</dt>
+                <dd>{statusWord(status.kem)}</dd>
+              </dl>
+              {registered ? (
+                <Verdict tone="ok" title="Registered: anyone can lock messages for your address" big={false}>
+                  <p>Share your address. Messages locked for it can only be opened with the key in this browser.</p>
+                </Verdict>
+              ) : (
+                <>
+                  <p className="pt-muted pt-small">
+                    Registering sends two transactions from your address, about 0.2 testnet QOR in fees. Get testnet QOR from the faucet for the address above, then check your balance again.
+                  </p>
+                  <div className="pt-row">
+                    <Button variant="primary" busy={busy === 'register'} busyLabel={label('register', 'Registering on QoreChain…')} onClick={register} disabled={!canRegister}>
+                      Register my keys on QoreChain
+                    </Button>
+                    <Button busy={busy === 'status'} busyLabel={label('status', 'Checking…')} onClick={refresh}>
+                      Check balance again
+                    </Button>
+                  </div>
+                </>
+              )}
+              {regTx && (
+                <div className="pt-txlist">
+                  {regTx.pqcTx && <HashLink value={regTx.pqcTx} label="ML-DSA-87 registration" small />}
+                  {regTx.kemTx && <HashLink value={regTx.kemTx} label="ML-KEM-1024 registration" small />}
+                </div>
+              )}
+              <Button variant="ghost" onClick={forget} className="pt-selfstart">
+                Forget this key
+              </Button>
+            </>
+          )}
+          {err('status')}
+          {err('register')}
+        </article>
+
+        {/* ── 3 ── */}
+        <article className="pt-cardx pt-lab__step" id="open">
+          <h2 className="pt-h3 pt-h3--lg">3. Open a message locked for you</h2>
+          <p className="pt-muted">Paste a sealed message, or choose a .ptseal file. Your key opens it here, in this browser.</p>
+          <textarea className="pt-input pt-input--mono" rows={5} value={fileText} onChange={(e) => (setFileText(e.target.value), setOpenRes(null))} placeholder='{ "format": "paper-trail-sealed-message", … }' aria-label="Sealed message" spellCheck={false} />
+          <div className="pt-row">
+            <label className="pt-btn pt-btn--sm">
+              Choose a file
+              <input type="file" accept=".ptseal,.json,.txt,application/json" hidden onChange={(e) => void e.target.files?.[0]?.text().then((t) => (setFileText(t), setOpenRes(null)))} />
+            </label>
+            <Button variant="primary" icon={<IconLockOpen size={18} stroke={2} aria-hidden />} busy={busy === 'open'} busyLabel={label('open', 'Opening…')} onClick={openIt} disabled={!unlocked}>
+              Open it with my key
+            </Button>
+            {!unlocked && <span className="pt-muted pt-small">Make or unlock your key in step 2 first.</span>}
+          </div>
+          {err('open')}
+          {openRes &&
+            (openRes.opened ? (
+              <Verdict tone="ok" title="Opened with your key" big={false}>
+                <p style={{ overflowWrap: 'anywhere' }}>“{openRes.text}”</p>
+                <p className="pt-small">Locked for {openRes.to.length} address{openRes.to.length === 1 ? '' : 'es'}, including yours.</p>
+              </Verdict>
+            ) : (
+              <XRow yes={false} aside={<span className="pt-code" title={openRes.code}>Locked out</span>}>
+                {openRes.mine
+                  ? `Your address is listed, but this key can't open it (${openRes.code}). Was it made with a different key for the same address?`
+                  : `This message wasn't locked for your address, so your key can't open it (${openRes.code}). It was locked for: ${openRes.to.join(', ')}.`}
+              </XRow>
+            ))}
+        </article>
+
+        <details className="pt-cardx pt-quicklab">
+          <summary className="pt-h3">Quick test without registering anything</summary>
+          <p className="pt-muted">A throwaway key in this browser locks a message for itself (and, if you like, a demo exam's markers), opens it, and shows that a stranger's key is refused. Nothing to set up.</p>
+          <QuickLab />
+        </details>
+
         <Note>
-          This is the browser side of Paper Trail. In the live demo, the server plays every role with demo keys and runs this same code on their behalf, so you can click through without a wallet. A real examiner, invigilator or marker would run it here, in their own browser, with a key only they hold.{' '}
-          <Link to="/demo">Try the live demo</Link>.
+          In the live demo, the server plays every role with demo keys and runs this same code on their behalf, so you can click through without a wallet. Here, the keys are yours and stay in your browser. Registering goes through our server only to reach QoreChain (its public endpoints block browsers): your browser signs the transactions first, so the server can't change them. <Link to="/demo">Try the live demo</Link>.
         </Note>
         <OnChainDetails
-          summary="Technical details: what ran in your browser"
+          summary="Technical details: what runs where"
           rows={[
-            ['Key', '@paper-trail/core createRoleKey: a fresh BIP-39 mnemonic deriving ML-DSA-87 (QoreSign) and ML-KEM-1024 + X25519 (QoreSeal) keys, in a Web Worker'],
-            ['Lock', '@paper-trail/core sealScript: QoreSeal multi-recipient envelope, purpose papertrail:script:v1, chain id qorechain-diana'],
-            ['Markers', '@paper-trail/core resolveGroupRecipients: EpochChanged log and membersHash read from the EVM RPC, current epoch from PaperTrail.centreEpoch, each recipient card verified against the pqcKeyStatus precompile and the ML-KEM-1024 key registry (qor_getKEMKey)'],
-            ['Open', '@paper-trail/core openScript with your ML-KEM-1024 + X25519 secret key; a stranger key fails with NOT_A_RECIPIENT'],
-            ['Sent', 'Only public reads: the marker team from the Paper Trail API, and chain data from the QoreChain RPC. Your message and keys never leave this page.'],
+            ['Lock', '@paper-trail/core resolveAddressRecipient (QoreSeal resolveRecipient: ML-KEM-1024 key from the KEM registry; recipient card checked against the ML-DSA-87 key from pqcKeyStatus) and sealMessage (QoreSeal, purpose papertrail:message:v1; the recipient list is authenticated)'],
+            ['Chain reads', 'From your browser to the QoreChain EVM JSON-RPC: qor_getKEMKey and qor_getPQCKeyStatus (CORS-enabled); recipient cards from the Paper Trail directory, verified before use'],
+            ['Your key', '@paper-trail/core createRoleKey and encryptRoleKey (Argon2id + AES-256-GCM) in a Web Worker; only the encrypted blob is stored, in this browser'],
+            ['Register', '@paper-trail/core ensureRoleOnChain: MsgRegisterPQCKey (ML-DSA-87) and MsgRegisterKEMKey (ML-KEM-1024), signed here, relayed unchanged by the API to QoreChain'],
+            ['Open', '@paper-trail/core openMessage with your ML-KEM-1024 (+ X25519) secret key; any other key fails with NOT_A_RECIPIENT'],
           ]}
         />
       </section>
