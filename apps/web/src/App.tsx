@@ -10,6 +10,7 @@ import { NotFound } from './pages/NotFound';
 
 // Verify and Marks load @paper-trail/core's crypto, so they're split out of the first page load.
 const Verify = lazy(() => import('./pages/Verify').then((m) => ({ default: m.Verify })));
+const TryEncryption = lazy(() => import('./pages/TryEncryption').then((m) => ({ default: m.TryEncryption })));
 const Marks = lazy(() => import('./pages/Marks').then((m) => ({ default: m.Marks })));
 
 function PageLoading() {
@@ -47,6 +48,7 @@ export function App() {
         <Route path="/exams/:examId" element={<Exam />} />
         <Route path="/exams/:examId/audit" element={<Audit />} />
         <Route path="/verify" element={<Suspense fallback={<PageLoading />}><Verify /></Suspense>} />
+        <Route path="/try" element={<Suspense fallback={<PageLoading />}><TryEncryption /></Suspense>} />
         <Route path="/marks" element={<Suspense fallback={<PageLoading />}><Marks /></Suspense>} />
         <Route path="*" element={<NotFound />} />
       </Routes>

@@ -147,6 +147,13 @@ export function Landing() {
           <div className="pt-wrap pt-toolgrid">
             <AuditCard />
             <div className="pt-card pt-toolcard">
+              <h3 className="pt-h3">Try the encryption</h3>
+              <p className="pt-toolcard__text">Make a key and lock a message in your own browser, with the code that locks the exam papers.</p>
+              <Link className="pt-btn" to="/try" style={{ alignSelf: 'flex-start', marginTop: 'auto' }}>
+                Try encryption
+              </Link>
+            </div>
+            <div className="pt-card pt-toolcard">
               <h3 className="pt-h3">Verify a paper</h3>
               <p className="pt-toolcard__text">Check a paper is exactly the one that was set, without sending it anywhere.</p>
               <Link className="pt-btn" to="/verify" style={{ alignSelf: 'flex-start', marginTop: 'auto' }}>

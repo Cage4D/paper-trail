@@ -19,6 +19,7 @@ export function ThemeToggle() {
 /** The global navigation: the same links, in the same order, on every page. Only the highlight moves. */
 const NAV = [
   { to: '/demo', label: 'Demo', match: (p: string) => p.startsWith('/demo') },
+  { to: '/try', label: 'Try encryption', match: (p: string) => p === '/try' },
   { to: '/audit', label: 'Audit trail', match: (p: string) => p === '/audit' || p.startsWith('/exams/') },
   { to: '/verify', label: 'Verify a paper', match: (p: string) => p === '/verify' },
   { to: '/marks', label: 'Check my mark', match: (p: string) => p === '/marks' },

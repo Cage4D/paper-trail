@@ -730,6 +730,11 @@ function BeatOpen({ d, state, cache, you, busy, error, onOpen }: { d: Derived; s
       )}
       <ActionError error={error} onRetry={onOpen} />
       {st === 'done' && (
+        <Note>
+          In this demo the server opened the paper with Invigilator A1's demo key, so you don't need a wallet. A real invigilator opens it in their own browser with their own key. <Link to="/try">See that encryption run in your browser</Link>.
+        </Note>
+      )}
+      {st === 'done' && (
         <OnChainDetails
           rows={[
             ['Read', "Centre A's ciphertext and the two released shares (sealed to the invigilator group)"],

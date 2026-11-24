@@ -184,7 +184,8 @@ button.pt-health { cursor: pointer; }
 .pt-steps4 li { display: flex; flex-direction: column; gap: 10px; border-top: var(--stroke-2) solid var(--line); padding-top: 16px; }
 .pt-steps4 span { font: 500 14px/1 var(--font-mono); color: var(--ink-muted); }
 .pt-steps4 strong { font: 700 22px/28px var(--font-display); }
-.pt-toolgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+.pt-toolgrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; }
+@media (max-width: 1240px) { .pt-toolgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .pt-toolcard { width: auto; border-radius: var(--radius-xl); padding: 32px; gap: 16px; }
 .pt-toolcard__text { color: var(--ink-muted); font-size: 15px; line-height: 22px; }
 .pt-claims { border: var(--stroke-2) solid var(--line); border-radius: var(--radius-xl); padding: 32px; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 24px 40px; }
@@ -434,3 +435,18 @@ button.pt-health { cursor: pointer; }
 /* a group of receipts ("rotateEpoch ×3 0x… 0x… 0x…") wraps instead of running off narrow screens */
 .pt-hash--group { flex-wrap: wrap; white-space: normal; row-gap: 4px; }
 .pt-hash--group a { white-space: nowrap; }
+
+/* ── try the encryption ── */
+.pt-lab { list-style: none; margin: 0; padding: 0; display: grid; gap: 20px; }
+.pt-lab__step--off { opacity: 0.55; }
+.pt-check { display: flex; gap: 10px; align-items: flex-start; font-size: 15px; line-height: 22px; cursor: pointer; }
+.pt-check input { width: 20px; height: 20px; margin-top: 1px; accent-color: var(--ink); flex: none; }
+.pt-cipher { overflow-wrap: anywhere; word-break: break-all; }
+/* seven global links: slightly tighter pills so the nav stays on one line until it collapses */
+.pt-applinks { gap: 2px; }
+.pt-applinks a { padding: 10px 11px; font-size: 15px; }
+@media (max-width: 1240px) {
+  .pt-navwide { display: none !important; }
+  .pt-navnarrow { display: flex !important; }
+  .pt-appbar .pt-wrap { min-height: 56px; padding-right: 0; flex-wrap: nowrap; }
+}
