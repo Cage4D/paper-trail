@@ -10,6 +10,26 @@
 
 ---
 
+## 0. Judging (Developer Fest rules; added 24 Nov)
+
+| Criterion | Weight |
+|---|---|
+| Works as described | 25% |
+| QoreChain tech usage | 25% |
+| Post-quantum correctness & security | 20% |
+| Originality | 15% |
+| Clarity, UX & docs | 15% |
+
+- **Top-Quality Awards** need a score of at least **70 / 100**.
+- **Encrypted Apps (QoreSeal) requirements**, all four must be met and shown:
+  1. ML-KEM-1024 encryption (QoreSeal);
+  2. PQC keys registered on chain;
+  3. ML-DSA-87 binding (keys and actions bound to ML-DSA-87 identities);
+  4. client-side encryption and decryption.
+- **Best AI-Native Build award:** an `AI_USAGE.md` at the repo root describing how AI was used.
+
+Where each requirement is met in the code: README, "Encrypted Apps requirements".
+
 ## 1. Product in one paragraph
 
 A post-quantum chain of custody for exams. Each centre's copy of the paper is encrypted when it's set. Its key is split 2-of-3 between the examiners, and two of them must release it at the start time. Each centre's copy is **fingerprinted** (canary copy) so a leak names its source. Invigilators form a **QoreSeal epoch group**: remove one and they're locked out of everything that follows. Answer scripts are sealed to markers under pseudonyms. Every action is **authorised by an ML-DSA-87 signature verified on-chain** by the `pqcVerify` precompile and recorded on QoreChain. **The server stores only ciphertext and hashes. It can't read a paper and can't forge an action.**
@@ -357,7 +377,7 @@ Buffer: **30 Nov–1 Dec** for frontend integration fixes, the video and submiss
 7. `EpochKeyManager` `history` restore round-trip across process restarts (for the demo bots and board state).
 8. Is `shamir-secret-sharing` byte-identical in Node and the browser?
 9. Free API host that allows long-running processes (indexer, SSE) without sleeping.
-10. Encrypted Apps rubric: ask in Discord; note the answer in findings.
+10. ~~Encrypted Apps rubric: ask in Discord; note the answer in findings.~~ **Answered** (24 Nov): see §0.
 
 ## 14. References
 

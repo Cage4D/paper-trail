@@ -28,7 +28,7 @@ Every claim below cites a script in `scripts/findings/` (raw output in
 | Q7 | `EpochKeyManager` history restore | **Answered**: works across processes |
 | Q8 | `shamir-secret-sharing` Node = browser | **Answered**: identical given equal randomness; shares interoperate |
 | Q9 | free always-on API host | **Answered with a constraint**: Vercel can't run long-lived processes. Needs a decision |
-| Q10 | Encrypted Apps rubric | pending (ask in Discord) |
+| Q10 | Encrypted Apps rubric | **Answered** (24 Nov, from the Fest rules): five weighted criteria, a 70-point bar for Top-Quality Awards, four Encrypted Apps requirements (ML-KEM-1024, registered PQC keys, ML-DSA-87 binding, client-side encryption and decryption) and `AI_USAGE.md`. See SPEC §0 and the README's "Encrypted Apps requirements". |
 
 ---
 
