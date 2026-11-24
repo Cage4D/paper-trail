@@ -64,7 +64,7 @@ its `CORS_ORIGIN`.
 |---|---|
 | `/` | Landing page; "Start the 3-minute demo" calls `POST /demo/start` |
 | `/demo/:demoId` | Judge mode: the 7 beats, driven by `/demo/*`, restored from the server's step log on reload |
-| `/try` | Try the encryption: a key made in your browser locks and opens a message with `@paper-trail/core`, in a Web Worker |
+| `/try` | Try the encryption, in your browser (`@paper-trail/core` in a Web Worker): seal a message to any registered `qor1` address, make and register your own key, and open messages sealed to it |
 | `/exams/:examId/audit` | Live audit trail of on-chain events, with the commitments to check against |
 | `/exams/:examId` | Exam status, centres, epochs and release counts |
 | `/verify` | Hash a paper in the browser and compare with the API and `commitment(examId, centreId)` on-chain |
@@ -118,14 +118,18 @@ QoreChain kits and never needs a server to encrypt, decrypt or sign.
 | | [`actions.ts` `signAction`](packages/core/src/actions.ts#L92), [`PaperTrail.sol`](packages/contracts/src/PaperTrail.sol#L281) | Every action (create, set centre, rotate team, release, submit script, publish marks) is signed with ML-DSA-87 by the role key and verified on chain by the `pqcVerify` precompile; the relayer can't forge one. |
 | | [`binding.ts`](packages/core/src/binding.ts#L16), [`PaperTrail.sol` `bindIdentity`](packages/contracts/src/PaperTrail.sol#L264) | Optional binding of a role key to the user's QoreX wallet address, signed with ML-DSA-87 and recorded on chain. |
 | **Client-side encryption and decryption** | [`packages/core`](packages/core/src/index.ts) | The client library: key creation and passphrase storage ([`keys.ts`](packages/core/src/keys.ts#L45)), sealing, opening and signing all run where the role key is. |
-| | [`/try` page](https://paper-trail-web-nu.vercel.app/try), [`crypto.worker.ts`](apps/web/src/workers/crypto.worker.ts) | In the deployed web app, the browser itself creates a role key, seals a message to itself and to a demo exam's real markers (after checking their cards against QoreChain with `resolveGroupRecipients`), opens it, and shows a stranger's key refused. No server is involved and no demo key is in the browser. |
+| | [`/try` page](https://paper-trail-web-nu.vercel.app/try), [`crypto.worker.ts`](apps/web/src/workers/crypto.worker.ts), [`messages.ts`](packages/core/src/messages.ts) | **Seal to any registered QoreChain address:** the browser reads each `qor1` address's ML-KEM-1024 key from the chain's KEM registry and, when a recipient card is published, checks the card against the address's ML-DSA-87 key (`pqcKeyStatus`); then it seals (hybrid ML-KEM-1024 + X25519, or ML-KEM-1024 alone without a card) and hands back a `.ptseal` file. An address with no registered key is refused. The message never leaves the browser. |
+| | [`/try` page](https://paper-trail-web-nu.vercel.app/try), [`keys.ts` `encryptRoleKey`](packages/core/src/keys.ts#L74), [`register.ts` `ensureRoleOnChain`](packages/core/src/register.ts#L65) | **Decrypt with your own registered key:** the browser makes a role key, keeps it only as an Argon2id + AES-256-GCM blob in `localStorage`, registers its ML-DSA-87 and ML-KEM-1024 keys on chain (signed in the browser; see the relay note below), and opens messages sealed to its address. Any other key gets `NOT_A_RECIPIENT`. Checked live: a key registered from one browser opened a message another browser sealed to its address. |
+| | [`chain-relay.controller.ts`](apps/api/src/chain-relay/chain-relay.controller.ts) | QoreChain's REST and Tendermint RPC endpoints send no CORS headers, so the API relays the browser's registration: allowlisted reads and already-signed transactions, forwarded unchanged and rate-limited. It holds no keys and can't alter a signed transaction. Chain reads for sealing go straight from the browser to the EVM JSON-RPC (`qor_getKEMKey`, `qor_getPQCKeyStatus`), which allows browsers. |
 | | [`demo.service.ts`](apps/api/src/demo/demo.service.ts#L313) | **Honest note:** in judge mode the server holds the DEMO role keys and runs this same client code (`openPaper`, `sealScript`, …) on their behalf, so a judge needs no wallet. Real users would run it in their own browser; the multi-role web UI for that (P2) is not built. |
 
 **Tests and runs that exercise the client code on its own**
 
 - [`packages/core/test`](packages/core/test): unit tests for sealing and opening ([`groups`](packages/core/test/groups.test.ts), [`scripts`](packages/core/test/scripts.test.ts), [`split`](packages/core/test/split.test.ts), [`keys`](packages/core/test/keys.test.ts), [`register`](packages/core/test/register.test.ts)) and a whole exam ([`flow`](packages/core/test/flow.test.ts)); `pnpm --filter @paper-trail/core test`.
 - [`verify-live.test.ts`](packages/core/test/verify-live.test.ts) (`LIVE=1`): `resolveGroupRecipients` against a real demo exam's markers on qorechain-diana, reading KEM keys the way a browser must.
-- [`apps/web/test/sealLab.test.ts`](apps/web/test/sealLab.test.ts): the `/try` lab with real core crypto (only chosen keys open; a stranger gets `NOT_A_RECIPIENT`).
+- [`apps/web/test/sealLab.test.ts`](apps/web/test/sealLab.test.ts): the `/try` quick lab with real core crypto (only chosen keys open; a stranger gets `NOT_A_RECIPIENT`).
+- [`packages/core/test/messages.test.ts`](packages/core/test/messages.test.ts): sealing to addresses with real crypto (hybrid with a verified card, ML-KEM-1024 without one, an unregistered address refused, an edited recipient list won't open); [`messages-live.test.ts`](packages/core/test/messages-live.test.ts) (`LIVE=1`) seals to Marker 1's real registered address.
+- [`apps/api/src/chain-relay.spec.ts`](apps/api/src/chain-relay.spec.ts): the relay forwards only allowlisted reads and methods, byte for byte, and rate-limits broadcasts.
 - [`scripts/full-e2e.ts`](scripts/full-e2e.ts) (`pnpm full:e2e`): every role as a separate core client with its own registered keys, a full exam on qorechain-diana through the API. The recorded passing run ([`scripts/out/full-e2e.json`](scripts/out/full-e2e.json)) used a locally run API against the live chain.
 - [`scripts/demo-e2e.ts`](scripts/demo-e2e.ts): judge mode against the deployed API ([`scripts/out/demo-e2e-deployed.json`](scripts/out/demo-e2e-deployed.json)).
 
@@ -149,6 +153,7 @@ external review; testnet only. See the trust model below.
   secret, paper, fingerprint tables) is sealed to the 3 examiners and the board, so any one of them could
   render any centre's copy and leak it, framing that centre. A leaked copy that names a centre therefore
   points at that centre *or* the committee. The master copy has its own fingerprint.
+- **The API also relays key registration for browsers** (`/chain/*`), because QoreChain's native endpoints block browsers. It forwards only allowlisted reads and transactions the browser has already signed; it can't change them or register anything on its own.
 - **Liveness depends on the relayer;** if it is down, nothing is lost. A release relayed by someone else
   lands on chain, but `/released` can only serve blobs that reached the API.
 - **Metadata is public on chain** (who, when, sizes); only payloads are confidential. QoreSeal is 0.1.0,
