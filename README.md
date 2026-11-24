@@ -63,6 +63,7 @@ its `CORS_ORIGIN`.
 |---|---|
 | `/` | Landing page; "Start the 3-minute demo" calls `POST /demo/start` |
 | `/demo/:demoId` | Judge mode: the 7 beats, driven by `/demo/*`, restored from the server's step log on reload |
+| `/try` | Try the encryption: a key made in your browser locks and opens a message with `@paper-trail/core`, in a Web Worker |
 | `/exams/:examId/audit` | Live audit trail of on-chain events, with the commitments to check against |
 | `/exams/:examId` | Exam status, centres, epochs and release counts |
 | `/verify` | Hash a paper in the browser and compare with the API and `commitment(examId, centreId)` on-chain |
@@ -98,6 +99,39 @@ Kits, templates and libraries used (required by the Fest rules):
   [JetBrains Mono](https://www.jetbrains.com/lp/mono/) and [Caveat](https://fonts.google.com/specimen/Caveat) (SIL OFL), [Testing Library](https://testing-library.com)
 - [tsup](https://tsup.egoist.dev), [Vitest](https://vitest.dev), [jsdom](https://github.com/jsdom/jsdom),
   [Zod](https://zod.dev), [viem](https://viem.sh)
+
+## Encrypted Apps requirements
+
+How Paper Trail meets the Encrypted Apps (QoreSeal) requirements, with the code that does it. All
+cryptography lives in [`packages/core`](packages/core), the **client** library: it wraps the official
+QoreChain kits and never needs a server to encrypt, decrypt or sign.
+
+| Requirement | Where | What it does |
+|---|---|---|
+| **ML-KEM-1024 encryption (QoreSeal)** | [`split.ts` `setExam`](packages/core/src/split.ts#L64) | Encrypts each centre's copy with AES-256-GCM under a fresh key, splits that key 2-of-3 and seals each share to one examiner, and seals the committee bundle to the examiners and the board (QoreSeal: ML-KEM-1024 + X25519). |
+| | [`groups.ts` `BoardGroups`](packages/core/src/groups.ts#L49), [`openGroupEpoch`](packages/core/src/groups.ts#L149) | Centre and marker teams are QoreSeal epoch groups: every membership change seals a fresh epoch key to the current members only. |
+| | [`release.ts` `prepareRelease`](packages/core/src/release.ts#L42), [`openPaper`](packages/core/src/release.ts#L80), [`sealedToExactly`](packages/core/src/release.ts#L67) | An examiner re-seals their share to the centre's current invigilators; an invigilator opens the paper and checks it against the on-chain commitment. |
+| | [`scripts.ts` `sealScript` / `openScript`](packages/core/src/scripts.ts#L24) | Answer scripts are sealed to the markers under a pseudonym. |
+| **Registered PQC keys** | [`register.ts` `ensureRoleOnChain`](packages/core/src/register.ts#L65), [`roleStatus`](packages/core/src/register.ts#L43), [`scripts/register.ts`](scripts/register.ts) | Registers each role's ML-DSA-87 key (QoreChain PQC registry) and ML-KEM-1024 key (KEM registry) on qorechain-diana; idempotent. |
+| **ML-DSA-87 binding** | [`register.ts` `recipientCardFor`](packages/core/src/register.ts#L56), [`verify.ts` `resolveGroupRecipients`](packages/core/src/verify.ts#L38) | Each role publishes a recipient card signed with its ML-DSA-87 (and classical) key. Before sealing anything, a client checks every recipient's card against the keys registered **on chain** (pqcKeyStatus precompile and the KEM registry) and the member list against the board-signed `EpochChanged` event, so the API can't slip in its own key. |
+| | [`actions.ts` `signAction`](packages/core/src/actions.ts#L92), [`PaperTrail.sol`](packages/contracts/src/PaperTrail.sol#L281) | Every action (create, set centre, rotate team, release, submit script, publish marks) is signed with ML-DSA-87 by the role key and verified on chain by the `pqcVerify` precompile; the relayer can't forge one. |
+| | [`binding.ts`](packages/core/src/binding.ts#L16), [`PaperTrail.sol` `bindIdentity`](packages/contracts/src/PaperTrail.sol#L264) | Optional binding of a role key to the user's QoreX wallet address, signed with ML-DSA-87 and recorded on chain. |
+| **Client-side encryption and decryption** | [`packages/core`](packages/core/src/index.ts) | The client library: key creation and passphrase storage ([`keys.ts`](packages/core/src/keys.ts#L45)), sealing, opening and signing all run where the role key is. |
+| | [`/try` page](https://paper-trail-web-nu.vercel.app/try), [`crypto.worker.ts`](apps/web/src/workers/crypto.worker.ts) | In the deployed web app, the browser itself creates a role key, seals a message to itself and to a demo exam's real markers (after checking their cards against QoreChain with `resolveGroupRecipients`), opens it, and shows a stranger's key refused. No server is involved and no demo key is in the browser. |
+| | [`demo.service.ts`](apps/api/src/demo/demo.service.ts#L313) | **Honest note:** in judge mode the server holds the DEMO role keys and runs this same client code (`openPaper`, `sealScript`, …) on their behalf, so a judge needs no wallet. Real users would run it in their own browser; the multi-role web UI for that (P2) is not built. |
+
+**Tests and runs that exercise the client code on its own**
+
+- [`packages/core/test`](packages/core/test): unit tests for sealing and opening ([`groups`](packages/core/test/groups.test.ts), [`scripts`](packages/core/test/scripts.test.ts), [`split`](packages/core/test/split.test.ts), [`keys`](packages/core/test/keys.test.ts), [`register`](packages/core/test/register.test.ts)) and a whole exam ([`flow`](packages/core/test/flow.test.ts)); `pnpm --filter @paper-trail/core test`.
+- [`verify-live.test.ts`](packages/core/test/verify-live.test.ts) (`LIVE=1`): `resolveGroupRecipients` against a real demo exam's markers on qorechain-diana, reading KEM keys the way a browser must.
+- [`apps/web/test/sealLab.test.ts`](apps/web/test/sealLab.test.ts): the `/try` lab with real core crypto (only chosen keys open; a stranger gets `NOT_A_RECIPIENT`).
+- [`scripts/full-e2e.ts`](scripts/full-e2e.ts) (`pnpm full:e2e`): every role as a separate core client with its own registered keys, a full exam on qorechain-diana through the API. The recorded passing run ([`scripts/out/full-e2e.json`](scripts/out/full-e2e.json)) used a locally run API against the live chain.
+- [`scripts/demo-e2e.ts`](scripts/demo-e2e.ts): judge mode against the deployed API ([`scripts/out/demo-e2e-deployed.json`](scripts/out/demo-e2e-deployed.json)).
+
+**What this does not claim.** The server is not trustless: it relays transactions, hosts ciphertext,
+and in judge mode holds the demo keys. It can't read papers or forge actions for real users, because
+those keys never reach it and every action is checked on chain. QoreSeal is version 0.1.0, pending
+external review; testnet only. See the trust model below.
 
 ## Trust model (honest version)
 
