@@ -460,3 +460,4 @@ button.pt-health { cursor: pointer; }
 .pt-quicklab .pt-cardx { box-shadow: none; }
 .pt-diy { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; justify-content: space-between; padding: 14px 16px; border: var(--stroke-2) dashed var(--line); border-radius: var(--radius-md); }
 .pt-diy > .pt-col { flex: 1 1 260px; }
+.pt-addr { white-space: normal; overflow-wrap: anywhere; word-break: break-all; }

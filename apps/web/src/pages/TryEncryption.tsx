@@ -249,12 +249,16 @@ export function TryEncryption() {
   useEffect(() => {
     if (window.location.hash) document.getElementById(window.location.hash.slice(1))?.scrollIntoView();
   }, []);
-  useEffect(() => {
-    // recipient cards are public; with one, the browser seals hybrid after checking it against the chain
+  // recipient cards are public; with one, the browser seals hybrid after checking it against the chain.
+  // Sealing waits for this load, so a quick click can't seal without the cards.
+  const [cardsLoad] = useState(() =>
     api<{ roleAddress: string; sealCard: unknown }[]>('/directory', { timeoutMs: 30_000 })
-      .then((rows) => setCards(Object.fromEntries(rows.filter((r) => r.sealCard).map((r) => [r.roleAddress, r.sealCard]))))
-      .catch(() => setCards({}));
-  }, []);
+      .then((rows) => Object.fromEntries(rows.filter((r) => r.sealCard).map((r) => [r.roleAddress, r.sealCard])) as Record<string, unknown>)
+      .catch(() => ({}) as Record<string, unknown>),
+  );
+  useEffect(() => {
+    void cardsLoad.then(setCards);
+  }, [cardsLoad]);
 
   const run = async (what: string, f: () => Promise<void>) => {
     if (busy) return;
@@ -276,7 +280,7 @@ export function TryEncryption() {
     run('seal', async () => {
       if (!addresses.length) throw new Error('Add at least one qor1 address.');
       if (!message) throw new Error('Write a message to lock.');
-      setSealRes(await ask<SealResult>({ type: 'seal-to', text: message, addresses, cards: cards ?? {} }));
+      setSealRes(await ask<SealResult>({ type: 'seal-to', text: message, addresses, cards: cards ?? (await cardsLoad) }));
       setCopied(false);
     });
 
@@ -376,7 +380,7 @@ export function TryEncryption() {
               <div className="pt-xrows">
                 {sealRes.results.map((r) => (
                   <XRow key={r.address} yes={r.ok} aside={r.ok ? <span className="pt-code" title={r.mode}>{r.mode === 'hybrid' ? 'card checked' : 'ML-KEM only'}</span> : undefined}>
-                    <span className="pt-mono pt-mono--inline" style={{ overflowWrap: 'anywhere' }}>{r.address}</span>
+                    <span className="pt-mono pt-mono--inline pt-addr">{r.address}</span>
                     <span className="pt-source__sub" style={{ fontFamily: 'var(--font-sans)', fontSize: 13 }}>
                       {r.ok
                         ? r.mode === 'hybrid'
