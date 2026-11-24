@@ -15,3 +15,4 @@ export * from "./binding.js";
 export * from "./verify.js";
 export * from "./sample-paper.js";
 export * from "./leak-sim.js";
+export * from "./messages.js";

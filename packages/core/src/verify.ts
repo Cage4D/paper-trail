@@ -104,7 +104,30 @@ export async function resolveGroupRecipients(args: {
  * from the RPC, in the REST response's shape. Any other URL goes to the global fetch unchanged.
  */
 export function kemFetchViaEvmRpc(evmRpc: string): (url: string, init?: RequestInit) => Promise<Response> {
+  return chainFetchViaEvmRpc(evmRpc);
+}
+
+/**
+ * Like kemFetchViaEvmRpc, and also answers the ML-DSA-87 key lookup (`/qorechain/pqc/v1/account/<address>`,
+ * used by QoreSeal/QoreSign to verify recipient cards) from `qor_getPQCKeyStatus`, which returns the
+ * REST response's shape.
+ */
+export function chainFetchViaEvmRpc(evmRpc: string): (url: string, init?: RequestInit) => Promise<Response> {
   return async (url, init) => {
+    const pq = /\/qorechain\/pqc\/v1\/account\/([^/?#]+)$/.exec(url);
+    if (pq) {
+      const res = await globalThis.fetch(evmRpc, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "qor_getPQCKeyStatus", params: [decodeURIComponent(pq[1])] }),
+      });
+      const body = (await res.json()) as { result?: { found?: boolean; account?: Record<string, unknown> } };
+      if (!res.ok || !body.result) return new Response(JSON.stringify({}), { status: 502 });
+      const acc = body.result.account;
+      // the RPC reports possession_proven as a string; the REST shape is a boolean
+      if (acc && typeof acc.possession_proven === "string") acc.possession_proven = acc.possession_proven.toLowerCase() === "true";
+      return new Response(JSON.stringify({ found: body.result.found === true, ...(acc ? { account: acc } : {}) }), { status: body.result.found ? 200 : 404, headers: { "Content-Type": "application/json" } });
+    }
     const m = /\/qorechain\/pqc\/v1\/kem\/([^/?#]+)$/.exec(url);
     if (!m) return globalThis.fetch(url, init);
     const res = await globalThis.fetch(evmRpc, {
