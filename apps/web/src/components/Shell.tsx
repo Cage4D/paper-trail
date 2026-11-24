@@ -18,25 +18,40 @@ export function ThemeToggle() {
 
 /** The global navigation: the same links, in the same order, on every page. Only the highlight moves. */
 const NAV = [
-  { to: '/demo', label: 'Demo', match: (p: string) => p.startsWith('/demo') },
-  { to: '/try', label: 'Try encryption', match: (p: string) => p === '/try' },
-  { to: '/audit', label: 'Audit trail', match: (p: string) => p === '/audit' || p.startsWith('/exams/') },
-  { to: '/verify', label: 'Verify a paper', match: (p: string) => p === '/verify' },
-  { to: '/marks', label: 'Check my mark', match: (p: string) => p === '/marks' },
-  { to: '/#how', label: 'How it works', match: () => false },
+  { to: '/', label: 'Home', hint: 'What Paper Trail is and how it works', match: (p: string) => p === '/' },
+  { to: '/demo', label: 'Live demo', hint: 'A 3-minute walkthrough on the real blockchain', match: (p: string) => p.startsWith('/demo') },
+  { to: '/try', label: 'Try encryption', hint: 'Lock and open messages in your own browser', match: (p: string) => p === '/try' },
+  { to: '/audit', label: 'Audit trail', hint: "Every step of an exam, on public record", match: (p: string) => p === '/audit' || p.startsWith('/exams/') },
+  { to: '/verify', label: 'Verify a paper', hint: "Check a paper is exactly the one that was set", match: (p: string) => p === '/verify' },
+  { to: '/marks', label: 'Check my mark', hint: 'Prove your mark with the code name on your ticket', match: (p: string) => p === '/marks' },
 ] as const;
 
-function NavLinks() {
+/** The global links. `withHints` (the phone menu) shows each link's one-line explanation under it. */
+function NavLinks({ withHints = false }: { withHints?: boolean }) {
   const { pathname } = useLocation();
   return (
     <>
       {NAV.map((l) => (
-        <Link key={l.label} to={l.to} aria-current={l.match(pathname) ? 'page' : undefined}>
-          {l.label}
+        <Link key={l.label} to={l.to} title={withHints ? undefined : l.hint} aria-current={l.match(pathname) ? 'page' : undefined} className={withHints ? 'pt-navhint' : undefined}>
+          {withHints ? (
+            <span className="pt-col" style={{ gap: 2 }}>
+              <span>{l.label}</span>
+              <span className="pt-navhint__text">{l.hint}</span>
+            </span>
+          ) : (
+            l.label
+          )}
         </Link>
       ))}
-      <a href={REPO_URL} target="_blank" rel="noreferrer">
-        GitHub
+      <a href={REPO_URL} target="_blank" rel="noreferrer" title="The source code on GitHub" className={withHints ? 'pt-navhint' : undefined}>
+        {withHints ? (
+          <span className="pt-col" style={{ gap: 2 }}>
+            <span>GitHub</span>
+            <span className="pt-navhint__text">The source code</span>
+          </span>
+        ) : (
+          'GitHub'
+        )}
       </a>
     </>
   );
@@ -68,7 +83,7 @@ export function AppBar() {
       {open && (
         <div id="pt-sheet" className="pt-sheetmenu pt-navnarrow">
           <nav aria-label="Main">
-            <NavLinks />
+            <NavLinks withHints />
           </nav>
           <div className="pt-sheetmenu__tools">
             <HealthChip />

@@ -24,7 +24,7 @@ describe('global nav', () => {
     const seen = pages.map(linksOn);
     for (const s of seen) expect(s.links).toEqual(seen[0].links);
     expect(seen[0].links.join(' ')).not.toMatch(/start/i);
-    expect(seen[0].links).toEqual(['Demo→/demo', 'Try encryption→/try', 'Audit trail→/audit', 'Verify a paper→/verify', 'Check my mark→/marks', 'How it works→/#how', 'GitHub→https://github.com/Cage4D/paper-trail']);
-    expect(seen.map((s) => s.current)).toEqual([[], ['Demo'], ['Demo'], ['Audit trail'], ['Audit trail'], ['Verify a paper'], ['Check my mark']]);
+    expect(seen[0].links).toEqual(['Home→/', 'Live demo→/demo', 'Try encryption→/try', 'Audit trail→/audit', 'Verify a paper→/verify', 'Check my mark→/marks', 'GitHub→https://github.com/Cage4D/paper-trail']);
+    expect(seen.map((s) => s.current)).toEqual([['Home'], ['Live demo'], ['Live demo'], ['Audit trail'], ['Audit trail'], ['Verify a paper'], ['Check my mark']]);
   });
 });
